@@ -25,7 +25,7 @@ interface ButtonProps extends Omit<
 const variantStyles: Record<Variant, string> = {
   primary: "bg-(--color-text) text-(--color-bg) hover:opacity-90",
   secondary:
-    "bg-(--color-bg-muted) text-(--color-text) hover:bg-(--color-bg-muted-hover)",
+    "bg-(--color-bg-muted) dark:shadow-contrast text-(--color-text) hover:bg-(--color-bg-muted-hover)",
   ghost:
     "text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted)",
   outline:
@@ -33,7 +33,7 @@ const variantStyles: Record<Variant, string> = {
   danger: "bg-red-500 text-white hover:bg-red-600",
   "danger-outline":
     "border border-red-400/50 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500",
-  pill: "rounded-full! bg-black text-white dark:bg-zinc-800 shadow-lg hover:scale-105 transition-transform",
+  pill: "rounded-full! dark:shadow-contrast bg-black text-white dark:bg-zinc-800 shadow-lg hover:scale-105 transition-transform",
 };
 
 const sizeStyles: Record<Size, string> = {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { motion } from "motion/react";
 import type { TaxReturn } from "../lib/schema";
 import { formatCompact } from "../lib/format";
 import { getTotalTax, getNetIncome } from "../lib/tax-calculations";
@@ -117,12 +118,21 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
 
   return (
     <div className="px-6 py-6 shrink-0 border-b border-(--color-border)">
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
-        <div className="col-span-2 flex items-center lg:col-span-1">
-          <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight text-(--color-brand)">
-            {isSummary ? "All time" : selectedYear}
-          </div>
+      <motion.div
+        className="@container mx-auto"
+        initial={false}
+        animate={{ maxWidth: isSummary ? "100%" : "42rem" }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight text-(--color-brand) mb-4 @3xl:hidden">
+          {isSummary ? "All time" : selectedYear}
         </div>
+        <div className="grid grid-cols-2 @3xl:grid-cols-5 gap-6">
+          <div className="hidden @3xl:flex items-center">
+            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight text-(--color-brand)">
+              {isSummary ? "All time" : selectedYear}
+            </div>
+          </div>
 
         <div>
           <div className="text-xs text-(--color-text-muted) mb-1">Income</div>
@@ -246,7 +256,8 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

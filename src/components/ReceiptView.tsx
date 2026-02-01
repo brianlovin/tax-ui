@@ -136,7 +136,7 @@ export function ReceiptView({ data }: Props) {
   const netMonthly = Math.round(netIncome / 12);
 
   return (
-    <div className="bg-neutral-50 px-4 md:px-0 dark:bg-neutral-950 py-4 md:py-8">
+    <div className="bg-neutral-50 px-4 md:px-0 dark:bg-neutral-950 py-4 md:py-8 md:pb-12">
       <div className="max-w-2xl bg-white dark:bg-neutral-900 rounded-lg dark:shadow-contrast mx-auto shadow-md ring-[0.5px] ring-black/5">
         {/* Content Table */}
         <div className="px-6 pb-6">

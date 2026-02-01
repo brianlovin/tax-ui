@@ -167,7 +167,7 @@ export function MainPanel(props: Props) {
                       className={cn(
                         "px-2.5 py-1 text-sm font-medium rounded-lg shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-(--color-text-muted)",
                         props.selectedId === item.id
-                          ? "text-(--color-text) bg-(--color-bg-muted)"
+                          ? "text-(--color-text) dark:shadow-contrast bg-(--color-bg-muted)"
                           : "text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted)",
                       )}
                     >
@@ -188,7 +188,10 @@ export function MainPanel(props: Props) {
                               className={cn(popupBaseClassName, "z-50")}
                             >
                               <ContextMenu.Item
-                                className={cn(itemBaseClassName, "data-[highlighted]:bg-(--color-bg-muted)")}
+                                className={cn(
+                                  itemBaseClassName,
+                                  "data-[highlighted]:bg-(--color-bg-muted)",
+                                )}
                                 onClick={() => props.onDeleteYear?.(item.id)}
                               >
                                 <TrashIcon />
