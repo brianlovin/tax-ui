@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Markdown from "react-markdown";
+import { cn } from "../lib/cn";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
+import { XMarkIcon } from "./XMarkIcon";
 
 export interface ChatMessage {
   id: string;
@@ -179,9 +181,10 @@ export function Chat({
 
   return (
     <div
-      className={`flex flex-col h-full bg-(--color-bg) border-l border-(--color-border) relative ${
-        isMobile ? "fixed inset-0 z-40" : ""
-      }`}
+      className={cn(
+        "flex flex-col h-full bg-(--color-bg) border-l border-(--color-border) relative",
+        isMobile && "fixed inset-0 z-40",
+      )}
       style={isMobile ? undefined : { width }}
     >
       {/* Resize handle */}
@@ -191,7 +194,7 @@ export function Chat({
       />
       {/* Header */}
       <header className="h-12 pl-4 pr-2 flex items-center justify-between border-b border-(--color-border)">
-        <span className="text-sm">Chat</span>
+        <span className="text-sm font-semibold">Chat</span>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
             <Button variant="ghost" size="sm" onClick={handleNewChat}>
@@ -199,16 +202,7 @@ export function Chat({
             </Button>
           )}
           <Button variant="ghost" size="sm" iconOnly onClick={onClose}>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <path d="M4 4l8 8M12 4l-8 8" />
-            </svg>
+            <XMarkIcon />
           </Button>
         </div>
       </header>
@@ -217,11 +211,12 @@ export function Chat({
       <div className="relative flex-1 min-h-0">
         {/* Top shadow */}
         <div
-          className={`absolute top-0 left-0 right-0 h-4 pointer-events-none z-10 transition-opacity duration-150 ${
+          className={cn(
+            "absolute top-0 left-0 right-0 h-4 pointer-events-none z-10 transition-opacity duration-150",
             hasTopOverflow
               ? "opacity-100 shadow-[0_8px_16px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_16px_-8px_rgba(0,0,0,0.3)]"
-              : "opacity-0"
-          }`}
+              : "opacity-0",
+          )}
         />
         <div ref={messagesContainerRef} className="h-full overflow-y-auto p-4">
           {messages.length === 0 ? (
@@ -282,7 +277,7 @@ export function Chat({
                           </th>
                         ),
                         td: ({ children }) => (
-                          <td className="py-1 pr-4 tabular-nums">{children}</td>
+                          <td className="py-1 pr-4 tabular-nums slashed-zero">{children}</td>
                         ),
                       }}
                     >
@@ -314,11 +309,11 @@ export function Chat({
         (isLoadingSuggestions ||
           (followUpSuggestions && followUpSuggestions.length > 0)) && (
           <div
-            className={`px-4 pb-2 pt-4 flex flex-wrap gap-2 transition-opacity duration-150 border-t border-(--color-border) ${
-              hasBottomOverflow
-                ? "shadow-[0_-8px_8px_-8px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.3)]"
-                : ""
-            }`}
+            className={cn(
+              "px-4 pb-2 pt-4 flex flex-wrap gap-2 transition-opacity duration-150 border-t border-(--color-border)",
+              hasBottomOverflow &&
+                "shadow-[0_-8px_8px_-8px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.3)]",
+            )}
             style={{
               opacity: input ? 0 : 1,
               pointerEvents: input ? "none" : "auto",
@@ -377,17 +372,17 @@ export function Chat({
       {/* Input */}
       <form
         onSubmit={handleSubmit}
-        className={`p-4 pt-2 pb-3 ${
+        className={cn(
+          "p-4 pt-2 pb-3",
           hasBottomOverflow &&
-          !(
-            messages.length > 0 &&
-            !isLoading &&
-            (isLoadingSuggestions ||
-              (followUpSuggestions && followUpSuggestions.length > 0))
-          )
-            ? "shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.3)]"
-            : ""
-        }`}
+            !(
+              messages.length > 0 &&
+              !isLoading &&
+              (isLoadingSuggestions ||
+                (followUpSuggestions && followUpSuggestions.length > 0))
+            ) &&
+            "shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.3)]",
+        )}
       >
         <textarea
           ref={inputRef}

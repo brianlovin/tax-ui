@@ -1,5 +1,6 @@
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ReactNode, Ref } from "react";
+import { XMarkIcon } from "./XMarkIcon";
 
 interface Props {
   open: boolean;
@@ -62,18 +63,9 @@ export function Dialog({
             <BaseDialog.Close
               autoFocus={autoFocusClose}
               disabled={closeDisabled}
-              className="absolute top-3 right-3 p-1.5 text-(--color-text-muted) hover:text-(--color-text) rounded-lg hover:bg-(--color-bg-muted) disabled:opacity-50 z-10"
+              className="absolute rounded-full top-3 right-3 p-1.5 text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted) disabled:opacity-50 z-10"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d="M4 4l8 8M12 4l-8 8" />
-              </svg>
+              <XMarkIcon />
             </BaseDialog.Close>
           )}
 

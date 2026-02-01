@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Accordion } from "@base-ui/react/accordion";
 import { Input } from "@base-ui/react/input";
+import { cn } from "../lib/cn";
 import { Dialog } from "./Dialog";
 import { Button } from "./Button";
 import { BrailleSpinner } from "./BrailleSpinner";
+import { CheckmarkIcon } from "./CheckmarkIcon";
 import type { FileProgress } from "../lib/schema";
 
 const AI_PRIVACY_PROMPT = `I want you to perform a security and privacy audit of Tax UI, an open source tax return parser.
@@ -536,19 +538,10 @@ export function OnboardingDialog({
                   )}
                   {file.status === "parsing" && <BrailleSpinner />}
                   {file.status === "complete" && (
-                    <svg
-                      className="w-4 h-4 text-(--color-positive)"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                    <CheckmarkIcon
+                      size={16}
+                      className="text-(--color-positive)"
+                    />
                   )}
                   {file.status === "error" && (
                     <span className="text-(--color-negative)">Failed</span>
@@ -564,11 +557,12 @@ export function OnboardingDialog({
               {files.map((fileEntry, i) => (
                 <div
                   key={i}
-                  className={`flex items-center gap-2 text-sm rounded-lg px-3 pr-1 py-2 ${
+                  className={cn(
+                    "flex items-center gap-2 text-sm rounded-lg px-3 pr-1 py-2",
                     fileEntry.isDuplicate
                       ? "bg-(--color-negative)/10 border border-(--color-negative)/20"
-                      : "bg-(--color-bg-muted) dark:bg-white/5"
-                  }`}
+                      : "bg-(--color-bg-muted) dark:bg-white/5",
+                  )}
                 >
                   <span className="truncate flex-1 text-[13px]">
                     {fileEntry.file.name}
@@ -578,11 +572,12 @@ export function OnboardingDialog({
                   )}
                   {!fileEntry.isExtracting && fileEntry.year !== null && (
                     <span
-                      className={`text-xs px-1.5 py-0.5 rounded ${
+                      className={cn(
+                        "text-xs px-1.5 py-0.5 rounded",
                         fileEntry.isDuplicate
                           ? "bg-(--color-negative)/20 text-(--color-negative)"
-                          : "bg-black/5 dark:bg-white/5"
-                      }`}
+                          : "bg-black/5 dark:bg-white/5",
+                      )}
                     >
                       {fileEntry.isDuplicate ? "Reprocess" : fileEntry.year}
                     </span>
