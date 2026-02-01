@@ -101,9 +101,10 @@ export function MainPanel(props: Props) {
                 viewBox="0 0 16 16"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="2"
+                strokeLinecap="round"
               >
-                <path d="M2 4h12M2 8h12M2 12h12" />
+                <path d="M2 5.5h12M2 10.5h12" />
               </svg>
             }
           >
