@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import type { TaxReturn } from "../lib/schema";
 import { Menu, MenuItem } from "./Menu";
 import { Tooltip } from "./Tooltip";
+import { InfoIcon } from "./InfoIcon";
 import { formatCurrency, formatPercent, formatCompact } from "../lib/format";
 import { getTotalTax } from "../lib/tax-calculations";
 import {
@@ -39,7 +40,7 @@ function DataRow({
   return (
     <tr className={isMuted ? "text-(--color-text-muted)" : ""}>
       <td className="py-1.5 text-sm">{label}</td>
-      <td className="py-1.5 text-sm text-right tabular-nums">
+      <td className="py-1.5 text-sm text-right tabular-nums slashed-zero">
         {showSign && amount >= 0 ? "+" : ""}
         {formatCurrency(amount)}
       </td>
@@ -59,7 +60,7 @@ function TotalRow({
   return (
     <tr className="font-medium border-t border-(--color-border)">
       <td className="py-2 text-sm">{label}</td>
-      <td className="py-2 text-sm text-right tabular-nums">
+      <td className="py-2 text-sm text-right tabular-nums slashed-zero">
         {showSign && amount >= 0 ? "+" : ""}
         {formatCurrency(amount)}
       </td>
@@ -88,7 +89,7 @@ function RatesSection({
       </tr>
       <tr>
         <td className="py-1.5 text-sm">Federal</td>
-        <td className="py-1.5 text-sm text-right tabular-nums">
+        <td className="py-1.5 text-sm text-right tabular-nums slashed-zero">
           <span className="inline-block w-16">
             {formatPercent(rates.federal.marginal)}
           </span>
@@ -100,7 +101,7 @@ function RatesSection({
       {rates.state && (
         <tr>
           <td className="py-1.5 text-sm">{stateName || "State"}</td>
-          <td className="py-1.5 text-sm text-right tabular-nums">
+          <td className="py-1.5 text-sm text-right tabular-nums slashed-zero">
             <span className="inline-block w-16">
               {formatPercent(rates.state.marginal)}
             </span>
@@ -113,7 +114,7 @@ function RatesSection({
       {rates.combined && (
         <tr className="border-t border-(--color-border)">
           <td className="py-2 text-sm font-medium">Combined</td>
-          <td className="py-2 text-sm text-right tabular-nums font-medium">
+          <td className="py-2 text-sm text-right tabular-nums slashed-zero font-medium">
             <span className="inline-block w-16">
               {formatPercent(rates.combined.marginal)}
             </span>
@@ -141,7 +142,7 @@ export function ReceiptView({ data }: Props) {
     <div className="max-w-2xl mx-auto">
       {/* Year Header */}
       <div className="px-6 pt-8 flex items-center justify-between">
-        <h1 className="text-3xl -tracking-wider font-bold tabular-nums">
+        <h1 className="text-3xl -tracking-wider font-bold tabular-nums slashed-zero">
           {data.year}
         </h1>
       </div>
@@ -152,7 +153,7 @@ export function ReceiptView({ data }: Props) {
           {/* Income */}
           <div>
             <div className="text-xs text-(--color-text-muted) mb-1">Income</div>
-            <div className="text-2xl font-semibold tabular-nums tracking-tight">
+            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
               {formatCompact(data.income.total)}
             </div>
           </div>
@@ -160,7 +161,7 @@ export function ReceiptView({ data }: Props) {
           {/* Taxes */}
           <div>
             <div className="text-xs text-(--color-text-muted) mb-1">Taxes</div>
-            <div className="text-2xl font-semibold tabular-nums tracking-tight">
+            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
               {formatCompact(totalTax)}
             </div>
           </div>
@@ -168,7 +169,7 @@ export function ReceiptView({ data }: Props) {
           {/* Net */}
           <div>
             <div className="text-xs text-(--color-text-muted) mb-1">Net</div>
-            <div className="text-2xl font-semibold tabular-nums tracking-tight">
+            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
               {formatCompact(netIncome)}
             </div>
           </div>
@@ -215,21 +216,11 @@ export function ReceiptView({ data }: Props) {
                   ),
                 )}
               </Menu>
-              <Tooltip content="Based on 2080hrs of work per year">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <circle cx="8" cy="8" r="6.5" />
-                  <path d="M8 7.5V11M8 5.5V5" strokeLinecap="round" />
-                </svg>
+              <Tooltip content="Based on 2080hrs of work per year" delay={0}>
+                <InfoIcon size={16} className="opacity-60" />
               </Tooltip>
             </div>
-            <div className="text-2xl font-semibold tabular-nums tracking-tight">
+            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
               {formatTimeUnitValueCompact(timeUnitValue, timeUnit)}
             </div>
           </div>
