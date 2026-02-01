@@ -249,5 +249,3 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
   );
 }
 
-export { type ColumnDef } from "@tanstack/react-table";
-export { createColumnHelper } from "@tanstack/react-table";

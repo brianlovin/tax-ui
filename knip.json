@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/frontend.tsx"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/**/*.test.ts"],
+  "ignoreDependencies": ["tailwindcss", "@anthropic-ai/claude-code"]
+}
