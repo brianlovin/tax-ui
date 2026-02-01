@@ -55,9 +55,9 @@ export function SummaryStats({ returns }: Props) {
             allReturns.length;
 
         // Hourly rate (2,080 working hours per year: 40 hrs × 52 weeks)
-        const hourlyRates = allReturns.map((r) => getNetIncome(r) / 2080);
+        const hourlyRatesPerYear = allReturns.map((r) => getNetIncome(r) / 2080);
         const avgHourlyRate =
-            hourlyRates.reduce((sum, h) => sum + h, 0) / hourlyRates.length;
+            hourlyRatesPerYear.reduce((sum, h) => sum + h, 0) / hourlyRatesPerYear.length;
 
         // Per-year values for sparklines
         const incomePerYear = allReturns.map((r) => r.income.total);
@@ -71,6 +71,7 @@ export function SummaryStats({ returns }: Props) {
             effective: { value: avgEffectiveRate, sparkline: effectivePerYear },
             net: { value: netIncome, sparkline: netPerYear },
             avgHourlyRate,
+            hourlyRatesPerYear,
         };
     }, [returns, years]);
 
@@ -79,6 +80,9 @@ export function SummaryStats({ returns }: Props) {
     }
 
     const timeUnitValue = convertToTimeUnit(stats.avgHourlyRate, timeUnit);
+    const timeUnitSparkline = stats.hourlyRatesPerYear.map((rate) =>
+        convertToTimeUnit(rate, timeUnit),
+    );
 
     return (
         <div className="px-6 py-6 shrink-0 border-b border-(--color-border)">
@@ -192,8 +196,16 @@ export function SummaryStats({ returns }: Props) {
                             </svg>
                         </Tooltip>
                     </div>
-                    <div className="text-2xl font-semibold tabular-nums tracking-tight">
-                        {formatTimeUnitValueCompact(timeUnitValue, timeUnit)}
+                    <div className="flex items-center gap-3">
+                        <span className="text-2xl font-semibold tabular-nums tracking-tight">
+                            {formatTimeUnitValueCompact(timeUnitValue, timeUnit)}
+                        </span>
+                        <Sparkline
+                            values={timeUnitSparkline}
+                            width={48}
+                            height={20}
+                            className="text-(--color-chart)"
+                        />
                     </div>
                 </div>
             </div>
