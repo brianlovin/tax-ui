@@ -137,7 +137,7 @@ export function ReceiptView({ data }: Props) {
 
   return (
     <div className="bg-neutral-50 px-4 md:px-0 dark:bg-neutral-950 py-4 md:py-8">
-      <div className="max-w-2xl bg-white dark:bg-neutral-900 rounded-lg dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] mx-auto shadow-md ring-[0.5px] ring-black/5">
+      <div className="max-w-2xl bg-white dark:bg-neutral-900 rounded-lg dark:shadow-contrast mx-auto shadow-md ring-[0.5px] ring-black/5">
         {/* Content Table */}
         <div className="px-6 pb-6">
           <table className="w-full">
