@@ -28,8 +28,8 @@ const server = serve({
     "/api/config": {
       GET: () => {
         const hasKey = Boolean(getApiKey());
-        const isDemo = process.env.NODE_ENV === "production" || process.env.DEMO_MODE === "true";
-        const isDev = process.env.NODE_ENV !== "production";
+        const isDemo = !!process.env.VERCEL || process.env.DEMO_MODE === "true";
+        const isDev = !process.env.VERCEL && process.env.NODE_ENV !== "production";
         return Response.json({ hasKey, isDemo, isDev });
       },
     },
