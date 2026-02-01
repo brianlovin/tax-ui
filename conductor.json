@@ -1,4 +1,6 @@
 {
-  "setup": "bun install",
-  "run": "bun run dev --port=$CONDUCTOR_PORT"
+  "scripts": {
+    "setup": "bun install",
+    "run": "bun run dev --port ${CONDUCTOR_PORT:-3000}"
+  }
 }
