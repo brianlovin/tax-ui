@@ -8,7 +8,7 @@ interface InfoIconProps {
 
 export function InfoIcon({
   size = 20,
-  strokeWidth = 1.5,
+  strokeWidth = 2,
   className,
 }: InfoIconProps) {
   return (

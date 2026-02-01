@@ -8,7 +8,7 @@ interface TrashIconProps {
 
 export function TrashIcon({
   size = 20,
-  strokeWidth = 1.5,
+  strokeWidth = 2,
   className,
 }: TrashIconProps) {
   return (

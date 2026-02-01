@@ -8,7 +8,7 @@ interface PlusIconProps {
 
 export function PlusIcon({
   size = 20,
-  strokeWidth = 1.5,
+  strokeWidth = 2,
   className,
 }: PlusIconProps) {
   return (
