@@ -63,7 +63,7 @@
   }
 
   html {
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "zero";
+    font-feature-settings: "cv03", "cv04", "cv11";
     scrollbar-width: thin;
     scrollbar-color: var(--color-text-tertiary) transparent;
   }
@@ -253,12 +253,6 @@
 
 .menu-popup[data-ending-style] {
   animation: menuOut 0.1s ease-in forwards;
-}
-
-/* Menu item highlight state */
-.menu-item[data-highlighted] {
-  background-color: var(--color-bg-muted);
-  color: var(--color-text);
 }
 
 /* Minimal chat prose */
