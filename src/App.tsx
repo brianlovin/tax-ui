@@ -599,6 +599,7 @@ export function App() {
       onSelect: handleSelect,
       onOpenStart: () => setOpenModal("onboarding"),
       onOpenReset: () => setOpenModal("reset"),
+      onDeleteYear: handleDelete,
       isDemo: effectiveIsDemo,
       hasUserData: state.hasUserData,
     };
