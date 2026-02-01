@@ -606,6 +606,7 @@ export function App() {
       onOpenReset: () => setOpenModal("reset"),
       onDeleteYear: handleDelete,
       isDemo: effectiveIsDemo,
+      showingSampleData: effectiveIsDemo || !state.hasUserData,
       hasUserData: state.hasUserData,
       hasStoredKey: state.hasStoredKey,
       returns: effectiveReturns,

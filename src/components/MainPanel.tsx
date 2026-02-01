@@ -5,8 +5,7 @@ import { cn } from "../lib/cn";
 import type { TaxReturn, PendingUpload } from "../lib/schema";
 import type { NavItem } from "../lib/types";
 import { ReceiptView } from "./ReceiptView";
-import { SummaryStats } from "./SummaryStats";
-import { YearStatsHeader } from "./YearStatsHeader";
+import { StatsHeader } from "./StatsHeader";
 import { SummaryTable } from "./SummaryTable";
 import { SummaryReceiptView } from "./SummaryReceiptView";
 import { LoadingView } from "./LoadingView";
@@ -29,6 +28,7 @@ interface CommonProps {
   onOpenReset: () => void;
   onDeleteYear?: (year: string) => void;
   isDemo: boolean;
+  showingSampleData: boolean;
   hasUserData: boolean;
   hasStoredKey: boolean;
   returns: Record<number, TaxReturn>;
@@ -264,9 +264,10 @@ export function MainPanel(props: Props) {
         />
       ) : props.view === "summary" ? (
         <div className="flex-1 flex flex-col min-h-0">
-          <SummaryStats
+          <StatsHeader
             returns={props.returns}
-            isDemo={props.isDemo}
+            selectedYear="summary"
+            showingSampleData={props.showingSampleData}
             onOpenStart={props.onOpenStart}
           />
           {summaryViewMode === "table" ? (
@@ -281,9 +282,11 @@ export function MainPanel(props: Props) {
         </div>
       ) : props.view === "receipt" ? (
         <div className="flex-1 flex flex-col min-h-0">
-          <YearStatsHeader
+          <StatsHeader
             returns={props.returns}
             selectedYear={props.selectedYear as number}
+            showingSampleData={props.showingSampleData}
+            onOpenStart={props.onOpenStart}
           />
           <div className="flex-1 overflow-y-auto">
             <ReceiptView data={props.data} />

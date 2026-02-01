@@ -126,110 +126,125 @@ export function ReceiptView({ data }: Props) {
   const netMonthly = Math.round(netIncome / 12);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Content Table */}
-      <div className="px-6 py-4">
-        <table className="w-full">
-          <tbody className="no-zebra">
-            <CategoryHeader>Monthly Breakdown</CategoryHeader>
-            <DataRow label="Gross monthly" amount={grossMonthly} />
-            <DataRow label="Net monthly" amount={netMonthly} />
+    <div className="bg-black">
+      <div className="max-w-2xl bg-[--bg-color] mx-auto">
+        {/* Content Table */}
+        <div className="px-6 py-4">
+          <table className="w-full">
+            <tbody className="no-zebra">
+              <CategoryHeader>Monthly Breakdown</CategoryHeader>
+              <DataRow label="Gross monthly" amount={grossMonthly} />
+              <DataRow label="Net monthly" amount={netMonthly} />
 
-            <CategoryHeader>Income</CategoryHeader>
-            {data.income.items.map((item, i) => (
-              <DataRow key={i} label={item.label} amount={item.amount} />
-            ))}
-            <TotalRow label="Total income" amount={data.income.total} />
+              <CategoryHeader>Income</CategoryHeader>
+              {data.income.items.map((item, i) => (
+                <DataRow key={i} label={item.label} amount={item.amount} />
+              ))}
+              <TotalRow label="Total income" amount={data.income.total} />
 
-            <CategoryHeader>Federal</CategoryHeader>
-            <DataRow label="Adjusted gross income" amount={data.federal.agi} />
-            {data.federal.deductions.map((item, i) => (
+              <CategoryHeader>Federal</CategoryHeader>
               <DataRow
-                key={i}
-                label={item.label}
-                amount={item.amount}
-                isMuted
+                label="Adjusted gross income"
+                amount={data.federal.agi}
               />
-            ))}
-            <DataRow
-              label="Taxable income"
-              amount={data.federal.taxableIncome}
-            />
-            <DataRow label="Tax" amount={data.federal.tax} />
-            {data.federal.credits.map((item, i) => (
-              <DataRow
-                key={i}
-                label={item.label}
-                amount={item.amount}
-                isMuted
-              />
-            ))}
-            {data.federal.payments.map((item, i) => (
-              <DataRow
-                key={i}
-                label={item.label}
-                amount={item.amount}
-                isMuted
-              />
-            ))}
-            <TotalRow
-              label={data.federal.refundOrOwed >= 0 ? "Refund" : "Owed"}
-              amount={data.federal.refundOrOwed}
-              showSign
-            />
-
-            {data.states.map((state, i) => (
-              <React.Fragment key={i}>
-                <CategoryHeader>{state.name}</CategoryHeader>
-                <DataRow label="Adjusted gross income" amount={state.agi} />
-                {state.deductions.map((item, j) => (
-                  <DataRow
-                    key={j}
-                    label={item.label}
-                    amount={item.amount}
-                    isMuted
-                  />
-                ))}
-                <DataRow label="Taxable income" amount={state.taxableIncome} />
-                <DataRow label="Tax" amount={state.tax} />
-                {state.adjustments.map((item, j) => (
-                  <DataRow key={j} label={item.label} amount={item.amount} />
-                ))}
-                {state.payments.map((item, j) => (
-                  <DataRow
-                    key={j}
-                    label={item.label}
-                    amount={item.amount}
-                    isMuted
-                  />
-                ))}
-                <TotalRow
-                  label={state.refundOrOwed >= 0 ? "Refund" : "Owed"}
-                  amount={state.refundOrOwed}
-                  showSign
+              {data.federal.deductions.map((item, i) => (
+                <DataRow
+                  key={i}
+                  label={item.label}
+                  amount={item.amount}
+                  isMuted
                 />
-              </React.Fragment>
-            ))}
-
-            <CategoryHeader>Net Position</CategoryHeader>
-            <DataRow
-              label={`Federal ${data.summary.federalAmount >= 0 ? "refund" : "owed"}`}
-              amount={data.summary.federalAmount}
-              showSign
-            />
-            {data.summary.stateAmounts.map((item, i) => (
+              ))}
               <DataRow
-                key={i}
-                label={`${item.state} ${item.amount >= 0 ? "refund" : "owed"}`}
-                amount={item.amount}
+                label="Taxable income"
+                amount={data.federal.taxableIncome}
+              />
+              <DataRow label="Tax" amount={data.federal.tax} />
+              {data.federal.credits.map((item, i) => (
+                <DataRow
+                  key={i}
+                  label={item.label}
+                  amount={item.amount}
+                  isMuted
+                />
+              ))}
+              {data.federal.payments.map((item, i) => (
+                <DataRow
+                  key={i}
+                  label={item.label}
+                  amount={item.amount}
+                  isMuted
+                />
+              ))}
+              <TotalRow
+                label={data.federal.refundOrOwed >= 0 ? "Refund" : "Owed"}
+                amount={data.federal.refundOrOwed}
                 showSign
               />
-            ))}
-            <TotalRow label="Net" amount={data.summary.netPosition} showSign />
 
-            <RatesSection rates={data.rates} stateName={data.states[0]?.name} />
-          </tbody>
-        </table>
+              {data.states.map((state, i) => (
+                <React.Fragment key={i}>
+                  <CategoryHeader>{state.name}</CategoryHeader>
+                  <DataRow label="Adjusted gross income" amount={state.agi} />
+                  {state.deductions.map((item, j) => (
+                    <DataRow
+                      key={j}
+                      label={item.label}
+                      amount={item.amount}
+                      isMuted
+                    />
+                  ))}
+                  <DataRow
+                    label="Taxable income"
+                    amount={state.taxableIncome}
+                  />
+                  <DataRow label="Tax" amount={state.tax} />
+                  {state.adjustments.map((item, j) => (
+                    <DataRow key={j} label={item.label} amount={item.amount} />
+                  ))}
+                  {state.payments.map((item, j) => (
+                    <DataRow
+                      key={j}
+                      label={item.label}
+                      amount={item.amount}
+                      isMuted
+                    />
+                  ))}
+                  <TotalRow
+                    label={state.refundOrOwed >= 0 ? "Refund" : "Owed"}
+                    amount={state.refundOrOwed}
+                    showSign
+                  />
+                </React.Fragment>
+              ))}
+
+              <CategoryHeader>Net Position</CategoryHeader>
+              <DataRow
+                label={`Federal ${data.summary.federalAmount >= 0 ? "refund" : "owed"}`}
+                amount={data.summary.federalAmount}
+                showSign
+              />
+              {data.summary.stateAmounts.map((item, i) => (
+                <DataRow
+                  key={i}
+                  label={`${item.state} ${item.amount >= 0 ? "refund" : "owed"}`}
+                  amount={item.amount}
+                  showSign
+                />
+              ))}
+              <TotalRow
+                label="Net"
+                amount={data.summary.netPosition}
+                showSign
+              />
+
+              <RatesSection
+                rates={data.rates}
+                stateName={data.states[0]?.name}
+              />
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
