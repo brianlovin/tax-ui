@@ -8,7 +8,6 @@ import {
   useId,
   useMemo,
   useRef,
-  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -174,18 +173,13 @@ export function MenuItem({
 }: MenuItemProps) {
   const ctx = useContext(MenuContext);
   const itemId = useId();
-  const [isHighlighted, setIsHighlighted] = useState(false);
+  const prevHighlightedRef = useRef(false);
   const hasMountedRef = useRef(false);
 
   const hasAnyHighlight = useSyncExternalStore(
     ctx?.subscribe ?? (() => () => {}),
     ctx?.getHasHighlight ?? (() => false),
   );
-
-  // Report highlight changes to the store
-  useEffect(() => {
-    ctx?.setHighlighted(itemId, isHighlighted);
-  }, [ctx, itemId, isHighlighted]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -194,27 +188,30 @@ export function MenuItem({
     };
   }, [ctx, itemId]);
 
-  // Show background if highlighted, or if selected and nothing else is highlighted
-  const showBackground = isHighlighted || (selected && !hasAnyHighlight);
-
-  // Track if this is the first time any highlight is being rendered
-  let isFirstMount = false;
-  if (showBackground && ctx && !hasMountedRef.current) {
-    hasMountedRef.current = true;
-    isFirstMount = !ctx.markMounted();
-  }
-
   return (
     <BaseMenu.Item
       onClick={onClick}
       className={cn(itemBaseClassName, selected && "font-medium", className)}
       render={(props) => {
         const dataProps = props as Record<string, unknown>;
-        const highlighted = dataProps["data-highlighted"] !== undefined;
+        const isHighlighted = dataProps["data-highlighted"] !== undefined;
 
-        // Update state (will trigger useEffect on next render)
-        if (highlighted !== isHighlighted) {
-          setIsHighlighted(highlighted);
+        // Synchronously update the external store when highlight changes
+        // This is safe because setHighlighted updates refs, not React state
+        if (ctx && isHighlighted !== prevHighlightedRef.current) {
+          prevHighlightedRef.current = isHighlighted;
+          ctx.setHighlighted(itemId, isHighlighted);
+        }
+
+        // Show background if highlighted, or if selected and nothing else is highlighted
+        const showBackground =
+          isHighlighted || (selected && !hasAnyHighlight);
+
+        // Track if this is the first time any highlight is being rendered
+        let isFirstMount = false;
+        if (showBackground && ctx && !hasMountedRef.current) {
+          hasMountedRef.current = true;
+          isFirstMount = !ctx.markMounted();
         }
 
         return (
