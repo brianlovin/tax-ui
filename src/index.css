@@ -63,11 +63,7 @@
   }
 
   html {
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    font-variant-numeric: tabular-nums;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "zero";
     scrollbar-width: thin;
     scrollbar-color: var(--color-text-tertiary) transparent;
   }
