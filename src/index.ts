@@ -1,8 +1,12 @@
-import { serve } from "bun";
+import { serve, argv } from "bun";
 import Anthropic from "@anthropic-ai/sdk";
 import { getReturns, saveReturn, deleteReturn, getApiKey, saveApiKey, clearAllData } from "./lib/storage";
 import { parseTaxReturn, extractYearFromPdf } from "./lib/parser";
 import index from "./index.html";
+
+// Parse --port=XXXX from command line args
+const portArg = argv.find((arg) => arg.startsWith("--port="));
+const port = portArg ? Number(portArg.split("=")[1]) : 3000;
 
 function buildChatSystemPrompt(returns: Record<number, unknown>): string {
   const years = Object.keys(returns).map(Number).sort((a, b) => a - b);
@@ -24,6 +28,7 @@ Answer questions about the user's income, taxes, deductions, credits, and tax ra
 }
 
 const server = serve({
+  port,
   routes: {
     "/api/config": {
       GET: () => {

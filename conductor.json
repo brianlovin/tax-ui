@@ -1,0 +1,4 @@
+{
+  "setup": "bun install",
+  "run": "bun run dev --port=$CONDUCTOR_PORT"
+}
