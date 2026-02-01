@@ -6,7 +6,7 @@ import { Button } from "./Button";
 import { BrailleSpinner } from "./BrailleSpinner";
 import type { FileProgress } from "../lib/schema";
 
-const AI_PRIVACY_PROMPT = `I want you to perform a security and privacy audit of TaxUI, an open source tax return parser.
+const AI_PRIVACY_PROMPT = `I want you to perform a security and privacy audit of Tax UI, an open source tax return parser.
 
 Repository: https://github.com/brianlovin/tax-ui
 
@@ -122,7 +122,7 @@ function FAQSection() {
           </Accordion.Header>
           <Accordion.Panel className="text-sm text-(--color-text-muted) space-y-3 px-3 pt-1 pb-2">
             <p>
-              TaxUI is open source. You can review the code yourself, or ask an
+              Tax UI is open source. You can review the code yourself, or ask an
               AI to audit it for you.
             </p>
             <Button
@@ -377,8 +377,8 @@ export function OnboardingDialog({
       <Dialog
         open={isOpen}
         onClose={onClose}
-        title="TaxUI"
-        description=" This is a demo with sample data. To use TaxUI with
+        title="Tax UI"
+        description=" This is a demo with sample data. To use Tax UI with
                 your own tax returns, run it locally on your
                 computer."
         size="lg"
@@ -435,7 +435,7 @@ export function OnboardingDialog({
     <Dialog
       open={isOpen}
       onClose={onClose}
-      title={hasStoredKey ? "Upload tax returns" : "TaxUI"}
+      title={hasStoredKey ? "Upload tax returns" : "Tax UI"}
       description={
         hasStoredKey
           ? "Upload more tax returns"

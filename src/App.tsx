@@ -24,7 +24,7 @@ function isClientDemo(): boolean {
   return host !== "localhost" && host !== "127.0.0.1";
 }
 
-const DEMO_RESPONSE = `This is a demo with sample data. To chat about your own tax returns, clone and run [TaxUI](https://github.com/brianlovin/tax-ui) locally:
+const DEMO_RESPONSE = `This is a demo with sample data. To chat about your own tax returns, clone and run [Tax UI](https://github.com/brianlovin/tax-ui) locally:
 \`\`\`
 git clone https://github.com/brianlovin/tax-ui
 cd tax-ui
@@ -129,7 +129,9 @@ export function App() {
     const stored = localStorage.getItem(CHAT_OPEN_KEY);
     return stored === null ? true : stored === "true";
   });
-  const [openModal, setOpenModal] = useState<"settings" | "reset" | "onboarding" | null>(null);
+  const [openModal, setOpenModal] = useState<
+    "settings" | "reset" | "onboarding" | null
+  >(null);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [isOnboardingProcessing, setIsOnboardingProcessing] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState<FileProgress[]>(
@@ -620,7 +622,9 @@ export function App() {
 
   // Skip open animation only on first automatic show (not manual reopen)
   const skipOnboardingAnimation =
-    showOnboarding && !hasShownOnboardingRef.current && openModal !== "onboarding";
+    showOnboarding &&
+    !hasShownOnboardingRef.current &&
+    openModal !== "onboarding";
   if (showOnboarding && !hasShownOnboardingRef.current) {
     hasShownOnboardingRef.current = true;
   }
