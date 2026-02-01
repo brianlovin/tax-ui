@@ -43,6 +43,7 @@ Not separate booleans for each modal.
 
 ## Verification
 
-After changes, run:
-- `bunx tsc --noEmit` — Type check only (skip build)
-- `bun test` — Run tests (if any)
+After changes, run type check only:
+- `bunx tsc --noEmit`
+
+Do NOT run `bun run build` — the dev server uses HMR so builds are unnecessary during development.
