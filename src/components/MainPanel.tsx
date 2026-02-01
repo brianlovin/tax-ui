@@ -15,6 +15,7 @@ interface CommonProps {
   isChatOpen: boolean;
   isChatLoading?: boolean;
   onToggleChat: () => void;
+  showChatButton?: boolean;
   navItems: NavItem[];
   selectedId: string;
   onSelect: (id: string) => void;
@@ -224,7 +225,7 @@ export function MainPanel(props: Props) {
             </nav>
           </Tabs.Root>
         </div>
-        {!props.isChatOpen && (
+        {props.showChatButton !== false && !props.isChatOpen && (
           <Button
             variant="ghost"
             size="sm"

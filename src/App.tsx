@@ -138,7 +138,11 @@ export function App() {
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(() => {
     const stored = localStorage.getItem(CHAT_OPEN_KEY);
-    return stored === null ? true : stored === "true";
+    if (stored !== null) {
+      return stored === "true";
+    }
+    // Default: closed on mobile, open on desktop
+    return typeof window !== "undefined" && window.innerWidth >= 768;
   });
   const [openModal, setOpenModal] = useState<
     "settings" | "reset" | "onboarding" | null
@@ -163,11 +167,15 @@ export function App() {
   );
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const hasShownOnboardingRef = useRef(false);
 
   // Compute effective demo mode early (dev override takes precedence)
   const effectiveIsDemo =
     devDemoOverride !== null ? devDemoOverride : state.isDemo;
+
+  // Hide chat on mobile in demo mode
+  const shouldShowChat = !effectiveIsDemo || !isMobile;
 
   // When demo mode is toggled on, show sample data instead of user data
   const effectiveReturns = effectiveIsDemo ? sampleReturns : state.returns;
@@ -204,6 +212,13 @@ export function App() {
     const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
@@ -578,6 +593,7 @@ export function App() {
       isChatOpen,
       isChatLoading,
       onToggleChat: () => setIsChatOpen(!isChatOpen),
+      showChatButton: shouldShowChat,
       navItems,
       selectedId,
       onSelect: handleSelect,
@@ -739,7 +755,7 @@ export function App() {
     <div className="flex h-screen">
       <ErrorBoundary name="Main Panel">{renderMainPanel()}</ErrorBoundary>
 
-      {isChatOpen && (
+      {shouldShowChat && isChatOpen && (
         <ErrorBoundary name="Chat">
           <Chat
             messages={chatMessages}

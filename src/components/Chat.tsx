@@ -138,8 +138,11 @@ export function Chat({
   }, [messages]);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    // Don't auto-focus on mobile - triggers keyboard unexpectedly
+    if (!isMobile) {
+      inputRef.current?.focus();
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     const textarea = inputRef.current;
@@ -394,7 +397,7 @@ export function Chat({
           placeholder={isDemo || hasApiKey ? "Ask anything..." : "Need API key"}
           disabled={(!isDemo && !hasApiKey) || isLoading}
           rows={1}
-          className="w-full px-3 py-2.5 bg-(--color-bg-muted) rounded-lg text-sm placeholder:text-(--color-text-muted) resize-none focus:outline-none disabled:opacity-50 overflow-y-auto"
+          className="w-full px-3 py-2.5 bg-(--color-bg-muted) rounded-lg text-base md:text-sm placeholder:text-(--color-text-muted) resize-none focus:outline-none disabled:opacity-50 overflow-y-auto"
         />
       </form>
     </div>

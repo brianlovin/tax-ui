@@ -23,6 +23,7 @@ interface TableProps<TData> {
 
 export function Table<TData>({ data, columns, storageKey, getRowClassName, isRowHoverDisabled }: TableProps<TData>) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const updateScrollState = useCallback(() => {
@@ -40,6 +41,83 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
       return () => container.removeEventListener("scroll", updateScrollState);
     }
   }, [updateScrollState, data]); // Re-run when data changes
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Lock scroll direction on mobile to prevent disorienting diagonal scrolling
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !isMobile) return;
+
+    let touchStartPos: { x: number; y: number } | null = null;
+    let lockedAxis: "x" | "y" | null = null;
+    let lockedScrollValue: number | null = null;
+    const THRESHOLD = 5;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) {
+        touchStartPos = { x: touch.clientX, y: touch.clientY };
+        lockedAxis = null;
+        lockedScrollValue = null;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!touchStartPos) return;
+
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      if (lockedAxis === null) {
+        const deltaX = Math.abs(touch.clientX - touchStartPos.x);
+        const deltaY = Math.abs(touch.clientY - touchStartPos.y);
+
+        if (deltaX > THRESHOLD || deltaY > THRESHOLD) {
+          lockedAxis = deltaX > deltaY ? "x" : "y";
+          lockedScrollValue =
+            lockedAxis === "x" ? container.scrollTop : container.scrollLeft;
+        }
+      }
+    };
+
+    const handleScroll = () => {
+      if (lockedAxis === null || lockedScrollValue === null) return;
+
+      if (lockedAxis === "x" && container.scrollTop !== lockedScrollValue) {
+        container.scrollTop = lockedScrollValue;
+      } else if (
+        lockedAxis === "y" &&
+        container.scrollLeft !== lockedScrollValue
+      ) {
+        container.scrollLeft = lockedScrollValue;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      touchStartPos = null;
+    };
+
+    container.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    container.addEventListener("touchmove", handleTouchMove, { passive: true });
+    container.addEventListener("touchend", handleTouchEnd);
+    container.addEventListener("scroll", handleScroll);
+
+    return () => {
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchmove", handleTouchMove);
+      container.removeEventListener("touchend", handleTouchEnd);
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [isMobile]);
 
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
     if (storageKey && typeof window !== "undefined") {
@@ -77,7 +155,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
   });
 
   return (
-    <div ref={containerRef} className="overflow-auto w-full h-full [-webkit-overflow-scrolling:touch]">
+    <div ref={containerRef} className="overflow-auto w-full h-full [-webkit-overflow-scrolling:touch] overscroll-contain">
       <table className="w-full border-collapse" style={{ minWidth: "max-content" }}>
         <thead className="sticky top-0 z-20">
           {table.getHeaderGroups().map((headerGroup) => (
