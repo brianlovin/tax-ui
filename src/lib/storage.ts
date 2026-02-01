@@ -46,6 +46,21 @@ export async function saveApiKey(key: string): Promise<void> {
   process.env.ANTHROPIC_API_KEY = key;
 }
 
+export async function removeApiKey(): Promise<void> {
+  const envFile = Bun.file(ENV_FILE);
+  if (await envFile.exists()) {
+    let content = await envFile.text();
+    content = content.replace(/ANTHROPIC_API_KEY=.*/g, "").trim();
+    if (content) {
+      await Bun.write(ENV_FILE, content + "\n");
+    } else {
+      const fs = await import("fs/promises");
+      await fs.unlink(ENV_FILE);
+    }
+  }
+  delete process.env.ANTHROPIC_API_KEY;
+}
+
 export async function clearAllData(): Promise<void> {
   // Clear tax returns
   const returnsFile = Bun.file(RETURNS_FILE);
