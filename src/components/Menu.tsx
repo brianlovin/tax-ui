@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useId,
   useMemo,
   useRef,
@@ -42,8 +41,6 @@ interface MenuContextValue {
   subscribe: (callback: () => void) => () => void;
   getHasHighlight: () => boolean;
   setHighlighted: (id: string, value: boolean) => void;
-  markMounted: () => boolean;
-  reset: () => void;
 }
 
 const MenuContext = createContext<MenuContextValue | null>(null);
@@ -57,13 +54,13 @@ const triggerInlineClassName =
 export const popupBaseClassName =
   "menu-popup bg-(--color-bg) border border-(--color-border) rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 py-1.5";
 
+// Note: No data-[highlighted] style here - we use motion for the animated highlight
 export const itemBaseClassName =
-  "menu-item relative mx-1.5 px-2.5 py-1.5 text-sm cursor-pointer rounded-lg outline-none text-(--color-text) flex items-center gap-2.5 select-none data-[highlighted]:bg-(--color-bg-muted)";
+  "menu-item relative mx-1.5 px-2.5 py-1.5 text-sm cursor-pointer rounded-lg outline-none text-(--color-text) flex items-center gap-2.5 select-none";
 
 function useHighlightStore() {
   const highlightedRef = useRef<Set<string>>(new Set());
   const listenersRef = useRef<Set<() => void>>(new Set());
-  const hasMountedRef = useRef(false);
 
   const subscribe = useCallback((callback: () => void) => {
     listenersRef.current.add(callback);
@@ -87,18 +84,11 @@ function useHighlightStore() {
     }
   }, []);
 
-  const markMounted = useCallback(() => {
-    const wasAlreadyMounted = hasMountedRef.current;
-    hasMountedRef.current = true;
-    return wasAlreadyMounted;
-  }, []);
-
   const reset = useCallback(() => {
     highlightedRef.current.clear();
-    hasMountedRef.current = false;
   }, []);
 
-  return { subscribe, getHasHighlight, setHighlighted, markMounted, reset };
+  return { subscribe, getHasHighlight, setHighlighted, reset };
 }
 
 export function Menu({
@@ -113,7 +103,7 @@ export function Menu({
   alignOffset,
 }: MenuProps) {
   const layoutId = useId();
-  const store = useHighlightStore();
+  const { reset, ...store } = useHighlightStore();
 
   const contextValue = useMemo(
     () => ({
@@ -139,10 +129,10 @@ export function Menu({
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
-        store.reset();
+        reset();
       }
     },
-    [store],
+    [reset],
   );
 
   return (
@@ -174,19 +164,12 @@ export function MenuItem({
   const ctx = useContext(MenuContext);
   const itemId = useId();
   const prevHighlightedRef = useRef(false);
-  const hasMountedRef = useRef(false);
 
+  // Track if any item is highlighted (for showing selected state)
   const hasAnyHighlight = useSyncExternalStore(
     ctx?.subscribe ?? (() => () => {}),
     ctx?.getHasHighlight ?? (() => false),
   );
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      ctx?.setHighlighted(itemId, false);
-    };
-  }, [ctx, itemId]);
 
   return (
     <BaseMenu.Item
@@ -197,34 +180,30 @@ export function MenuItem({
         const isHighlighted = dataProps["data-highlighted"] !== undefined;
 
         // Synchronously update the external store when highlight changes
-        // This is safe because setHighlighted updates refs, not React state
         if (ctx && isHighlighted !== prevHighlightedRef.current) {
           prevHighlightedRef.current = isHighlighted;
           ctx.setHighlighted(itemId, isHighlighted);
         }
 
-        // Show background if highlighted, or if selected and nothing else is highlighted
-        const showBackground =
-          isHighlighted || (selected && !hasAnyHighlight);
-
-        // Track if this is the first time any highlight is being rendered
-        let isFirstMount = false;
-        if (showBackground && ctx && !hasMountedRef.current) {
-          hasMountedRef.current = true;
-          isFirstMount = !ctx.markMounted();
-        }
+        // Show static background for selected items when nothing is highlighted
+        const showSelectedBackground = selected && !hasAnyHighlight && !isHighlighted;
 
         return (
           <div {...props}>
-            {showBackground && ctx && (
+            {/* Static background for selected items (no animation) */}
+            {showSelectedBackground && (
+              <div className="absolute inset-0 bg-(--color-bg-muted) rounded-lg" />
+            )}
+            {/* Animated highlight - only ONE of these exists at a time across all items */}
+            {isHighlighted && ctx && (
               <motion.div
-                layoutId={isFirstMount ? undefined : ctx.layoutId}
+                layoutId={ctx.layoutId}
                 className="absolute inset-0 bg-(--color-bg-muted) rounded-lg"
                 initial={false}
                 transition={{
                   type: "spring",
-                  stiffness: 800,
-                  damping: 50,
+                  stiffness: 500,
+                  damping: 35,
                 }}
               />
             )}

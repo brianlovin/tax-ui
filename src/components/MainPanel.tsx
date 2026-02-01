@@ -185,7 +185,7 @@ export function MainPanel(props: Props) {
                               className={cn(popupBaseClassName, "z-50")}
                             >
                               <ContextMenu.Item
-                                className={itemBaseClassName}
+                                className={cn(itemBaseClassName, "data-[highlighted]:bg-(--color-bg-muted)")}
                                 onClick={() => props.onDeleteYear?.(item.id)}
                               >
                                 <TrashIcon />
