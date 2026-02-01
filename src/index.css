@@ -37,6 +37,9 @@
 
     /* Dialog overlay */
     --color-overlay: rgba(255, 255, 255, 0.7);
+
+    /* Brand */
+    --color-brand: #fc532a;
   }
 
   .dark {
@@ -66,6 +69,9 @@
 
     /* Dialog overlay */
     --color-overlay: rgba(0, 0, 0, 0.6);
+
+    /* Brand */
+    --color-brand: #fc532a;
   }
 
   html {

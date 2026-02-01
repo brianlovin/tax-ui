@@ -49,13 +49,18 @@ function TotalRow({
   showSign?: boolean;
 }) {
   return (
-    <tr className="font-medium border-t border-(--color-border)">
-      <td className="py-2 text-sm">{label}</td>
-      <td className="py-2 text-sm text-right tabular-nums slashed-zero">
-        {showSign && amount >= 0 ? "+" : ""}
-        {formatCurrency(amount)}
-      </td>
-    </tr>
+    <>
+      <tr>
+        <td colSpan={2} className="h-2" />
+      </tr>
+      <tr className="font-semibold border-t border-(--color-border)">
+        <td className="py-2 pt-4 text-sm">{label}</td>
+        <td className="py-2 pt-4 text-sm text-right tabular-nums slashed-zero">
+          {showSign && amount >= 0 ? "+" : ""}
+          {formatCurrency(amount)}
+        </td>
+      </tr>
+    </>
   );
 }
 
@@ -103,17 +108,22 @@ function RatesSection({
         </tr>
       )}
       {rates.combined && (
-        <tr className="border-t border-(--color-border)">
-          <td className="py-2 text-sm font-medium">Combined</td>
-          <td className="py-2 text-sm text-right tabular-nums slashed-zero font-medium">
-            <span className="inline-block w-16">
-              {formatPercent(rates.combined.marginal)}
-            </span>
-            <span className="inline-block w-16">
-              {formatPercent(rates.combined.effective)}
-            </span>
-          </td>
-        </tr>
+        <>
+          <tr>
+            <td colSpan={2} className="h-2" />
+          </tr>
+          <tr className="border-t border-(--color-border)">
+            <td className="py-2 pt-4 text-sm font-medium">Combined</td>
+            <td className="py-2 pt-4 text-sm text-right tabular-nums slashed-zero font-medium">
+              <span className="inline-block w-16">
+                {formatPercent(rates.combined.marginal)}
+              </span>
+              <span className="inline-block w-16">
+                {formatPercent(rates.combined.effective)}
+              </span>
+            </td>
+          </tr>
+        </>
       )}
     </>
   );
@@ -126,10 +136,10 @@ export function ReceiptView({ data }: Props) {
   const netMonthly = Math.round(netIncome / 12);
 
   return (
-    <div className="bg-black">
-      <div className="max-w-2xl bg-[--bg-color] mx-auto">
+    <div className="bg-neutral-50 px-4 md:px-0 dark:bg-neutral-950 py-4 md:py-8">
+      <div className="max-w-2xl bg-white dark:bg-neutral-900 rounded-lg dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] mx-auto shadow-md ring-[0.5px] ring-black/5">
         {/* Content Table */}
-        <div className="px-6 py-4">
+        <div className="px-6 pb-6">
           <table className="w-full">
             <tbody className="no-zebra">
               <CategoryHeader>Monthly Breakdown</CategoryHeader>

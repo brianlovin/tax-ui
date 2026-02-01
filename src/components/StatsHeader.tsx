@@ -18,16 +18,10 @@ import { AnimatedNumber } from "./AnimatedNumber";
 interface Props {
   returns: Record<number, TaxReturn>;
   selectedYear: "summary" | number;
-  showingSampleData?: boolean;
   onOpenStart?: () => void;
 }
 
-export function StatsHeader({
-  returns,
-  selectedYear,
-  showingSampleData,
-  onOpenStart,
-}: Props) {
+export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
   const [timeUnit, setTimeUnit] = useState<TimeUnit>("daily");
   const isSummary = selectedYear === "summary";
 
@@ -36,7 +30,7 @@ export function StatsHeader({
       Object.keys(returns)
         .map(Number)
         .sort((a, b) => a - b),
-    [returns]
+    [returns],
   );
 
   const stats = useMemo(() => {
@@ -51,7 +45,7 @@ export function StatsHeader({
 
       const totalIncome = allReturns.reduce(
         (sum, r) => sum + r.income.total,
-        0
+        0,
       );
       const totalTaxes = allReturns.reduce((sum, r) => sum + getTotalTax(r), 0);
       const netIncome = totalIncome - totalTaxes;
@@ -98,22 +92,19 @@ export function StatsHeader({
 
   const timeUnitValue = convertToTimeUnit(stats.hourlyRate, timeUnit);
   const timeUnitSparkline = stats.sparklines?.hourlyRates.map((rate) =>
-    convertToTimeUnit(rate, timeUnit)
+    convertToTimeUnit(rate, timeUnit),
   );
 
   return (
     <div className="px-6 py-6 shrink-0 border-b border-(--color-border)">
-      {showingSampleData && (
-        <div className="mb-4 flex">
-          <button
-            onClick={onOpenStart}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors cursor-pointer"
-          >
-            Sample data
-          </button>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="col-span-2 flex items-center lg:col-span-1">
+          <div className="text-xs text-(--color-text-muted) mb-1">&nbsp;</div>
+          <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight text-(--color-brand)">
+            {isSummary ? "All time" : selectedYear}
+          </div>
         </div>
-      )}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+
         <div>
           <div className="text-xs text-(--color-text-muted) mb-1">Income</div>
           <div className="flex items-center gap-3">
@@ -236,7 +227,7 @@ export function StatsHeader({
                   >
                     {TIME_UNIT_LABELS[unit]}
                   </MenuItem>
-                )
+                ),
               )}
             </Menu>
             <Tooltip content="Based on 2080hrs of work per year" delay={0}>
