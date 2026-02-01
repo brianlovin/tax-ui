@@ -65,6 +65,17 @@ async function fetchInitialState(): Promise<
     "returns" | "hasStoredKey" | "hasUserData" | "isDemo" | "isDev"
   >
 > {
+  // In production (static hosting), skip API calls and use sample data
+  if (isClientDemo()) {
+    return {
+      hasStoredKey: false,
+      returns: {},
+      hasUserData: false,
+      isDemo: true,
+      isDev: false,
+    };
+  }
+
   const [configRes, returnsRes] = await Promise.all([
     fetch("/api/config"),
     fetch("/api/returns"),
