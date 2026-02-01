@@ -229,6 +229,7 @@ const server = serve({
         }
       },
     },
+    "/og-image.png": () => new Response(Bun.file(new URL("./tax-ui-og.png", import.meta.url))),
     "/*": index,
   },
   development: process.env.NODE_ENV !== "production" && {
