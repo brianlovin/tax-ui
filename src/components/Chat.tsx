@@ -396,7 +396,7 @@ export function Chat({
           onKeyDown={handleKeyDown}
           placeholder={isDemo || hasApiKey ? "Ask anything..." : "Need API key"}
           disabled={(!isDemo && !hasApiKey) || isLoading}
-          rows={1}
+          rows={3}
           className="w-full px-3 py-2.5 bg-(--color-bg-muted) rounded-lg text-base md:text-sm placeholder:text-(--color-text-muted) resize-none focus:outline-none disabled:opacity-50 overflow-y-auto"
         />
       </form>
