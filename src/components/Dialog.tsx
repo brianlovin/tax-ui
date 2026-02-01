@@ -14,6 +14,7 @@ interface Props {
   closeDisabled?: boolean;
   autoFocusClose?: boolean;
   contentRef?: Ref<HTMLDivElement>;
+  skipOpenAnimation?: boolean;
 }
 
 const sizeClasses = {
@@ -41,10 +42,13 @@ export function Dialog({
   closeDisabled = false,
   autoFocusClose = false,
   contentRef,
+  skipOpenAnimation = false,
 }: Props) {
+  const noAnim = skipOpenAnimation ? " no-animation" : "";
   const popupClasses = fullScreenMobile
-    ? `dialog-popup fixed z-50 bg-(--color-bg) dark:bg-(--color-bg-muted) shadow-2xl flex flex-col focus:outline-none inset-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full h-full sm:h-auto sm:max-h-[90vh] sm:ring ring-black/5 dark:ring-white/10 sm:rounded-2xl ${fullScreenMobileSizeClasses[size]}`
-    : `dialog-popup fixed z-50 bg-(--color-bg) shadow-2xl flex flex-col focus:outline-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${sizeClasses[size]} ring ring-black/5 dark:ring-white/10 rounded-2xl`;
+    ? `dialog-popup${noAnim} fixed z-50 bg-(--color-bg) dark:bg-(--color-bg-muted) shadow-2xl flex flex-col focus:outline-none inset-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full h-full sm:h-auto sm:max-h-[90vh] sm:ring ring-black/5 dark:ring-white/10 sm:rounded-2xl ${fullScreenMobileSizeClasses[size]}`
+    : `dialog-popup${noAnim} fixed z-50 bg-(--color-bg) shadow-2xl flex flex-col focus:outline-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${sizeClasses[size]} ring ring-black/5 dark:ring-white/10 rounded-2xl`;
+  const backdropClasses = `dialog-backdrop${noAnim} fixed inset-0 bg-(--color-overlay) backdrop-blur-[3px] z-40`;
 
   return (
     <BaseDialog.Root
@@ -52,7 +56,7 @@ export function Dialog({
       onOpenChange={(isOpen) => !isOpen && !closeDisabled && onClose()}
     >
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="dialog-backdrop fixed inset-0 bg-(--color-overlay) backdrop-blur-[3px] z-40" />
+        <BaseDialog.Backdrop className={backdropClasses} />
         <BaseDialog.Popup className={popupClasses}>
           {showClose && (
             <BaseDialog.Close

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { TaxReturn, PendingUpload, FileProgress } from "./lib/schema";
 import type { NavItem } from "./lib/types";
 import { sampleReturns } from "./data/sampleData";
@@ -144,6 +144,7 @@ export function App() {
   );
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const hasShownOnboardingRef = useRef(false);
 
   // Compute effective demo mode early (dev override takes precedence)
   const effectiveIsDemo =
@@ -611,6 +612,13 @@ export function App() {
     openModal === "onboarding" ||
     (!onboardingDismissed && !state.hasStoredKey && !state.hasUserData);
 
+  // Skip open animation only on first automatic show (not manual reopen)
+  const skipOnboardingAnimation =
+    showOnboarding && !hasShownOnboardingRef.current && openModal !== "onboarding";
+  if (showOnboarding && !hasShownOnboardingRef.current) {
+    hasShownOnboardingRef.current = true;
+  }
+
   function getPostUploadNavigation(
     existingYears: number[],
     uploadedYears: number[],
@@ -735,6 +743,7 @@ export function App() {
         fileProgress={onboardingProgress}
         hasStoredKey={state.hasStoredKey}
         existingYears={Object.keys(state.returns).map(Number)}
+        skipOpenAnimation={skipOnboardingAnimation}
       />
 
       <UploadModal

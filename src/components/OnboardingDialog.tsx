@@ -149,6 +149,7 @@ interface Props {
   fileProgress?: FileProgress[];
   hasStoredKey?: boolean;
   existingYears?: number[];
+  skipOpenAnimation?: boolean;
 }
 
 interface FileWithYear {
@@ -168,6 +169,7 @@ export function OnboardingDialog({
   fileProgress,
   hasStoredKey,
   existingYears = [],
+  skipOpenAnimation,
 }: Props) {
   const [apiKey, setApiKey] = useState("");
   const [files, setFiles] = useState<FileWithYear[]>([]);
@@ -382,6 +384,7 @@ export function OnboardingDialog({
         size="lg"
         fullScreenMobile
         autoFocusClose
+        skipOpenAnimation={skipOpenAnimation}
         footer={<FAQSection />}
       >
         <div>
@@ -442,6 +445,7 @@ export function OnboardingDialog({
       fullScreenMobile
       showClose={hasStoredKey && !isProcessing}
       closeDisabled={!hasStoredKey || isProcessing}
+      skipOpenAnimation={skipOpenAnimation}
       footer={<FAQSection />}
     >
       <div>

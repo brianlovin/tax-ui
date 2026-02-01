@@ -194,6 +194,11 @@
   animation: dialogPopupOut 0.1s ease-in forwards;
 }
 
+.dialog-backdrop.no-animation,
+.dialog-popup.no-animation {
+  animation: none;
+}
+
 /* Menu animations */
 @keyframes menuIn {
   from {
