@@ -18,7 +18,7 @@ interface ButtonProps extends Omit<
 const variantStyles: Record<Variant, string> = {
   primary: "bg-(--color-text) text-(--color-bg) hover:opacity-90",
   secondary:
-    "bg-(--color-bg-muted) text-(--color-text) hover:bg-(--color-bg-subtle)",
+    "bg-(--color-bg-muted) text-(--color-text) hover:bg-(--color-bg-muted-hover)",
   ghost:
     "text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted)",
   outline:
