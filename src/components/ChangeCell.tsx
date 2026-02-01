@@ -22,7 +22,7 @@ export function ChangeCell({ current, previous, invertPolarity }: Props) {
 
   return (
     <span className={cn("inline-flex items-center relative", colorClass)}>
-      <span className="absolute right-full mr-1 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-100 ease-out origin-right text-xs font-medium tabular-nums whitespace-nowrap">
+      <span className="absolute right-full mr-1 translate-y-px opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-100 ease-out origin-right text-xs font-medium tabular-nums whitespace-nowrap">
         {formatPercentChange(current, previous)}
       </span>
       <TriangleIcon size={12} direction={isPositive ? "up" : "down"} />
