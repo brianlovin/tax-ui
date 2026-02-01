@@ -18,6 +18,12 @@ const CHAT_OPEN_KEY = "tax-chat-open";
 const CHAT_HISTORY_KEY = "tax-chat-history";
 const DEV_DEMO_OVERRIDE_KEY = "dev-demo-override";
 
+function isClientDemo(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host !== "localhost" && host !== "127.0.0.1";
+}
+
 const DEMO_RESPONSE = `This is a demo with sample data. To chat about your own tax returns, clone and run [TaxUI](https://github.com/brianlovin/tax-ui) locally:
 \`\`\`
 git clone https://github.com/brianlovin/tax-ui
@@ -107,7 +113,7 @@ export function App() {
     selectedYear: "summary",
     isLoading: true,
     hasUserData: false,
-    isDemo: false,
+    isDemo: isClientDemo(),
     isDev: false,
   });
   const [devDemoOverride, setDevDemoOverride] = useState<boolean | null>(() => {

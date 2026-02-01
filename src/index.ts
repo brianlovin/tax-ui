@@ -28,10 +28,8 @@ const server = serve({
     "/api/config": {
       GET: () => {
         const hasKey = Boolean(getApiKey());
-        // Check multiple signals for Vercel deployment
-        const isVercel = !!process.env.VERCEL || !!process.env.VERCEL_ENV || !!process.env.VERCEL_URL;
-        const isDemo = isVercel || process.env.DEMO_MODE === "true";
-        const isDev = !isVercel && process.env.NODE_ENV !== "production";
+        const isDemo = process.env.DEMO_MODE === "true";
+        const isDev = process.env.NODE_ENV !== "production";
         return Response.json({ hasKey, isDemo, isDev });
       },
     },
