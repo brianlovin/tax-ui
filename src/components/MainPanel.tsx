@@ -28,7 +28,6 @@ interface CommonProps {
   onOpenReset: () => void;
   onDeleteYear?: (year: string) => void;
   isDemo: boolean;
-  showingSampleData: boolean;
   hasUserData: boolean;
   hasStoredKey: boolean;
   returns: Record<number, TaxReturn>;
@@ -267,7 +266,6 @@ export function MainPanel(props: Props) {
           <StatsHeader
             returns={props.returns}
             selectedYear="summary"
-            showingSampleData={props.showingSampleData}
             onOpenStart={props.onOpenStart}
           />
           {summaryViewMode === "table" ? (
@@ -285,7 +283,6 @@ export function MainPanel(props: Props) {
           <StatsHeader
             returns={props.returns}
             selectedYear={props.selectedYear as number}
-            showingSampleData={props.showingSampleData}
             onOpenStart={props.onOpenStart}
           />
           <div className="flex-1 overflow-y-auto">

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import type { TaxReturn } from "../lib/schema";
 import { formatCompact } from "../lib/format";
 import { getTotalTax, getNetIncome } from "../lib/tax-calculations";
@@ -33,6 +32,34 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
     [returns],
   );
 
+  // Index of selected year in the sparkline (null for summary view)
+  const activeIndex = useMemo(() => {
+    if (isSummary) return null;
+    const idx = years.indexOf(selectedYear as number);
+    return idx >= 0 ? idx : null;
+  }, [isSummary, years, selectedYear]);
+
+  // Always compute sparklines from all years
+  const sparklines = useMemo(() => {
+    if (years.length < 2) return null;
+
+    const allReturns = years
+      .map((year) => returns[year])
+      .filter((r): r is TaxReturn => r !== undefined);
+
+    if (allReturns.length < 2) return null;
+
+    const hourlyRatesPerYear = allReturns.map((r) => getNetIncome(r) / 2080);
+
+    return {
+      income: allReturns.map((r) => r.income.total),
+      taxes: allReturns.map((r) => getTotalTax(r)),
+      net: allReturns.map((r) => getNetIncome(r)),
+      hourlyRates: hourlyRatesPerYear,
+    };
+  }, [returns, years]);
+
+  // Compute displayed values based on summary vs individual year
   const stats = useMemo(() => {
     if (isSummary) {
       if (years.length === 0) return null;
@@ -60,12 +87,6 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
         taxes: totalTaxes,
         net: netIncome,
         hourlyRate: avgHourlyRate,
-        sparklines: {
-          income: allReturns.map((r) => r.income.total),
-          taxes: allReturns.map((r) => getTotalTax(r)),
-          net: allReturns.map((r) => getNetIncome(r)),
-          hourlyRates: hourlyRatesPerYear,
-        },
       };
     } else {
       const yearData = returns[selectedYear];
@@ -81,7 +102,6 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
         taxes,
         net,
         hourlyRate,
-        sparklines: null,
       };
     }
   }, [returns, years, selectedYear, isSummary]);
@@ -91,7 +111,7 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
   }
 
   const timeUnitValue = convertToTimeUnit(stats.hourlyRate, timeUnit);
-  const timeUnitSparkline = stats.sparklines?.hourlyRates.map((rate) =>
+  const timeUnitSparkline = sparklines?.hourlyRates.map((rate) =>
     convertToTimeUnit(rate, timeUnit),
   );
 
@@ -99,7 +119,6 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
     <div className="px-6 py-6 shrink-0 border-b border-(--color-border)">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="col-span-2 flex items-center lg:col-span-1">
-          <div className="text-xs text-(--color-text-muted) mb-1">&nbsp;</div>
           <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight text-(--color-brand)">
             {isSummary ? "All time" : selectedYear}
           </div>
@@ -113,23 +132,15 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               format={formatCompact}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
             />
-            <AnimatePresence>
-              {stats.sparklines && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 48 }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Sparkline
-                    values={stats.sparklines.income}
-                    width={48}
-                    height={20}
-                    className="text-(--color-chart)"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {sparklines && (
+              <Sparkline
+                values={sparklines.income}
+                width={48}
+                height={20}
+                className="text-(--color-chart)"
+                activeIndex={activeIndex}
+              />
+            )}
           </div>
         </div>
 
@@ -141,23 +152,15 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               format={formatCompact}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
             />
-            <AnimatePresence>
-              {stats.sparklines && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 48 }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Sparkline
-                    values={stats.sparklines.taxes}
-                    width={48}
-                    height={20}
-                    className="text-(--color-chart)"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {sparklines && (
+              <Sparkline
+                values={sparklines.taxes}
+                width={48}
+                height={20}
+                className="text-(--color-chart)"
+                activeIndex={activeIndex}
+              />
+            )}
           </div>
         </div>
 
@@ -169,23 +172,15 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               format={formatCompact}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
             />
-            <AnimatePresence>
-              {stats.sparklines && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 48 }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Sparkline
-                    values={stats.sparklines.net}
-                    width={48}
-                    height={20}
-                    className="text-(--color-chart)"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {sparklines && (
+              <Sparkline
+                values={sparklines.net}
+                width={48}
+                height={20}
+                className="text-(--color-chart)"
+                activeIndex={activeIndex}
+              />
+            )}
           </div>
         </div>
 
@@ -240,23 +235,15 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               format={(v) => formatTimeUnitValueCompact(v, timeUnit)}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
             />
-            <AnimatePresence>
-              {timeUnitSparkline && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 48 }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Sparkline
-                    values={timeUnitSparkline}
-                    width={48}
-                    height={20}
-                    className="text-(--color-chart)"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {timeUnitSparkline && (
+              <Sparkline
+                values={timeUnitSparkline}
+                width={48}
+                height={20}
+                className="text-(--color-chart)"
+                activeIndex={activeIndex}
+              />
+            )}
           </div>
         </div>
       </div>

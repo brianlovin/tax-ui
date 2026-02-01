@@ -1,13 +1,21 @@
 import { useId } from "react";
+import { motion } from "motion/react";
 
 interface Props {
   values: number[];
   width?: number;
   height?: number;
   className?: string;
+  activeIndex?: number | null;
 }
 
-export function Sparkline({ values, width = 80, height = 24, className = "" }: Props) {
+export function Sparkline({
+  values,
+  width = 80,
+  height = 24,
+  className = "",
+  activeIndex,
+}: Props) {
   const gradientId = useId();
 
   if (values.length < 2) {
@@ -60,11 +68,24 @@ export function Sparkline({ values, width = 80, height = 24, className = "" }: P
   const bottom = height - padding;
   const areaD = `${lineD} L ${lastPoint.x},${bottom} L ${firstPoint.x},${bottom} Z`;
 
+  const activePoint =
+    activeIndex !== undefined && activeIndex !== null
+      ? points[activeIndex]
+      : null;
+
+  const lineGradientId = `${gradientId}-line`;
+
   return (
-    <svg width={width} height={height} className={className}>
+    <svg width={width} height={height} className={className} style={{ overflow: "visible" }}>
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="currentColor" stopOpacity={0.25} />
+          <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+        </linearGradient>
+        <linearGradient id={lineGradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity={0} />
+          <stop offset="30%" stopColor="currentColor" stopOpacity={0.3} />
+          <stop offset="70%" stopColor="currentColor" stopOpacity={0.3} />
           <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
         </linearGradient>
       </defs>
@@ -77,6 +98,30 @@ export function Sparkline({ values, width = 80, height = 24, className = "" }: P
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {activePoint && (
+        <>
+          <motion.line
+            x1={activePoint.x}
+            x2={activePoint.x}
+            y1={0}
+            y2={height}
+            stroke={`url(#${lineGradientId})`}
+            strokeWidth={1}
+            initial={false}
+            animate={{ x1: activePoint.x, x2: activePoint.x }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+          <motion.circle
+            r={3}
+            fill="var(--color-bg)"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            initial={false}
+            animate={{ cx: activePoint.x, cy: activePoint.y }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+        </>
+      )}
     </svg>
   );
 }
