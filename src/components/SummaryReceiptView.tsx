@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { cn } from "../lib/cn";
 import type { TaxReturn } from "../lib/schema";
 import { formatPercent } from "../lib/format";
 import { aggregateSummary } from "../lib/summary";
@@ -135,7 +136,7 @@ export function SummaryReceiptView({ returns }: Props) {
             </span>
           )}
         </span>
-        <span className="tabular-nums">{formatTimeUnitValue(timeUnitValue, timeUnit)}</span>
+        <span className="tabular-nums slashed-zero">{formatTimeUnitValue(timeUnitValue, timeUnit)}</span>
       </div>
 
       <div className="flex gap-1 mt-1 mb-4">
@@ -143,11 +144,12 @@ export function SummaryReceiptView({ returns }: Props) {
           <button
             key={unit}
             onClick={() => setTimeUnit(unit)}
-            className={`px-2.5 py-1 text-xs rounded-lg border ${
+            className={cn(
+              "px-2.5 py-1 text-xs rounded-lg border",
               timeUnit === unit
                 ? "border-(--color-text) bg-(--color-text) text-(--color-bg)"
-                : "border-(--color-border) text-(--color-text-muted) hover:border-(--color-text-muted)"
-            }`}
+                : "border-(--color-border) text-(--color-text-muted) hover:border-(--color-text-muted)",
+            )}
           >
             {unit.charAt(0).toUpperCase()}
           </button>

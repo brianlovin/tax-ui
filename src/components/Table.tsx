@@ -6,6 +6,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { cn } from "../lib/cn";
 
 export interface ColumnMeta {
   align?: "left" | "right";
@@ -178,7 +179,11 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    className={`${alignClass} ${stickyClass} py-2 px-4 text-xs text-(--color-text-muted) font-normal relative bg-(--color-bg)`}
+                    className={cn(
+                      alignClass,
+                      stickyClass,
+                      "py-2 px-4 text-xs text-(--color-text-muted) font-normal relative bg-(--color-bg)",
+                    )}
                     style={{
                       width: header.getSize(),
                       boxShadow: headerShadow,
@@ -191,7 +196,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                       <div
                         onMouseDown={header.getResizeHandler()}
                         onTouchStart={header.getResizeHandler()}
-                        className={`resizer ${header.column.getIsResizing() ? "isResizing" : ""}`}
+                        className={cn("resizer", header.column.getIsResizing() && "isResizing")}
                       />
                     )}
                   </th>
@@ -209,7 +214,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
             return (
             <tr
               key={row.id}
-              className={`group ${rowHoverClass} ${noZebraClass} ${customClassName}`}
+              className={cn("group", rowHoverClass, noZebraClass, customClassName)}
             >
               {row.getVisibleCells().map((cell) => {
                 const meta = cell.column.columnDef.meta as ColumnMeta | undefined;
@@ -230,7 +235,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                 return (
                   <td
                     key={cell.id}
-                    className={`py-2 px-4 text-sm ${stickyClass} ${truncateClass}`}
+                    className={cn("py-2 px-4 text-sm", stickyClass, truncateClass)}
                     style={{
                       width: cell.column.getSize(),
                       ...(cellShadows.length > 0 ? { boxShadow: cellShadows.join(", ") } : {}),

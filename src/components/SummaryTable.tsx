@@ -272,7 +272,7 @@ export function SummaryTable({ returns }: Props) {
       cols.push(
         columnHelper.accessor((row) => row.values[year], {
           id: `year-${year}`,
-          header: () => <span className="tabular-nums">{year}</span>,
+          header: () => <span className="tabular-nums slashed-zero">{year}</span>,
           cell: (info) => {
             const row = info.row.original;
             if (row.isHeader) {
@@ -288,7 +288,7 @@ export function SummaryTable({ returns }: Props) {
             const isEmpty = value === undefined;
 
             return (
-              <div className="text-right tabular-nums flex items-center justify-end gap-2">
+              <div className="text-right tabular-nums slashed-zero flex items-center justify-end gap-2">
                 <span className={isEmpty ? "text-(--color-text-tertiary)" : isDeduction ? "text-(--color-text-muted)" : "text-(--color-text)"}>
                   {formatValue(value, isRate)}
                 </span>
