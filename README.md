@@ -1,14 +1,14 @@
 <img width="1280" height="640" alt="tax-ui-og" src="https://github.com/user-attachments/assets/4ddd9dbf-edcd-4688-8bb9-424dca287cea" />
 
-# TaxUI
+# Tax UI
 
-TaxUI helps you understand your tax returns in a beautiful interface with clean tables and structured content. You can also chat with your tax history to get advice or find insights in your historical returns.
+Tax UI helps you visualize and understand your tax returns in a beautiful UI. Chat with your tax history to get advice or find insights in your historical returns.
 
-## Getting Started
+## Get Started
 
 ### 1. Install Bun
 
-TaxUI runs on [Bun](https://bun.sh), a fast JavaScript runtime.
+Tax UI runs on [Bun](https://bun.sh), a fast JavaScript runtime.
 
 ```bash
 curl -fsSL https://bun.sh/install | bash
@@ -16,9 +16,9 @@ curl -fsSL https://bun.sh/install | bash
 
 ### 2. Get an Anthropic API Key
 
-TaxUI uses Claude to parse and analyze your tax returns. Get an API key from [console.anthropic.com](https://console.anthropic.com/settings/keys).
+Tax UI uses Claude to parse and analyze your tax returns. Get an API key from [console.anthropic.com](https://console.anthropic.com/settings/keys).
 
-### 3. Run TaxUI
+### 3. Run Tax UI
 
 ```bash
 git clone https://github.com/brianlovin/tax-ui
@@ -49,13 +49,13 @@ Anthropic's commercial terms prohibit training models on API customer data. See 
 
 ### Verify It Yourself
 
-TaxUI is open source. You can review the code yourself, or ask an AI to audit it for you. Copy the prompt below and paste it into Claude, ChatGPT, or any other AI assistant:
+Tax UI is open source. You can review the code yourself, or ask an AI to audit it for you. Copy the prompt below and paste it into Claude, ChatGPT, or any other AI assistant:
 
 <details>
 <summary>Copy security audit prompt</summary>
 
 ```
-I want you to perform a security and privacy audit of TaxUI, an open source tax return parser.
+I want you to perform a security and privacy audit of Tax UI, an open source tax return parser.
 
 Repository: https://github.com/brianlovin/tax-ui
 
