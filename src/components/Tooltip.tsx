@@ -5,12 +5,13 @@ interface TooltipProps {
   content: ReactNode;
   children: ReactNode;
   sideOffset?: number;
+  delay?: number;
 }
 
-export function Tooltip({ content, children, sideOffset = 6 }: TooltipProps) {
+export function Tooltip({ content, children, sideOffset = 6, delay }: TooltipProps) {
   return (
     <BaseTooltip.Root>
-      <BaseTooltip.Trigger className="text-(--color-text-muted) hover:text-(--color-text)">
+      <BaseTooltip.Trigger delay={delay} className="text-(--color-text-muted) hover:text-(--color-text)">
         {children}
       </BaseTooltip.Trigger>
       <BaseTooltip.Portal>

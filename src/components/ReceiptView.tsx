@@ -216,7 +216,7 @@ export function ReceiptView({ data }: Props) {
                   ),
                 )}
               </Menu>
-              <Tooltip content="Based on 2080hrs of work per year">
+              <Tooltip content="Based on 2080hrs of work per year" delay={0}>
                 <InfoIcon size={16} className="opacity-60" />
               </Tooltip>
             </div>
