@@ -23,6 +23,7 @@ interface CommonProps {
   onOpenReset: () => void;
   isDemo: boolean;
   hasUserData: boolean;
+  hasStoredKey: boolean;
 }
 
 interface ReceiptProps extends CommonProps {
@@ -113,7 +114,7 @@ export function MainPanel(props: Props) {
               </svg>
               Get started
             </MenuItem>
-            {!props.isDemo && props.hasUserData && (
+            {!props.isDemo && (props.hasUserData || props.hasStoredKey) && (
               <MenuItem onClick={props.onOpenReset}>
                 <svg
                   width="14"
@@ -248,7 +249,7 @@ export function MainPanel(props: Props) {
       ) : props.view === "summary" ? (
         summaryViewMode === "table" ? (
           <div className="flex-1 flex flex-col min-h-0">
-            <SummaryStats returns={props.returns} />
+            <SummaryStats returns={props.returns} isDemo={props.isDemo} onOpenStart={props.onOpenStart} />
             <div className="flex-1 min-h-0">
               <SummaryTable returns={props.returns} />
             </div>

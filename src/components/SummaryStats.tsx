@@ -18,9 +18,11 @@ import { Menu, MenuItem } from "./Menu";
 
 interface Props {
     returns: Record<number, TaxReturn>;
+    isDemo?: boolean;
+    onOpenStart?: () => void;
 }
 
-export function SummaryStats({ returns }: Props) {
+export function SummaryStats({ returns, isDemo, onOpenStart }: Props) {
     const [timeUnit, setTimeUnit] = useState<TimeUnit>("daily");
 
     const years = useMemo(
@@ -86,6 +88,16 @@ export function SummaryStats({ returns }: Props) {
 
     return (
         <div className="px-6 py-6 shrink-0 border-b border-(--color-border)">
+            {isDemo && (
+                <div className="mb-4 flex">
+                    <button
+                        onClick={onOpenStart}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors cursor-pointer"
+                    >
+                        Sample data
+                    </button>
+                </div>
+            )}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
                     <div className="text-xs text-(--color-text-muted) mb-1">
