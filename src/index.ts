@@ -4,6 +4,13 @@ import { getReturns, saveReturn, deleteReturn, getApiKey, saveApiKey, removeApiK
 import { parseTaxReturn, extractYearFromPdf } from "./lib/parser";
 import index from "./index.html";
 
+// Model used for lightweight operations (validation, suggestions)
+const FAST_MODEL = "claude-haiku-4-5-20251001";
+
+function isAuthError(message: string): boolean {
+  return message.includes("authentication") || message.includes("401") || message.includes("API key");
+}
+
 // Parse --port=XXXX from command line args
 const portArg = argv.find((arg) => arg.startsWith("--port="));
 const port = portArg ? Number(portArg.split("=")[1]) : 3000;
@@ -49,13 +56,13 @@ const server = serve({
         try {
           const client = new Anthropic({ apiKey: apiKey.trim() });
           await client.messages.create({
-            model: "claude-haiku-4-5-20251001",
+            model: FAST_MODEL,
             max_tokens: 1,
             messages: [{ role: "user", content: "hi" }],
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : "";
-          if (message.includes("authentication") || message.includes("401")) {
+          if (isAuthError(message)) {
             return Response.json({ error: "Invalid API key" }, { status: 401 });
           }
           // Other errors (rate limit, etc.) - key is probably valid
@@ -108,7 +115,7 @@ const server = serve({
         } catch (error) {
           console.error("Year extraction error:", error);
           const message = error instanceof Error ? error.message : "";
-          if (message.includes("authentication") || message.includes("401")) {
+          if (isAuthError(message)) {
             await removeApiKey();
             return Response.json({ error: "Invalid API key" }, { status: 401 });
           }
@@ -160,7 +167,7 @@ const server = serve({
         } catch (error) {
           console.error("Chat error:", error);
           const message = error instanceof Error ? error.message : "Unknown error";
-          if (message.includes("authentication") || message.includes("401")) {
+          if (isAuthError(message)) {
             await removeApiKey();
             return Response.json({ error: "Invalid API key" }, { status: 401 });
           }
@@ -192,7 +199,7 @@ const server = serve({
           messages.push({ role: "user", content: "Suggest 3 follow-up questions I might ask." });
 
           const response = await client.messages.create({
-            model: "claude-haiku-4-5-20251001",
+            model: FAST_MODEL,
             max_tokens: 256,
             system: `You are helping a user explore their own tax return data. Generate 3 short follow-up questions the user might want to ask about their finances. Phrase questions in FIRST PERSON (e.g., "Why did my income drop?" not "Why did your income drop?").`,
             messages,
@@ -248,8 +255,7 @@ const server = serve({
           console.error("Parse error:", error);
           const message = error instanceof Error ? error.message : "Unknown error";
 
-          if (message.includes("authentication") || message.includes("API key") || message.includes("401")) {
-            // Remove invalid key if it was saved
+          if (isAuthError(message)) {
             await removeApiKey();
             return Response.json({ error: "Invalid API key" }, { status: 401 });
           }

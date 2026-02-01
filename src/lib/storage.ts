@@ -50,7 +50,7 @@ export async function removeApiKey(): Promise<void> {
   const envFile = Bun.file(ENV_FILE);
   if (await envFile.exists()) {
     let content = await envFile.text();
-    content = content.replace(/ANTHROPIC_API_KEY=.*/g, "").trim();
+    content = content.replace(/^ANTHROPIC_API_KEY=.*$/gm, "").trim();
     if (content) {
       await Bun.write(ENV_FILE, content + "\n");
     } else {
@@ -72,7 +72,7 @@ export async function clearAllData(): Promise<void> {
   const envFile = Bun.file(ENV_FILE);
   if (await envFile.exists()) {
     let content = await envFile.text();
-    content = content.replace(/ANTHROPIC_API_KEY=.*/g, "").trim();
+    content = content.replace(/^ANTHROPIC_API_KEY=.*$/gm, "").trim();
     if (content) {
       await Bun.write(ENV_FILE, content + "\n");
     } else {
