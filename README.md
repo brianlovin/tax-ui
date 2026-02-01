@@ -1,5 +1,4 @@
-<img width="2738" height="1956" alt="Screen Shot 2026-02-01 at 09 57 23@2x" src="https://github.com/user-attachments/assets/4ef13599-7433-481d-b2bb-65f18405a6f8" />
-
+<img width="1280" height="640" alt="tax-ui-og" src="https://github.com/user-attachments/assets/4ddd9dbf-edcd-4688-8bb9-424dca287cea" />
 
 # TaxUI
 
