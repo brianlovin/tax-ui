@@ -288,10 +288,7 @@ export function SummaryTable({ returns }: Props) {
             const isEmpty = value === undefined;
 
             return (
-              <div className="text-right tabular-nums slashed-zero flex items-center justify-end gap-2">
-                <span className={isEmpty ? "text-(--color-text-tertiary)" : isDeduction ? "text-(--color-text-muted)" : "text-(--color-text)"}>
-                  {formatValue(value, isRate)}
-                </span>
+              <div className="text-right tabular-nums slashed-zero flex items-center justify-end gap-1.5">
                 {prevYear !== undefined && row.showChange && (
                   <span className="hidden sm:inline">
                     <ChangeCell
@@ -301,6 +298,9 @@ export function SummaryTable({ returns }: Props) {
                     />
                   </span>
                 )}
+                <span className={isEmpty ? "text-(--color-text-tertiary)" : isDeduction ? "text-(--color-text-muted)" : "text-(--color-text)"}>
+                  {formatValue(value, isRate)}
+                </span>
               </div>
             );
           },
