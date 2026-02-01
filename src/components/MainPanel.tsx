@@ -288,7 +288,7 @@ export function MainPanel(props: Props) {
             selectedYear={props.selectedYear as number}
             onOpenStart={props.onOpenStart}
           />
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 bg-neutral-50 dark:bg-neutral-950 overflow-y-auto">
             <ReceiptView data={props.data} />
           </div>
         </div>
