@@ -46,17 +46,17 @@ interface MenuContextValue {
 const MenuContext = createContext<MenuContextValue | null>(null);
 
 const triggerButtonClassName =
-  "p-1.5 rounded-lg text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted) data-[popup-open]:text-(--color-text) data-[popup-open]:bg-(--color-bg-muted)";
+  "p-1.5 rounded-lg select-none text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted) data-[popup-open]:text-(--color-text) data-[popup-open]:bg-(--color-bg-muted)";
 
 const triggerInlineClassName =
-  "text-(--color-text-muted) flex items-center gap-1 hover:text-(--color-text) data-[popup-open]:text-(--color-text) cursor-pointer";
+  "text-(--color-text-muted) select-none flex items-center gap-1 hover:text-(--color-text) data-[popup-open]:text-(--color-text) cursor-pointer";
 
 export const popupBaseClassName =
-  "menu-popup bg-(--color-bg) border border-(--color-border) rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 py-1.5";
+  "menu-popup bg-(--color-bg) select-none border border-(--color-border) rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 py-1.5";
 
 // Note: No data-[highlighted] style here - we use motion for the animated highlight
 export const itemBaseClassName =
-  "menu-item relative mx-1.5 px-2.5 py-1.5 text-sm cursor-pointer rounded-lg outline-none text-(--color-text) flex items-center gap-2.5 select-none";
+  "menu-item select-none relative mx-1.5 px-2.5 py-1.5 text-sm cursor-pointer rounded-lg outline-none text-(--color-text) flex items-center gap-2.5 select-none";
 
 function useHighlightStore() {
   const highlightedRef = useRef<Set<string>>(new Set());
@@ -186,7 +186,8 @@ export function MenuItem({
         }
 
         // Show static background for selected items when nothing is highlighted
-        const showSelectedBackground = selected && !hasAnyHighlight && !isHighlighted;
+        const showSelectedBackground =
+          selected && !hasAnyHighlight && !isHighlighted;
 
         return (
           <div {...props}>
