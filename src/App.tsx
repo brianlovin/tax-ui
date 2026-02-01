@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { TaxReturn, PendingUpload, FileProgress } from "./lib/schema";
+import type { TaxReturn, PendingUpload, FileProgress, FileWithId } from "./lib/schema";
 import type { NavItem } from "./lib/types";
 import { sampleReturns } from "./data/sampleData";
 import { MainPanel } from "./components/MainPanel";
 import { UploadModal } from "./components/UploadModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { ResetDialog } from "./components/ResetDialog";
-import { OnboardingDialog } from "./components/OnboardingDialog";
+import { DemoDialog } from "./components/DemoDialog";
+import { SetupDialog } from "./components/SetupDialog";
 import { Chat, type ChatMessage } from "./components/Chat";
 import { Button } from "./components/Button";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -601,6 +602,7 @@ export function App() {
       onOpenReset: () => setOpenModal("reset"),
       isDemo: effectiveIsDemo,
       hasUserData: state.hasUserData,
+      hasStoredKey: state.hasStoredKey,
     };
 
     if (selectedPendingUpload) {
@@ -666,14 +668,14 @@ export function App() {
     return "summary"; // multiple files -> summary
   }
 
-  async function handleOnboardingUpload(files: File[], apiKey: string) {
+  async function handleOnboardingUpload(files: FileWithId[], apiKey: string) {
     setIsOnboardingProcessing(true);
     const existingYears = Object.keys(state.returns).map(Number);
 
-    // Initialize progress
+    // Initialize progress using the same IDs from SetupDialog
     const progress: FileProgress[] = files.map((f) => ({
-      id: crypto.randomUUID(),
-      filename: f.name,
+      id: f.id,
+      filename: f.file.name,
       status: "pending" as const,
     }));
     setOnboardingProgress(progress);
@@ -686,8 +688,9 @@ export function App() {
     // Process files with progress updates
     const uploadedYears: number[] = [];
     for (let i = 0; i < files.length; i++) {
-      const file = files[i]!;
-      const id = progress[i]!.id;
+      const fileWithId = files[i]!;
+      const file = fileWithId.file;
+      const id = fileWithId.id;
 
       setOnboardingProgress((p) =>
         p.map((f) => (f.id === id ? { ...f, status: "parsing" } : f)),
@@ -771,17 +774,24 @@ export function App() {
         </ErrorBoundary>
       )}
 
-      <OnboardingDialog
-        isOpen={showOnboarding}
-        isDemo={effectiveIsDemo}
-        onUpload={handleOnboardingUpload}
-        onClose={handleOnboardingClose}
-        isProcessing={isOnboardingProcessing}
-        fileProgress={onboardingProgress}
-        hasStoredKey={state.hasStoredKey}
-        existingYears={Object.keys(state.returns).map(Number)}
-        skipOpenAnimation={skipOnboardingAnimation}
-      />
+      {effectiveIsDemo ? (
+        <DemoDialog
+          isOpen={showOnboarding}
+          onClose={handleOnboardingClose}
+          skipOpenAnimation={skipOnboardingAnimation}
+        />
+      ) : (
+        <SetupDialog
+          isOpen={showOnboarding}
+          onUpload={handleOnboardingUpload}
+          onClose={handleOnboardingClose}
+          isProcessing={isOnboardingProcessing}
+          fileProgress={onboardingProgress}
+          hasStoredKey={state.hasStoredKey}
+          existingYears={Object.keys(state.returns).map(Number)}
+          skipOpenAnimation={skipOnboardingAnimation}
+        />
+      )}
 
       <UploadModal
         isOpen={isModalOpen}
@@ -830,5 +840,3 @@ export function App() {
     </div>
   );
 }
-
-export default App;

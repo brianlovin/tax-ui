@@ -62,9 +62,6 @@ export const TaxReturnSchema = z.object({
 
 export type TaxReturn = z.infer<typeof TaxReturnSchema>;
 export type LabeledAmount = z.infer<typeof LabeledAmount>;
-export type StateReturn = z.infer<typeof StateReturn>;
-export type TaxRates = z.infer<typeof TaxRates>;
-export type FilingStatus = TaxReturn["filingStatus"];
 
 export interface PendingUpload {
   id: string;
@@ -80,4 +77,9 @@ export interface FileProgress {
   status: "pending" | "parsing" | "complete" | "error";
   year?: number;
   error?: string;
+}
+
+export interface FileWithId {
+  id: string;
+  file: File;
 }
