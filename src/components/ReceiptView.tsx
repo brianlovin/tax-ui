@@ -1,16 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import type { TaxReturn } from "../lib/schema";
-import { Menu, MenuItem } from "./Menu";
-import { Tooltip } from "./Tooltip";
-import { InfoIcon } from "./InfoIcon";
-import { formatCurrency, formatPercent, formatCompact } from "../lib/format";
+import { formatCurrency, formatPercent } from "../lib/format";
 import { getTotalTax } from "../lib/tax-calculations";
-import {
-  type TimeUnit,
-  TIME_UNIT_LABELS,
-  convertToTimeUnit,
-  formatTimeUnitValueCompact,
-} from "../lib/time-units";
 
 interface Props {
   data: TaxReturn;
@@ -129,104 +120,13 @@ function RatesSection({
 }
 
 export function ReceiptView({ data }: Props) {
-  const [timeUnit, setTimeUnit] = useState<TimeUnit>("daily");
-
   const totalTax = getTotalTax(data);
   const netIncome = data.income.total - totalTax;
   const grossMonthly = Math.round(data.income.total / 12);
   const netMonthly = Math.round(netIncome / 12);
-  const hourlyRate = netIncome / 2080;
-  const timeUnitValue = convertToTimeUnit(hourlyRate, timeUnit);
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Year Header */}
-      <div className="px-6 pt-8 flex items-center justify-between">
-        <h1 className="text-3xl -tracking-wider font-bold tabular-nums slashed-zero">
-          {data.year}
-        </h1>
-      </div>
-
-      {/* Stats Header */}
-      <div className="px-6 py-6 shrink-0">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Income */}
-          <div>
-            <div className="text-xs text-(--color-text-muted) mb-1">Income</div>
-            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
-              {formatCompact(data.income.total)}
-            </div>
-          </div>
-
-          {/* Taxes */}
-          <div>
-            <div className="text-xs text-(--color-text-muted) mb-1">Taxes</div>
-            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
-              {formatCompact(totalTax)}
-            </div>
-          </div>
-
-          {/* Net */}
-          <div>
-            <div className="text-xs text-(--color-text-muted) mb-1">Net</div>
-            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
-              {formatCompact(netIncome)}
-            </div>
-          </div>
-
-          {/* Time unit selector */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <Menu
-                triggerVariant="inline"
-                triggerClassName="text-xs"
-                popupClassName="min-w-[130px] text-sm"
-                sideOffset={6}
-                trigger={
-                  <>
-                    {TIME_UNIT_LABELS[timeUnit]}
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 16 16"
-                      fill="currentColor"
-                      className="opacity-50"
-                    >
-                      <path
-                        d="M4 6l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </>
-                }
-              >
-                {(["daily", "hourly", "minute", "second"] as TimeUnit[]).map(
-                  (unit) => (
-                    <MenuItem
-                      key={unit}
-                      onClick={() => setTimeUnit(unit)}
-                      selected={timeUnit === unit}
-                    >
-                      {TIME_UNIT_LABELS[unit]}
-                    </MenuItem>
-                  ),
-                )}
-              </Menu>
-              <Tooltip content="Based on 2080hrs of work per year" delay={0}>
-                <InfoIcon size={16} className="opacity-60" />
-              </Tooltip>
-            </div>
-            <div className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight">
-              {formatTimeUnitValueCompact(timeUnitValue, timeUnit)}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Content Table */}
       <div className="px-6 py-4">
         <table className="w-full">

@@ -590,6 +590,10 @@ export function App() {
   }
 
   function renderMainPanel() {
+    // Calculate selectedYear for StatsHeader (always "summary" or a number)
+    const statsSelectedYear: "summary" | number =
+      typeof state.selectedYear === "number" ? state.selectedYear : "summary";
+
     const commonProps = {
       isChatOpen,
       isChatLoading,
@@ -604,6 +608,8 @@ export function App() {
       isDemo: effectiveIsDemo,
       hasUserData: state.hasUserData,
       hasStoredKey: state.hasStoredKey,
+      returns: effectiveReturns,
+      selectedYear: statsSelectedYear,
     };
 
     if (selectedPendingUpload) {
@@ -617,7 +623,7 @@ export function App() {
     }
     if (state.selectedYear === "summary") {
       return (
-        <MainPanel view="summary" returns={effectiveReturns} {...commonProps} />
+        <MainPanel view="summary" {...commonProps} />
       );
     }
     const receiptData = getReceiptData();
@@ -632,7 +638,7 @@ export function App() {
       );
     }
     return (
-      <MainPanel view="summary" returns={effectiveReturns} {...commonProps} />
+      <MainPanel view="summary" {...commonProps} />
     );
   }
 
