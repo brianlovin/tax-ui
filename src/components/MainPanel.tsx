@@ -1,6 +1,17 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useId,
+  useMemo,
+  createContext,
+  useContext,
+  useSyncExternalStore,
+} from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { ContextMenu } from "@base-ui/react/context-menu";
+import { LayoutGroup, motion } from "motion/react";
 import { cn } from "../lib/cn";
 import type { TaxReturn, PendingUpload } from "../lib/schema";
 import type { NavItem } from "../lib/types";
@@ -56,11 +67,107 @@ type SummaryViewMode = "table" | "receipt";
 const ITEM_WIDTH = 70;
 const OVERFLOW_BUTTON_WIDTH = 40;
 
+// Animated tab highlight context and helpers (same pattern as Menu)
+interface TabHighlightContextValue {
+  layoutId: string;
+  subscribe: (callback: () => void) => () => void;
+  getHoveredId: () => string | null;
+  setHovered: (id: string | null) => void;
+}
+
+const TabHighlightContext = createContext<TabHighlightContextValue | null>(
+  null,
+);
+
+function useTabHighlightStore() {
+  const hoveredRef = useRef<string | null>(null);
+  const listenersRef = useRef<Set<() => void>>(new Set());
+
+  const subscribe = useCallback((callback: () => void) => {
+    listenersRef.current.add(callback);
+    return () => listenersRef.current.delete(callback);
+  }, []);
+
+  const getHoveredId = useCallback(() => {
+    return hoveredRef.current;
+  }, []);
+
+  const setHovered = useCallback((id: string | null) => {
+    if (hoveredRef.current !== id) {
+      hoveredRef.current = id;
+      listenersRef.current.forEach((cb) => cb());
+    }
+  }, []);
+
+  return { subscribe, getHoveredId, setHovered };
+}
+
+interface AnimatedTabProps {
+  id: string;
+  label: string;
+  isSelected: boolean;
+  wrapper?: (tab: React.ReactElement) => React.ReactNode;
+}
+
+function AnimatedTab({ id, label, isSelected, wrapper }: AnimatedTabProps) {
+  const ctx = useContext(TabHighlightContext);
+
+  const hoveredId = useSyncExternalStore(
+    ctx?.subscribe ?? (() => () => {}),
+    ctx?.getHoveredId ?? (() => null),
+  );
+
+  const hasAnyHover = hoveredId !== null;
+  // Show highlight if hovered, or if selected and nothing is hovered
+  const showHighlight = hoveredId === id || (isSelected && !hasAnyHover);
+
+  const tab = (
+    <Tabs.Tab
+      value={id}
+      className={cn(
+        "relative px-2.5 py-1 text-sm font-medium rounded-lg shrink-0 outline-none",
+        isSelected
+          ? "text-(--color-text)"
+          : "text-(--color-text-muted) hover:text-(--color-text)",
+      )}
+      onMouseEnter={() => ctx?.setHovered(id)}
+    >
+      {/* Animated highlight - follows hover or selection */}
+      {showHighlight && ctx && (
+        <motion.div
+          layoutId={ctx.layoutId}
+          className="absolute inset-0 bg-(--color-bg-muted) dark:shadow-contrast rounded-lg"
+          initial={false}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 35,
+          }}
+        />
+      )}
+      <span className="relative z-10">{label}</span>
+    </Tabs.Tab>
+  );
+
+  return wrapper ? wrapper(tab) : tab;
+}
+
 export function MainPanel(props: Props) {
   const [summaryViewMode, setSummaryViewMode] =
     useState<SummaryViewMode>("table");
   const [visibleCount, setVisibleCount] = useState(props.navItems.length);
   const navRef = useRef<HTMLElement>(null);
+
+  // Animated tab highlight setup
+  const tabLayoutId = useId();
+  const tabHighlightStore = useTabHighlightStore();
+  const tabHighlightContextValue = useMemo(
+    () => ({
+      layoutId: tabLayoutId,
+      ...tabHighlightStore,
+    }),
+    [tabLayoutId, tabHighlightStore],
+  );
 
   const calculateVisibleItems = useCallback(() => {
     if (!navRef.current) return;
@@ -79,6 +186,52 @@ export function MainPanel(props: Props) {
     }
     return () => observer.disconnect();
   }, [calculateVisibleItems]);
+
+  // Global arrow key handler for tab navigation
+  const tabListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+
+      // Skip if focus is already in the tab list
+      if (tabListRef.current?.contains(document.activeElement)) return;
+
+      // Skip if focus is in an input, textarea, or contenteditable
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLTextAreaElement ||
+        (active instanceof HTMLElement && active.isContentEditable)
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+
+      const currentIndex = props.navItems.findIndex(
+        (item) => item.id === props.selectedId,
+      );
+      const direction = e.key === "ArrowLeft" ? -1 : 1;
+      const nextIndex = Math.max(
+        0,
+        Math.min(props.navItems.length - 1, currentIndex + direction),
+      );
+      const nextItem = props.navItems[nextIndex];
+
+      if (nextItem && nextItem.id !== props.selectedId) {
+        props.onSelect(nextItem.id);
+      }
+
+      // Focus the tab list so subsequent arrow keys work natively
+      const tabToFocus = tabListRef.current?.querySelector(
+        `[data-value="${nextItem?.id ?? props.selectedId}"]`,
+      ) as HTMLElement | null;
+      tabToFocus?.focus();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [props.navItems, props.selectedId, props.onSelect]);
 
   const visibleItems = props.navItems.slice(0, visibleCount);
   const overflowItems = props.navItems.slice(visibleCount);
@@ -152,60 +305,69 @@ export function MainPanel(props: Props) {
           >
             <nav
               ref={navRef}
-              className="flex items-center gap-0.5 flex-1 min-w-0"
+              className="flex items-center gap-2 flex-1 min-w-0"
             >
-              <Tabs.List className="flex items-center gap-0.5" activateOnFocus>
-                {visibleItems.map((item) => {
-                  const isYear = item.id !== "summary";
-                  const canDelete =
-                    isYear && !props.isDemo && props.onDeleteYear;
+              <Tabs.List
+                ref={tabListRef}
+                className="flex items-center gap-2"
+                activateOnFocus
+                onMouseLeave={() => tabHighlightStore.setHovered(null)}
+              >
+                <LayoutGroup>
+                  <TabHighlightContext.Provider
+                    value={tabHighlightContextValue}
+                  >
+                    {visibleItems.map((item) => {
+                      const isYear = item.id !== "summary";
+                      const canDelete =
+                        isYear && !props.isDemo && props.onDeleteYear;
 
-                  const tabElement = (
-                    <Tabs.Tab
-                      key={item.id}
-                      value={item.id}
-                      className={cn(
-                        "px-2.5 py-1 text-sm font-medium rounded-lg shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-(--color-text-muted)",
-                        props.selectedId === item.id
-                          ? "text-(--color-text) dark:shadow-contrast bg-(--color-bg-muted)"
-                          : "text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted)",
-                      )}
-                    >
-                      {item.label}
-                    </Tabs.Tab>
-                  );
-
-                  if (canDelete) {
-                    return (
-                      <ContextMenu.Root key={item.id}>
-                        <ContextMenu.Trigger render={tabElement} />
-                        <ContextMenu.Portal>
-                          <ContextMenu.Positioner
-                            className="z-50"
-                            sideOffset={4}
-                          >
-                            <ContextMenu.Popup
-                              className={cn(popupBaseClassName, "z-50")}
-                            >
-                              <ContextMenu.Item
-                                className={cn(
-                                  itemBaseClassName,
-                                  "data-[highlighted]:bg-(--color-bg-muted)",
-                                )}
-                                onClick={() => props.onDeleteYear?.(item.id)}
-                              >
-                                <TrashIcon />
-                                Remove {item.label} data
-                              </ContextMenu.Item>
-                            </ContextMenu.Popup>
-                          </ContextMenu.Positioner>
-                        </ContextMenu.Portal>
-                      </ContextMenu.Root>
-                    );
-                  }
-
-                  return tabElement;
-                })}
+                      return (
+                        <AnimatedTab
+                          key={item.id}
+                          id={item.id}
+                          label={item.label}
+                          isSelected={props.selectedId === item.id}
+                          wrapper={
+                            canDelete
+                              ? (tab) => (
+                                  <ContextMenu.Root>
+                                    <ContextMenu.Trigger render={tab} />
+                                    <ContextMenu.Portal>
+                                      <ContextMenu.Positioner
+                                        className="z-50"
+                                        sideOffset={4}
+                                      >
+                                        <ContextMenu.Popup
+                                          className={cn(
+                                            popupBaseClassName,
+                                            "z-50",
+                                          )}
+                                        >
+                                          <ContextMenu.Item
+                                            className={cn(
+                                              itemBaseClassName,
+                                              "data-[highlighted]:bg-(--color-bg-muted)",
+                                            )}
+                                            onClick={() =>
+                                              props.onDeleteYear?.(item.id)
+                                            }
+                                          >
+                                            <TrashIcon />
+                                            Remove {item.label} data
+                                          </ContextMenu.Item>
+                                        </ContextMenu.Popup>
+                                      </ContextMenu.Positioner>
+                                    </ContextMenu.Portal>
+                                  </ContextMenu.Root>
+                                )
+                              : undefined
+                          }
+                        />
+                      );
+                    })}
+                  </TabHighlightContext.Provider>
+                </LayoutGroup>
               </Tabs.List>
 
               {/* Overflow items */}
@@ -231,16 +393,28 @@ export function MainPanel(props: Props) {
               )}
 
               {/* Add button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                iconOnly
-                onClick={props.onOpenStart}
-                title="Add tax returns"
-                className="shrink-0"
-              >
-                <PlusIcon />
-              </Button>
+              {props.isDemo ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={props.onOpenStart}
+                  className="shrink-0 flex items-center gap-1.5 pl-2.5"
+                >
+                  <PlusIcon />
+                  Upload
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  iconOnly
+                  onClick={props.onOpenStart}
+                  title="Add tax returns"
+                  className="shrink-0"
+                >
+                  <PlusIcon />
+                </Button>
+              )}
             </nav>
           </Tabs.Root>
         </div>
