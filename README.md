@@ -1,4 +1,4 @@
-<img width="1280" height="640" alt="tax-ui-github-og" src="https://github.com/user-attachments/assets/dbff5602-5322-4100-a2da-064730d1f766" />
+<img width="1280" height="640" alt="tax-ui-github-og" src="https://github.com/user-attachments/assets/9b0e23dc-a7ed-4d17-a024-0ab3ea465e03" />
 
 # Tax UI
 
