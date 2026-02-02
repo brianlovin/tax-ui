@@ -47,6 +47,7 @@ export const TaxReturnSchema = z.object({
     deductions: z.array(LabeledAmount),
     taxableIncome: z.number(),
     tax: z.number(),
+    additionalTaxes: z.array(LabeledAmount),
     credits: z.array(LabeledAmount),
     payments: z.array(LabeledAmount),
     refundOrOwed: z.number(),

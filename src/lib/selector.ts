@@ -18,7 +18,17 @@ const IMPORTANT: FormType[] = [
   "k1_summary",
 ];
 const OPTIONAL: FormType[] = ["schedule_2", "schedule_3", "state_schedule"];
-const SKIP: FormType[] = ["k1_detail", "worksheet", "supporting_doc", "other"];
+const SKIP: FormType[] = [
+  "k1_detail",
+  "worksheet",
+  "supporting_doc",
+  "cover_letter",
+  "direct_deposit",
+  "carryover_summary",
+  "efiling_auth",
+  "crypto_detail",
+  "other",
+];
 
 // Target page count to stay under token limits (~40 pages max)
 const MAX_SELECTED_PAGES = 40;

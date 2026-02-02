@@ -22,6 +22,7 @@ const makeReturn = (
     deductions: [{ label: "Standard deduction", amount: -14600 }],
     taxableIncome: income - 14600,
     tax: federalTax,
+    additionalTaxes: [],
     credits: [],
     payments: [{ label: "Withheld", amount: -(federalTax + 1000) }],
     refundOrOwed: 1000,

@@ -16,12 +16,22 @@ const CLASSIFICATION_THRESHOLD = 20;
 async function extractPages(pdfBase64: string, pageNumbers: number[]): Promise<string> {
   const pdfBytes = Buffer.from(pdfBase64, "base64");
   const pdfDoc = await PDFDocument.load(pdfBytes);
+  const totalPages = pdfDoc.getPageCount();
+
+  // Filter out invalid page numbers (1-indexed input)
+  const validPageNumbers = pageNumbers.filter((p) => p >= 1 && p <= totalPages);
+
+  if (validPageNumbers.length === 0) {
+    throw new Error(
+      `No valid pages to extract. Requested: ${pageNumbers.join(", ")}, PDF has ${totalPages} pages`,
+    );
+  }
 
   const newDoc = await PDFDocument.create();
   // pageNumbers are 1-indexed, copyPages needs 0-indexed
   const pages = await newDoc.copyPages(
     pdfDoc,
-    pageNumbers.map((p) => p - 1),
+    validPageNumbers.map((p) => p - 1),
   );
   pages.forEach((page) => newDoc.addPage(page));
 
@@ -132,10 +142,14 @@ function mergeReturns(returns: TaxReturn[]): TaxReturn {
       base.income.total = chunk.income.total;
     }
 
-    // Merge federal deductions, credits, payments
+    // Merge federal deductions, additional taxes, credits, payments
     base.federal.deductions = mergeLabeledAmounts(
       base.federal.deductions,
       chunk.federal.deductions,
+    );
+    base.federal.additionalTaxes = mergeLabeledAmounts(
+      base.federal.additionalTaxes,
+      chunk.federal.additionalTaxes,
     );
     base.federal.credits = mergeLabeledAmounts(base.federal.credits, chunk.federal.credits);
     base.federal.payments = mergeLabeledAmounts(base.federal.payments, chunk.federal.payments);

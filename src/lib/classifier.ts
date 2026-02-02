@@ -17,6 +17,11 @@ export type FormType =
   | "state_schedule"
   | "worksheet"
   | "supporting_doc"
+  | "cover_letter"
+  | "direct_deposit"
+  | "carryover_summary"
+  | "efiling_auth"
+  | "crypto_detail"
   | "other";
 
 export interface PageClassification {
@@ -27,7 +32,7 @@ export interface PageClassification {
 const CLASSIFICATION_PROMPT = `Classify each page of this tax return PDF. For each page, identify the form type.
 
 Classification categories:
-- 1040_main: Form 1040 pages 1-2 (the main federal return)
+- 1040_main: Form 1040 pages 1-2 (the main federal return with income, deductions, tax)
 - schedule_1: Schedule 1 - Additional Income and Adjustments
 - schedule_2: Schedule 2 - Additional Taxes
 - schedule_3: Schedule 3 - Additional Credits and Payments
@@ -38,11 +43,23 @@ Classification categories:
 - schedule_e: Schedule E - Supplemental Income (rentals, royalties, partnerships, S corps)
 - k1_summary: Schedule K-1 summary/first page (contains income amounts)
 - k1_detail: Schedule K-1 supporting pages, instructions, or continuation pages
-- state_main: State tax return main pages (Form 540, IT-201, etc.)
+- state_main: State tax return main pages (Form 540 for CA, IT-201 for NY, etc.)
 - state_schedule: State return supporting schedules
 - worksheet: Calculation worksheets (tax computation, AMT, etc.)
 - supporting_doc: W-2, 1099, or other source document copies
-- other: Cover pages, signature pages, preparer notes, engagement letters
+- cover_letter: Preparer transmittal letters, engagement letters, "Dear Client" letters
+- direct_deposit: Direct deposit/debit reports showing bank routing and account numbers
+- carryover_summary: Tax return carryovers to next year, loss carryforward summaries
+- efiling_auth: E-file authorization forms (Form 8879, TR-579-IT, e-file jurat/disclosure)
+- crypto_detail: Cryptocurrency transaction details, lot-by-lot disposal reports
+- other: Any other pages not fitting above categories
+
+IMPORTANT: Look for these clues to identify preparer documents vs actual tax forms:
+- Cover letters often start with "Dear [Name]" and mention "RKO Tax", "H&R Block", etc.
+- Direct deposit pages show routing numbers, account numbers in a table format
+- Carryover summaries have "Carryovers to [Year]" in the title
+- E-file auth pages mention "penalties of perjury", "ERO Declaration", "Taxpayer PIN"
+- The actual Form 1040 has "U.S. Individual Income Tax Return" and numbered lines
 
 Respond with a JSON array where each element has:
 - "page": page number (1-indexed)
@@ -50,9 +67,9 @@ Respond with a JSON array where each element has:
 
 Example response format:
 [
-  {"page": 1, "type": "1040_main"},
-  {"page": 2, "type": "1040_main"},
-  {"page": 3, "type": "schedule_1"}
+  {"page": 1, "type": "cover_letter"},
+  {"page": 2, "type": "carryover_summary"},
+  {"page": 3, "type": "1040_main"}
 ]
 
 Classify ALL pages in the document.`;
@@ -65,7 +82,7 @@ export async function classifyPages(
   const pdfDoc = await PDFDocument.load(pdfBytes);
   const totalPages = pdfDoc.getPageCount();
 
-  // For small PDFs, skip classification
+  // For small PDFs, skip classification entirely and process all pages
   if (totalPages <= 20) {
     return Array.from({ length: totalPages }, (_, i) => ({
       pageNumber: i + 1,
@@ -73,7 +90,6 @@ export async function classifyPages(
     }));
   }
 
-  // Use Haiku for fast, cheap classification
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 4096,

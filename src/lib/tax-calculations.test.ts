@@ -17,6 +17,7 @@ const baseTaxReturn: TaxReturn = {
     deductions: [{ label: "Standard deduction", amount: -14600 }],
     taxableIncome: 85400,
     tax: 14000,
+    additionalTaxes: [],
     credits: [],
     payments: [{ label: "Withheld", amount: -15000 }],
     refundOrOwed: 1000,

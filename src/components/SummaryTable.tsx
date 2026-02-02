@@ -109,6 +109,20 @@ function collectRows(returns: Record<number, TaxReturn>): SummaryRow[] {
   addRow("Federal", "Taxable income", (data) => data.federal.taxableIncome, { showChange: true });
   addRow("Federal", "Tax", (data) => data.federal.tax, { invertPolarity: true, showChange: true });
 
+  // Federal additional taxes (Schedule 2: SE tax, Additional Medicare, NIIT, AMT)
+  const federalAdditionalTaxLabels = new Set<string>();
+  for (const r of allReturns) {
+    for (const item of r.federal.additionalTaxes) {
+      federalAdditionalTaxLabels.add(item.label);
+    }
+  }
+  for (const label of federalAdditionalTaxLabels) {
+    addRow("Federal", label, (data) =>
+      data.federal.additionalTaxes.find((i) => i.label === label)?.amount,
+      { invertPolarity: true }
+    );
+  }
+
   const federalCreditLabels = new Set<string>();
   for (const r of allReturns) {
     for (const item of r.federal.credits) {
