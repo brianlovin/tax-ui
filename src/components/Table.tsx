@@ -184,7 +184,8 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                       meta?.sticky ? "sticky top-0 left-0 z-30" : "relative",
                     )}
                     style={{
-                      width: header.getSize(),
+                      width: isMobile && meta?.sticky ? "40vw" : header.getSize(),
+                      maxWidth: isMobile && meta?.sticky ? "40vw" : undefined,
                       boxShadow: headerShadow,
                     }}
                   >
@@ -221,7 +222,6 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                 const stickyClass = meta?.sticky
                   ? `sticky left-0 z-10 sticky-cell ${stickyCellHover}`
                   : "";
-                const truncateClass = meta?.sticky ? "truncate max-w-[160px]" : "";
 
                 const cellShadows: string[] = [];
                 if (meta?.sticky && (isScrolled || isMobile)) {
@@ -234,9 +234,10 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                 return (
                   <td
                     key={cell.id}
-                    className={cn("py-2 px-4 text-sm", stickyClass, truncateClass)}
+                    className={cn("py-2 px-4 text-sm", stickyClass)}
                     style={{
-                      width: cell.column.getSize(),
+                      width: isMobile && meta?.sticky ? "40vw" : cell.column.getSize(),
+                      maxWidth: isMobile && meta?.sticky ? "40vw" : undefined,
                       ...(cellShadows.length > 0 ? { boxShadow: cellShadows.join(", ") } : {}),
                     }}
                   >

@@ -253,7 +253,10 @@ export function SummaryTable({ returns }: Props) {
           }
           const isDeduction = row.label.startsWith("−") || row.label.startsWith("–") || row.label.startsWith("- ");
           return (
-            <span className={isDeduction ? "text-(--color-text-muted)" : "text-(--color-text)"}>
+            <span
+              title={info.getValue()}
+              className={`block truncate ${isDeduction ? "text-(--color-text-muted)" : "text-(--color-text)"}`}
+            >
               {info.getValue()}
             </span>
           );
@@ -261,8 +264,7 @@ export function SummaryTable({ returns }: Props) {
         meta: {
           sticky: true,
         } satisfies ColumnMeta,
-        size: 180,
-        maxSize: 180,
+        size: 240,
       }),
     ];
 
@@ -308,7 +310,7 @@ export function SummaryTable({ returns }: Props) {
             align: "right",
             borderLeft: i > 0,
           } satisfies ColumnMeta,
-          size: 180,
+          size: 160,
         })
       );
     });
