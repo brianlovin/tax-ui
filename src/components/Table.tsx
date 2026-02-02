@@ -166,7 +166,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                 const alignClass = meta?.align === "right" ? "text-right" : "text-left";
 
                 const shadows = ["inset 0 -1px 0 var(--color-border-opaque)"];
-                if (meta?.sticky && isScrolled) {
+                if (meta?.sticky && (isScrolled || isMobile)) {
                   shadows.push("inset -1px 0 0 var(--color-border-opaque)");
                 }
                 if (meta?.borderLeft) {
@@ -224,7 +224,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                 const truncateClass = meta?.sticky ? "truncate max-w-[160px]" : "";
 
                 const cellShadows: string[] = [];
-                if (meta?.sticky && isScrolled) {
+                if (meta?.sticky && (isScrolled || isMobile)) {
                   cellShadows.push("inset -1px 0 0 var(--color-border-opaque)");
                 }
                 if (meta?.borderLeft) {
