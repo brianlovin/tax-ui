@@ -64,8 +64,9 @@ type Props = ReceiptProps | SummaryProps | LoadingProps;
 
 type SummaryViewMode = "table" | "receipt";
 
-const ITEM_WIDTH = 70;
-const OVERFLOW_BUTTON_WIDTH = 40;
+const ITEM_WIDTH = 78; // 70px + 8px gap
+const OVERFLOW_BUTTON_WIDTH = 48; // 40px + gap
+const ADD_BUTTON_WIDTH = 48; // 40px + gap
 
 // Animated tab highlight context and helpers (same pattern as Menu)
 interface TabHighlightContextValue {
@@ -172,8 +173,9 @@ export function MainPanel(props: Props) {
   const calculateVisibleItems = useCallback(() => {
     if (!navRef.current) return;
     const availableWidth = navRef.current.offsetWidth;
+    const reservedWidth = OVERFLOW_BUTTON_WIDTH + ADD_BUTTON_WIDTH;
     const maxItems = Math.floor(
-      (availableWidth - OVERFLOW_BUTTON_WIDTH) / ITEM_WIDTH,
+      (availableWidth - reservedWidth) / ITEM_WIDTH,
     );
     setVisibleCount(Math.max(1, Math.min(props.navItems.length, maxItems)));
   }, [props.navItems.length]);
@@ -309,7 +311,7 @@ export function MainPanel(props: Props) {
             >
               <Tabs.List
                 ref={tabListRef}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 min-w-0 overflow-hidden"
                 activateOnFocus
                 onMouseLeave={() => tabHighlightStore.setHovered(null)}
               >
