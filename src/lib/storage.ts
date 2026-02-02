@@ -6,10 +6,37 @@ const DATA_DIR = process.env.TAX_UI_DATA_DIR || process.cwd();
 const RETURNS_FILE = path.join(DATA_DIR, ".tax-returns.json");
 const ENV_FILE = path.join(DATA_DIR, ".env");
 
+// Ensure old stored data has all required array fields
+function migrate(data: Record<number, unknown>): Record<number, TaxReturn> {
+  const result: Record<number, TaxReturn> = {};
+  for (const [year, r] of Object.entries(data)) {
+    const ret = r as Record<string, unknown>;
+    const fed = (ret.federal ?? {}) as Record<string, unknown>;
+    result[Number(year)] = {
+      ...ret,
+      dependents: ret.dependents ?? [],
+      federal: {
+        ...fed,
+        deductions: fed.deductions ?? [],
+        additionalTaxes: fed.additionalTaxes ?? [],
+        credits: fed.credits ?? [],
+        payments: fed.payments ?? [],
+      },
+      states: ((ret.states ?? []) as Record<string, unknown>[]).map((s) => ({
+        ...s,
+        deductions: s.deductions ?? [],
+        adjustments: s.adjustments ?? [],
+        payments: s.payments ?? [],
+      })),
+    } as TaxReturn;
+  }
+  return result;
+}
+
 export async function getReturns(): Promise<Record<number, TaxReturn>> {
   const file = Bun.file(RETURNS_FILE);
   if (await file.exists()) {
-    return file.json();
+    return migrate(await file.json());
   }
   return {};
 }
