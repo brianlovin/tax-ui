@@ -10,10 +10,10 @@ export const TIME_UNIT_LABELS: Record<TimeUnit, string> = {
 };
 
 export const TIME_UNIT_SUFFIXES: Record<TimeUnit, string> = {
-  daily: "day",
-  hourly: "hr",
-  minute: "min",
-  second: "sec",
+  daily: "d",
+  hourly: "h",
+  minute: "m",
+  second: "s",
 };
 
 export function convertToTimeUnit(hourlyRate: number, unit: TimeUnit): number {

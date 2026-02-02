@@ -18,10 +18,10 @@ describe("TIME_UNIT_LABELS", () => {
 
 describe("TIME_UNIT_SUFFIXES", () => {
   test("has all expected suffixes", () => {
-    expect(TIME_UNIT_SUFFIXES.daily).toBe("day");
-    expect(TIME_UNIT_SUFFIXES.hourly).toBe("hr");
-    expect(TIME_UNIT_SUFFIXES.minute).toBe("min");
-    expect(TIME_UNIT_SUFFIXES.second).toBe("sec");
+    expect(TIME_UNIT_SUFFIXES.daily).toBe("d");
+    expect(TIME_UNIT_SUFFIXES.hourly).toBe("h");
+    expect(TIME_UNIT_SUFFIXES.minute).toBe("m");
+    expect(TIME_UNIT_SUFFIXES.second).toBe("s");
   });
 });
 
@@ -60,36 +60,36 @@ describe("formatTimeUnitValue", () => {
   });
 
   test("formats minute with suffix", () => {
-    expect(formatTimeUnitValue(1.25, "minute")).toBe("$1.25/min");
+    expect(formatTimeUnitValue(1.25, "minute")).toBe("$1.25/m");
   });
 
   test("formats second with suffix", () => {
-    expect(formatTimeUnitValue(0.02, "second")).toBe("$0.02/sec");
+    expect(formatTimeUnitValue(0.02, "second")).toBe("$0.02/s");
   });
 
   test("handles sub-cent values", () => {
-    expect(formatTimeUnitValue(0.005, "second")).toBe("$0.005/sec");
+    expect(formatTimeUnitValue(0.005, "second")).toBe("$0.005/s");
   });
 });
 
 describe("formatTimeUnitValueCompact", () => {
   test("formats daily compactly with suffix", () => {
-    expect(formatTimeUnitValueCompact(480, "daily")).toBe("$480/day");
+    expect(formatTimeUnitValueCompact(480, "daily")).toBe("$480/d");
   });
 
   test("formats hourly compactly with suffix", () => {
-    expect(formatTimeUnitValueCompact(60, "hourly")).toBe("$60/hr");
+    expect(formatTimeUnitValueCompact(60, "hourly")).toBe("$60/h");
   });
 
   test("formats large daily values with K suffix", () => {
-    expect(formatTimeUnitValueCompact(1500, "daily")).toBe("$2K/day");
+    expect(formatTimeUnitValueCompact(1500, "daily")).toBe("$2K/d");
   });
 
   test("formats minute same as regular", () => {
-    expect(formatTimeUnitValueCompact(1.25, "minute")).toBe("$1.25/min");
+    expect(formatTimeUnitValueCompact(1.25, "minute")).toBe("$1.25/m");
   });
 
   test("formats second same as regular", () => {
-    expect(formatTimeUnitValueCompact(0.02, "second")).toBe("$0.02/sec");
+    expect(formatTimeUnitValueCompact(0.02, "second")).toBe("$0.02/s");
   });
 });
