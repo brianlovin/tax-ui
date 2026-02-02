@@ -102,7 +102,8 @@ const server = serve({
           return Response.json({ error: "No PDF file provided" }, { status: 400 });
         }
 
-        const apiKey = getApiKey();
+        const formApiKey = formData.get("apiKey") as string | null;
+        const apiKey = formApiKey || getApiKey();
         if (!apiKey) {
           return Response.json({ error: "No API key configured" }, { status: 400 });
         }

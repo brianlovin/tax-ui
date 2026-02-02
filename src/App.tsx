@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { TaxReturn, PendingUpload, FileProgress, FileWithId } from "./lib/schema";
+import type {
+  TaxReturn,
+  PendingUpload,
+  FileProgress,
+  FileWithId,
+} from "./lib/schema";
 import type { NavItem } from "./lib/types";
 import { sampleReturns } from "./data/sampleData";
 import { MainPanel } from "./components/MainPanel";
@@ -547,9 +552,23 @@ export function App() {
 
     await fetch(`/api/returns/${year}`, { method: "DELETE" });
 
+    // Check if this is the last year before updating state
+    const isLastYear = Object.keys(state.returns).length === 1;
+
     setState((s) => {
       const newReturns = { ...s.returns };
       delete newReturns[year];
+
+      if (isLastYear) {
+        // Last year deleted - reset to sample data state
+        return {
+          ...s,
+          returns: sampleReturns,
+          selectedYear: "summary",
+          hasUserData: false,
+        };
+      }
+
       const newSelection =
         s.selectedYear === year
           ? getDefaultSelection(newReturns)
@@ -560,6 +579,11 @@ export function App() {
         selectedYear: newSelection,
       };
     });
+
+    // Re-open onboarding if we just deleted the last year
+    if (isLastYear) {
+      setOpenModal("onboarding");
+    }
   }
 
   if (state.isLoading) {
@@ -622,9 +646,7 @@ export function App() {
       );
     }
     if (state.selectedYear === "summary") {
-      return (
-        <MainPanel view="summary" {...commonProps} />
-      );
+      return <MainPanel view="summary" {...commonProps} />;
     }
     const receiptData = getReceiptData();
     if (receiptData) {
@@ -637,9 +659,7 @@ export function App() {
         />
       );
     }
-    return (
-      <MainPanel view="summary" {...commonProps} />
-    );
+    return <MainPanel view="summary" {...commonProps} />;
   }
 
   // Find pending upload if selected
@@ -651,10 +671,14 @@ export function App() {
 
   // Show onboarding dialog for new users (unless dismissed) or when manually opened
   // Processing takes precedence - keep dialog open while processing
+  // In demo mode, don't auto-show - let users browse sample data first
   const showOnboarding =
     isOnboardingProcessing ||
     openModal === "onboarding" ||
-    (!onboardingDismissed && !state.hasStoredKey && !state.hasUserData);
+    (!effectiveIsDemo &&
+      !onboardingDismissed &&
+      !state.hasStoredKey &&
+      !state.hasUserData);
 
   // Skip open animation only on first automatic show (not manual reopen)
   const skipOnboardingAnimation =
@@ -828,13 +852,25 @@ export function App() {
         onReset={handleClearData}
       />
 
-      {/* Get started pill - show in demo mode when onboarding was dismissed */}
-      {effectiveIsDemo && onboardingDismissed && !showOnboarding && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
-          <Button variant="pill" onClick={() => setOpenModal("onboarding")}>
-            Get started
-          </Button>
-        </div>
+      {/* Demo island - show in demo mode when dialog is closed */}
+      {effectiveIsDemo && !showOnboarding && (
+        <>
+          <div className="bg-linear-to-t pointer-events-none z-90 from-white dark:from-black to-transparent fixed bottom-0 inset-x-0 md:h-128 h-96" />
+          <button
+            onClick={() => setOpenModal("onboarding")}
+            className="cursor-pointer z-100 fixed bottom-8 left-8 md:max-w-lg right-8 p-4 md:p-6 rounded-2xl bg-black dark:bg-neutral-800 text-white dark:shadow-contrast shadow-md ring-[0.5px] ring-black/10 flex flex-col gap-3"
+          >
+            <div className="text-lg mb-2 flex flex-col items-start justify-start text-left">
+              <span className="font-semibold text-(--color-brand)">Tax UI</span>
+              <span className="font-medium">
+                Visualize and chat with your tax returns
+              </span>
+            </div>
+            <span className="bg-(--color-brand) text-white self-start text-neutral-900 text-base font-semibold px-3 py-1.5 rounded-lg">
+              Get started
+            </span>
+          </button>
+        </>
       )}
 
       {state.isDev && (

@@ -57,7 +57,7 @@ export function FAQSection() {
   }
 
   return (
-    <div className="shrink-0 border-t border-(--color-border) p-4 px-5">
+    <div className="shrink-0 border-t border-(--color-border) p-4 px-3">
       <Accordion.Root
         className="space-y-px"
         value={openItems}
@@ -97,8 +97,8 @@ export function FAQSection() {
               <div className="text-sm text-(--color-text-muted) space-y-2 px-3 pt-1 pb-3">
                 <p>
                   Your tax data is processed locally and sent directly to
-                  Anthropic's API using your own API key. No data is stored on any
-                  third-party servers.
+                  Anthropic's API using your own API key. No data is stored on
+                  any third-party servers.
                 </p>
                 <p>
                   Anthropic's commercial terms prohibit training models on API
@@ -150,8 +150,8 @@ export function FAQSection() {
             >
               <div className="text-sm text-(--color-text-muted) space-y-3 px-3 pt-1 pb-2">
                 <p>
-                  Tax UI is open source. You can review the code yourself, or ask an
-                  AI to audit it for you.
+                  Tax UI is open source. You can review the code yourself, or
+                  ask an AI to audit it for you.
                 </p>
                 <Button
                   onClick={handleCopyPrompt}
