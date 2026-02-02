@@ -311,7 +311,7 @@ export function MainPanel(props: Props) {
             >
               <Tabs.List
                 ref={tabListRef}
-                className="flex items-center gap-2 min-w-0 overflow-hidden"
+                className="flex items-center gap-2 min-w-0 overflow-hidden pr-1"
                 activateOnFocus
                 onMouseLeave={() => tabHighlightStore.setHovered(null)}
               >
@@ -400,9 +400,9 @@ export function MainPanel(props: Props) {
                   variant="ghost"
                   size="sm"
                   onClick={props.onOpenStart}
-                  className="shrink-0 flex items-center gap-1.5 pl-2.5"
+                  className="shrink-0 flex items-center gap-1 px-2.5 py-1"
                 >
-                  <PlusIcon />
+                  <PlusIcon size={14} strokeWidth={2.5} />
                   Upload
                 </Button>
               ) : (

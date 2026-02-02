@@ -1,5 +1,6 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import type { ComponentProps, ReactNode } from "react";
+import { cn } from "../lib/cn";
 
 type Variant =
   | "primary"
@@ -57,7 +58,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <BaseButton
-      className={[
+      className={cn(
         "font-medium select-none",
         "rounded-lg outline-none",
         "focus-visible:ring-2 focus-visible:ring-(--color-text-muted) focus-visible:ring-offset-2 focus-visible:ring-offset-(--color-bg)",
@@ -67,7 +68,7 @@ export function Button({
           ? `${iconOnlySizeStyles[size]} flex items-center justify-center`
           : sizeStyles[size],
         className,
-      ].join(" ")}
+      )}
       disabled={disabled}
       {...props}
     >

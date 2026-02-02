@@ -140,11 +140,12 @@ export function Chat({
   }, [messages]);
 
   useEffect(() => {
-    // Don't auto-focus on mobile - triggers keyboard unexpectedly
-    if (!isMobile) {
+    // Don't auto-focus on mobile (triggers keyboard unexpectedly)
+    // or in demo mode (we don't want users typing here)
+    if (!isMobile && !isDemo) {
       inputRef.current?.focus();
     }
-  }, [isMobile]);
+  }, [isMobile, isDemo]);
 
   useEffect(() => {
     const textarea = inputRef.current;
