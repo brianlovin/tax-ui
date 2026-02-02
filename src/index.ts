@@ -11,9 +11,15 @@ function isAuthError(message: string): boolean {
   return message.includes("authentication") || message.includes("401") || message.includes("API key");
 }
 
-// Parse --port=XXXX from command line args
-const portArg = argv.find((arg) => arg.startsWith("--port="));
-const port = portArg ? Number(portArg.split("=")[1]) : 3000;
+// Parse --port from command line args (supports --port=XXXX or --port XXXX)
+function parsePort(): number {
+  const idx = argv.findIndex((arg) => arg === "--port" || arg.startsWith("--port="));
+  if (idx === -1) return 3000;
+  const arg = argv[idx]!;
+  if (arg.startsWith("--port=")) return Number(arg.split("=")[1]);
+  return Number(argv[idx + 1]) || 3000;
+}
+const port = parsePort();
 
 function buildChatSystemPrompt(returns: Record<number, unknown>): string {
   const years = Object.keys(returns).map(Number).sort((a, b) => a - b);
