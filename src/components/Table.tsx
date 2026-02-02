@@ -164,14 +164,13 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
               {headerGroup.headers.map((header) => {
                 const meta = header.column.columnDef.meta as ColumnMeta | undefined;
                 const alignClass = meta?.align === "right" ? "text-right" : "text-left";
-                const stickyClass = meta?.sticky ? "sticky left-0 z-30" : "";
 
-                const shadows = ["inset 0 -1px 0 var(--color-border)"];
+                const shadows = ["inset 0 -1px 0 var(--color-border-opaque)"];
                 if (meta?.sticky && isScrolled) {
-                  shadows.push("inset -1px 0 0 var(--color-border)");
+                  shadows.push("inset -1px 0 0 var(--color-border-opaque)");
                 }
                 if (meta?.borderLeft) {
-                  shadows.push("inset 1px 0 0 var(--color-border)");
+                  shadows.push("inset 1px 0 0 var(--color-border-opaque)");
                 }
                 const headerShadow = shadows.join(", ");
 
@@ -181,8 +180,8 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                     colSpan={header.colSpan}
                     className={cn(
                       alignClass,
-                      stickyClass,
-                      "py-2 px-4 text-xs text-(--color-text-muted) font-normal relative bg-(--color-bg)",
+                      "py-2 px-4 text-xs text-(--color-text-muted) font-normal bg-(--color-bg)",
+                      meta?.sticky ? "sticky top-0 left-0 z-30" : "relative",
                     )}
                     style={{
                       width: header.getSize(),
@@ -226,10 +225,10 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
 
                 const cellShadows: string[] = [];
                 if (meta?.sticky && isScrolled) {
-                  cellShadows.push("inset -1px 0 0 var(--color-border)");
+                  cellShadows.push("inset -1px 0 0 var(--color-border-opaque)");
                 }
                 if (meta?.borderLeft) {
-                  cellShadows.push("inset 1px 0 0 var(--color-border)");
+                  cellShadows.push("inset 1px 0 0 var(--color-border-opaque)");
                 }
 
                 return (

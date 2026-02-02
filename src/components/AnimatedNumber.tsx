@@ -6,6 +6,7 @@ interface AnimatedNumberProps {
   format: (n: number) => string;
   className?: string;
   duration?: number;
+  minChars?: number;
 }
 
 const DIGIT_CHARS = "0123456789";
@@ -15,6 +16,7 @@ export function AnimatedNumber({
   format,
   className,
   duration = 0.4,
+  minChars,
 }: AnimatedNumberProps) {
   const text = format(value);
   const [displayText, setDisplayText] = useState(text);
@@ -82,5 +84,12 @@ export function AnimatedNumber({
     };
   }, [value, text, duration]);
 
-  return <span className={cn(className)}>{displayText}</span>;
+  return (
+    <span
+      className={cn(className)}
+      style={minChars ? { minWidth: `${minChars}ch` } : undefined}
+    >
+      {displayText}
+    </span>
+  );
 }

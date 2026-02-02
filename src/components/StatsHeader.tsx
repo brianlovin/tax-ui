@@ -17,10 +17,9 @@ import { AnimatedNumber } from "./AnimatedNumber";
 interface Props {
   returns: Record<number, TaxReturn>;
   selectedYear: "summary" | number;
-  onOpenStart?: () => void;
 }
 
-export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
+export function StatsHeader({ returns, selectedYear }: Props) {
   const [timeUnit, setTimeUnit] = useState<TimeUnit>("daily");
   const isSummary = selectedYear === "summary";
 
@@ -58,6 +57,50 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
       hourlyRates: hourlyRatesPerYear,
     };
   }, [returns, years]);
+
+  // Compute max character widths for each stat to prevent layout shift
+  const maxChars = useMemo(() => {
+    const allReturns = years
+      .map((year) => returns[year])
+      .filter((r): r is TaxReturn => r !== undefined);
+
+    if (allReturns.length === 0) return { income: 0, taxes: 0, net: 0, timeUnit: 0 };
+
+    // Collect all possible values including summary totals
+    const incomeValues = allReturns.map((r) => r.income.total);
+    const taxValues = allReturns.map((r) => getTotalTax(r));
+    const netValues = allReturns.map((r) => getNetIncome(r));
+    const hourlyRates = allReturns.map((r) => getNetIncome(r) / 2080);
+
+    // Add summary totals
+    const totalIncome = incomeValues.reduce((a, b) => a + b, 0);
+    const totalTaxes = taxValues.reduce((a, b) => a + b, 0);
+    const totalNet = totalIncome - totalTaxes;
+    const avgHourlyRate = hourlyRates.reduce((a, b) => a + b, 0) / hourlyRates.length;
+
+    incomeValues.push(totalIncome);
+    taxValues.push(totalTaxes);
+    netValues.push(totalNet);
+    hourlyRates.push(avgHourlyRate);
+
+    // Find max formatted length for each stat
+    const maxIncomeChars = Math.max(...incomeValues.map((v) => formatCompact(v).length));
+    const maxTaxesChars = Math.max(...taxValues.map((v) => formatCompact(v).length));
+    const maxNetChars = Math.max(...netValues.map((v) => formatCompact(v).length));
+
+    // For time unit, only check the currently selected unit
+    const timeUnitLengths = hourlyRates.map((rate) =>
+      formatTimeUnitValueCompact(convertToTimeUnit(rate, timeUnit), timeUnit).length
+    );
+    const maxTimeUnitChars = Math.max(...timeUnitLengths);
+
+    return {
+      income: maxIncomeChars,
+      taxes: maxTaxesChars,
+      net: maxNetChars,
+      timeUnit: maxTimeUnitChars,
+    };
+  }, [returns, years, timeUnit]);
 
   // Compute displayed values based on summary vs individual year
   const stats = useMemo(() => {
@@ -131,6 +174,7 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               value={stats.income}
               format={formatCompact}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
+              minChars={maxChars.income}
             />
             {sparklines && (
               <Sparkline
@@ -151,6 +195,7 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               value={stats.taxes}
               format={formatCompact}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
+              minChars={maxChars.taxes}
             />
             {sparklines && (
               <Sparkline
@@ -171,6 +216,7 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               value={stats.net}
               format={formatCompact}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
+              minChars={maxChars.net}
             />
             {sparklines && (
               <Sparkline
@@ -234,6 +280,7 @@ export function StatsHeader({ returns, selectedYear, onOpenStart }: Props) {
               value={timeUnitValue}
               format={(v) => formatTimeUnitValueCompact(v, timeUnit)}
               className="text-2xl font-semibold tabular-nums slashed-zero tracking-tight"
+              minChars={maxChars.timeUnit}
             />
             {timeUnitSparkline && (
               <Sparkline

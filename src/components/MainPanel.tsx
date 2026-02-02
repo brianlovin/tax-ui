@@ -266,13 +266,9 @@ export function MainPanel(props: Props) {
         />
       ) : props.view === "summary" ? (
         <div className="flex-1 flex flex-col min-h-0">
-          <StatsHeader
-            returns={props.returns}
-            selectedYear="summary"
-            onOpenStart={props.onOpenStart}
-          />
+          <StatsHeader returns={props.returns} selectedYear="summary" />
           {summaryViewMode === "table" ? (
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 overflow-hidden">
               <SummaryTable returns={props.returns} />
             </div>
           ) : (
@@ -286,7 +282,6 @@ export function MainPanel(props: Props) {
           <StatsHeader
             returns={props.returns}
             selectedYear={props.selectedYear as number}
-            onOpenStart={props.onOpenStart}
           />
           <div className="flex-1 bg-neutral-50 dark:bg-neutral-950 overflow-y-auto">
             <ReceiptView data={props.data} />

@@ -28,6 +28,7 @@
         /* Hairline borders */
         --color-border: rgba(0, 0, 0, 0.08);
         --color-border-subtle: rgba(0, 0, 0, 0.04);
+        --color-border-opaque: #eee;
 
         /* Colors matching visitors.now */
         --color-negative: #e85d5d;
@@ -52,7 +53,7 @@
         --color-bg-subtle: #111111;
         --color-bg-muted: rgba(255, 255, 255, 0.05);
         --color-bg-muted-hover: rgba(255, 255, 255, 0.1);
-        --color-bg-elevated: #262626;
+        --color-bg-elevated: #151515;
         --color-ring-elevated: rgba(255, 255, 255, 0.15);
 
         --color-text: #ffffff;
@@ -62,6 +63,7 @@
 
         --color-border: rgba(255, 255, 255, 0.1);
         --color-border-subtle: rgba(255, 255, 255, 0.05);
+        --color-border-opaque: #212121;
 
         --color-negative: #f87171;
         --color-positive: #4ade80;
