@@ -1,0 +1,9 @@
+node_modules
+dist
+out
+electron
+resources
+coverage
+*.log
+.DS_Store
+.git

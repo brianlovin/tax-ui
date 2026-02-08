@@ -12,7 +12,11 @@
     "electron:dev": "cd electron && npm run dev",
     "electron:build": "bun run build:server && cd electron && npm run build",
     "electron:pack": "bun run build && bun run build:server && cd electron && npm run pack",
-    "electron:dist": "bun run build && bun run build:server && cd electron && npm run dist"
+    "electron:dist": "bun run build && bun run build:server && cd electron && npm run dist",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{ts,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{ts,json}\""
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.25",
@@ -32,8 +36,17 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/bun": "latest"
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "typescript-eslint": "^8.54.0"
   }
 }
