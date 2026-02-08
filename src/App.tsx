@@ -23,7 +23,70 @@ import {
   isHostedEnvironment,
   resolveDemoMode,
 } from "./lib/env";
+import { isElectron } from "./lib/electron";
 import "./index.css";
+
+export type UpdateStatus = "available" | "downloading" | "ready";
+
+function useElectronUpdater(devOverride: UpdateStatus | null) {
+  const [status, setStatus] = useState<UpdateStatus | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!isElectron()) return;
+    const api = window.electronAPI?.update;
+    if (!api) return;
+
+    const unsubs: (() => void)[] = [];
+
+    if (api.onAvailable) {
+      unsubs.push(
+        api.onAvailable((data) => {
+          setVersion(data.version);
+          setStatus("available");
+        }),
+      );
+    }
+    if (api.onProgress) {
+      unsubs.push(
+        api.onProgress((data) => {
+          setStatus("downloading");
+          setProgress(Math.round(data.percent));
+        }),
+      );
+    }
+    if (api.onDownloaded) {
+      unsubs.push(
+        api.onDownloaded(() => {
+          setStatus("ready");
+        }),
+      );
+    }
+    if (api.onError) {
+      unsubs.push(
+        api.onError((data) => {
+          console.error("Auto-update error:", data.message);
+          setStatus(null);
+        }),
+      );
+    }
+
+    return () => unsubs.forEach((fn) => fn());
+  }, []);
+
+  const effective = devOverride ?? status;
+
+  if (!effective) return null;
+
+  return {
+    status: effective,
+    version: devOverride ? "0.0.0-dev" : version,
+    progress: devOverride === "downloading" ? 42 : progress,
+    download: () => window.electronAPI?.update?.download?.(),
+    install: () => window.electronAPI?.update?.install?.(),
+  };
+}
 
 const CHAT_OPEN_KEY = "tax-chat-open";
 const CHAT_HISTORY_KEY = "tax-chat-history";
@@ -169,6 +232,8 @@ export function App() {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const hasShownOnboardingRef = useRef(false);
+  const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
+  const updater = useElectronUpdater(devUpdateOverride);
 
   // Compute effective demo mode early (dev override takes precedence)
   const effectiveIsDemo = resolveDemoMode(devDemoOverride, state.isDemo);
@@ -866,11 +931,43 @@ export function App() {
         </>
       )}
 
+      {updater && (
+        <div className="get-started-pill fixed bottom-6 right-6 z-50 flex h-10 items-center gap-2 rounded-full bg-black pl-4 pr-1.5 text-sm text-white shadow-lg transition-all duration-300 ease-out dark:bg-zinc-800 dark:shadow-contrast">
+          {updater.status === "available" && (
+            <>
+              <span className="whitespace-nowrap">v{updater.version} available</span>
+              <button
+                onClick={updater.download}
+                className="cursor-pointer rounded-full bg-blue-500 px-3 py-1 text-sm font-medium text-white hover:bg-blue-600"
+              >
+                Update
+              </button>
+            </>
+          )}
+          {updater.status === "downloading" && (
+            <span className="whitespace-nowrap tabular-nums pr-2.5">Downloading {updater.progress}%</span>
+          )}
+          {updater.status === "ready" && (
+            <>
+              <span className="whitespace-nowrap">Update ready</span>
+              <button
+                onClick={updater.install}
+                className="cursor-pointer rounded-full bg-blue-500 px-3 py-1 text-sm font-medium text-white hover:bg-blue-600"
+              >
+                Restart
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {state.isDev && (
         <DevTools
           devDemoOverride={devDemoOverride}
           onDemoOverrideChange={setDevDemoOverride}
           onTriggerError={() => setDevTriggerError(true)}
+          devUpdateOverride={devUpdateOverride}
+          onUpdateOverrideChange={setDevUpdateOverride}
         />
       )}
     </div>
