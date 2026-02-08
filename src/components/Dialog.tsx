@@ -1,5 +1,6 @@
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ReactNode, Ref } from "react";
+
 import { isElectron } from "../lib/electron";
 import { XMarkIcon } from "./XMarkIcon";
 
@@ -54,10 +55,7 @@ export function Dialog({
   const backdropClasses = `dialog-backdrop${noAnim} fixed inset-0 bg-(--color-overlay) backdrop-blur-[3px] z-40${isElectron() ? " app-window-drag" : ""}`;
 
   return (
-    <BaseDialog.Root
-      open={open}
-      onOpenChange={(isOpen) => !isOpen && !closeDisabled && onClose()}
-    >
+    <BaseDialog.Root open={open} onOpenChange={(isOpen) => !isOpen && !closeDisabled && onClose()}>
       <BaseDialog.Portal>
         <BaseDialog.Backdrop className={backdropClasses} />
         <BaseDialog.Popup className={popupClasses}>
@@ -65,7 +63,7 @@ export function Dialog({
             <BaseDialog.Close
               autoFocus={autoFocusClose}
               disabled={closeDisabled}
-              className="absolute rounded-full top-3 right-3 p-1.5 text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted) disabled:opacity-50 z-10"
+              className="absolute top-3 right-3 z-10 rounded-full p-1.5 text-(--color-text-muted) hover:bg-(--color-bg-muted) hover:text-(--color-text) disabled:opacity-50"
             >
               <XMarkIcon />
             </BaseDialog.Close>
@@ -75,18 +73,14 @@ export function Dialog({
             ref={contentRef}
             className={
               fullScreenMobile
-                ? "flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 pt-6 pb-4 sm:pb-6"
+                ? "min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-4 sm:px-6 sm:pb-6"
                 : "p-6"
             }
           >
             <div className="mb-4 pr-8">
-              <BaseDialog.Title className="text-lg font-semibold">
-                {title}
-              </BaseDialog.Title>
+              <BaseDialog.Title className="text-lg font-semibold">{title}</BaseDialog.Title>
               {description && (
-                <p className="text-sm text-(--color-text-muted) mt-1">
-                  {description}
-                </p>
+                <p className="mt-1 text-sm text-(--color-text-muted)">{description}</p>
               )}
             </div>
             {children}

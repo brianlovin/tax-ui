@@ -6,11 +6,7 @@ interface FilePlusIconProps {
   className?: string;
 }
 
-export function FilePlusIcon({
-  size = 20,
-  strokeWidth = 2,
-  className,
-}: FilePlusIconProps) {
+export function FilePlusIcon({ size = 20, strokeWidth = 2, className }: FilePlusIconProps) {
   return (
     <svg
       width={size}

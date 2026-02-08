@@ -1,9 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { PDFDocument } from "pdf-lib";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { TaxReturnSchema, type TaxReturn, type LabeledAmount } from "./schema";
-import { EXTRACTION_PROMPT } from "./prompt";
+import { PDFDocument } from "pdf-lib";
+
 import { classifyPages } from "./classifier";
+import { EXTRACTION_PROMPT } from "./prompt";
+import { type LabeledAmount, type TaxReturn, TaxReturnSchema } from "./schema";
 import { selectPages } from "./selector";
 
 // Max pages per extraction chunk (after smart selection)
@@ -12,10 +13,7 @@ const MAX_PAGES = 40;
 // Threshold for using smart classification (skip for small PDFs)
 const CLASSIFICATION_THRESHOLD = 20;
 
-async function extractPages(
-  pdfBase64: string,
-  pageNumbers: number[]
-): Promise<string> {
+async function extractPages(pdfBase64: string, pageNumbers: number[]): Promise<string> {
   const pdfBytes = Buffer.from(pdfBase64, "base64");
   const pdfDoc = await PDFDocument.load(pdfBytes);
 
@@ -23,7 +21,7 @@ async function extractPages(
   // pageNumbers are 1-indexed, copyPages needs 0-indexed
   const pages = await newDoc.copyPages(
     pdfDoc,
-    pageNumbers.map((p) => p - 1)
+    pageNumbers.map((p) => p - 1),
   );
   pages.forEach((page) => newDoc.addPage(page));
 
@@ -46,7 +44,7 @@ async function splitPdf(pdfBase64: string): Promise<string[]> {
     const chunkDoc = await PDFDocument.create();
     const pages = await chunkDoc.copyPages(
       pdfDoc,
-      Array.from({ length: end - start }, (_, i) => start + i)
+      Array.from({ length: end - start }, (_, i) => start + i),
     );
     pages.forEach((page) => chunkDoc.addPage(page));
     const chunkBytes = await chunkDoc.save();
@@ -56,10 +54,7 @@ async function splitPdf(pdfBase64: string): Promise<string[]> {
   return chunks;
 }
 
-async function parseChunk(
-  pdfBase64: string,
-  client: Anthropic
-): Promise<TaxReturn> {
+async function parseChunk(pdfBase64: string, client: Anthropic): Promise<TaxReturn> {
   const response = await client.messages.create({
     model: "claude-sonnet-4-5-20250929",
     max_tokens: 4096,
@@ -97,7 +92,7 @@ async function parseChunk(
 
 function mergeLabeledAmounts(
   existing: LabeledAmount[],
-  incoming: LabeledAmount[]
+  incoming: LabeledAmount[],
 ): LabeledAmount[] {
   const map = new Map<string, number>();
 
@@ -140,16 +135,10 @@ function mergeReturns(returns: TaxReturn[]): TaxReturn {
     // Merge federal deductions, credits, payments
     base.federal.deductions = mergeLabeledAmounts(
       base.federal.deductions,
-      chunk.federal.deductions
+      chunk.federal.deductions,
     );
-    base.federal.credits = mergeLabeledAmounts(
-      base.federal.credits,
-      chunk.federal.credits
-    );
-    base.federal.payments = mergeLabeledAmounts(
-      base.federal.payments,
-      chunk.federal.payments
-    );
+    base.federal.credits = mergeLabeledAmounts(base.federal.credits, chunk.federal.credits);
+    base.federal.payments = mergeLabeledAmounts(base.federal.payments, chunk.federal.payments);
 
     // Merge state returns
     for (const chunkState of chunk.states) {
@@ -157,16 +146,13 @@ function mergeReturns(returns: TaxReturn[]): TaxReturn {
       if (existingState) {
         existingState.deductions = mergeLabeledAmounts(
           existingState.deductions,
-          chunkState.deductions
+          chunkState.deductions,
         );
         existingState.adjustments = mergeLabeledAmounts(
           existingState.adjustments,
-          chunkState.adjustments
+          chunkState.adjustments,
         );
-        existingState.payments = mergeLabeledAmounts(
-          existingState.payments,
-          chunkState.payments
-        );
+        existingState.payments = mergeLabeledAmounts(existingState.payments, chunkState.payments);
       } else {
         base.states.push(chunkState);
       }
@@ -189,10 +175,7 @@ function mergeReturns(returns: TaxReturn[]): TaxReturn {
   return base;
 }
 
-async function smartExtract(
-  pdfBase64: string,
-  client: Anthropic
-): Promise<TaxReturn> {
+async function smartExtract(pdfBase64: string, client: Anthropic): Promise<TaxReturn> {
   const pdfBytes = Buffer.from(pdfBase64, "base64");
   const pdfDoc = await PDFDocument.load(pdfBytes);
   const totalPages = pdfDoc.getPageCount();
@@ -217,10 +200,7 @@ async function smartExtract(
   } catch (error) {
     // Fallback: process first 40 pages if classification fails
     console.error("Classification failed, using fallback:", error);
-    const fallbackPages = Array.from(
-      { length: Math.min(totalPages, MAX_PAGES) },
-      (_, i) => i + 1
-    );
+    const fallbackPages = Array.from({ length: Math.min(totalPages, MAX_PAGES) }, (_, i) => i + 1);
     const fallbackPdf = await extractPages(pdfBase64, fallbackPages);
     return parseChunk(fallbackPdf, client);
   }
@@ -231,10 +211,7 @@ async function smartExtract(
 
   // If no pages selected or selection too small, use fallback
   if (selectedPages.length === 0) {
-    const fallbackPages = Array.from(
-      { length: Math.min(totalPages, MAX_PAGES) },
-      (_, i) => i + 1
-    );
+    const fallbackPages = Array.from({ length: Math.min(totalPages, MAX_PAGES) }, (_, i) => i + 1);
     const fallbackPdf = await extractPages(pdfBase64, fallbackPages);
     return parseChunk(fallbackPdf, client);
   }
@@ -256,17 +233,14 @@ async function smartExtract(
   return mergeReturns(results);
 }
 
-export async function parseTaxReturn(
-  pdfBase64: string,
-  apiKey: string
-): Promise<TaxReturn> {
+export async function parseTaxReturn(pdfBase64: string, apiKey: string): Promise<TaxReturn> {
   const client = new Anthropic({ apiKey });
   return smartExtract(pdfBase64, client);
 }
 
 export async function extractYearFromPdf(
   pdfBase64: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<number | null> {
   const client = new Anthropic({ apiKey });
 

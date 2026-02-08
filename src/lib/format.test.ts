@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { formatCurrency, formatPercent, formatPercentChange } from "./format";
 
 describe("formatCurrency", () => {

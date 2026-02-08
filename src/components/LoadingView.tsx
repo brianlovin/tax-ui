@@ -7,21 +7,21 @@ interface Props {
 }
 
 export function LoadingView({ filename, year, status }: Props) {
-  const statusText = status === "extracting-year"
-    ? "Extracting year..."
-    : "Parsing tax return...";
+  const statusText = status === "extracting-year" ? "Extracting year..." : "Parsing tax return...";
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center">
+    <div className="flex flex-1 flex-col items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 rounded-2xl bg-(--color-bg-muted) flex items-center justify-center mx-auto mb-6">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-(--color-bg-muted)">
           <BrailleSpinner className="text-2xl text-(--color-text-muted)" />
         </div>
-        <h2 className="text-xl font-semibold text-(--color-text) mb-2">
+        <h2 className="mb-2 text-xl font-semibold text-(--color-text)">
           {year ? `${year} Tax Return` : "Processing"}
         </h2>
-        <p className="text-sm text-(--color-text-secondary) mb-1 max-w-xs truncate px-4">{filename}</p>
-        <p className="text-xs text-(--color-text-muted) animate-pulse-soft">{statusText}</p>
+        <p className="mb-1 max-w-xs truncate px-4 text-sm text-(--color-text-secondary)">
+          {filename}
+        </p>
+        <p className="animate-pulse-soft text-xs text-(--color-text-muted)">{statusText}</p>
       </div>
     </div>
   );

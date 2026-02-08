@@ -1,5 +1,5 @@
-import { useId } from "react";
 import { motion } from "motion/react";
+import { useId } from "react";
 
 interface Props {
   values: number[];
@@ -9,13 +9,7 @@ interface Props {
   activeIndex?: number | null;
 }
 
-export function Sparkline({
-  values,
-  width = 80,
-  height = 24,
-  className = "",
-  activeIndex,
-}: Props) {
+export function Sparkline({ values, width = 80, height = 24, className = "", activeIndex }: Props) {
   const gradientId = useId();
 
   if (values.length < 2) {
@@ -69,9 +63,7 @@ export function Sparkline({
   const areaD = `${lineD} L ${lastPoint.x},${bottom} L ${firstPoint.x},${bottom} Z`;
 
   const activePoint =
-    activeIndex !== undefined && activeIndex !== null
-      ? points[activeIndex]
-      : null;
+    activeIndex !== undefined && activeIndex !== null ? points[activeIndex] : null;
 
   const lineGradientId = `${gradientId}-line`;
 

@@ -1,30 +1,22 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import type {
-  TaxReturn,
-  PendingUpload,
-  FileProgress,
-  FileWithId,
-} from "./lib/schema";
-import type { NavItem } from "./lib/types";
-import { sampleReturns } from "./data/sampleData";
-import { MainPanel } from "./components/MainPanel";
-import { UploadModal } from "./components/UploadModal";
-import { SettingsModal } from "./components/SettingsModal";
-import { ResetDialog } from "./components/ResetDialog";
-import { DemoDialog } from "./components/DemoDialog";
-import { SetupDialog } from "./components/SetupDialog";
-import { Chat, type ChatMessage } from "./components/Chat";
-import { Button } from "./components/Button";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { DevTools, cycleDemoOverride } from "./components/DevTools";
-import { extractYearFromFilename } from "./lib/year-extractor";
-import {
-  getDevDemoOverride,
-  isHostedEnvironment,
-  resolveDemoMode,
-} from "./lib/env";
-import { isElectron } from "./lib/electron";
 import "./index.css";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { Chat, type ChatMessage } from "./components/Chat";
+import { DemoDialog } from "./components/DemoDialog";
+import { DevTools } from "./components/DevTools";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { MainPanel } from "./components/MainPanel";
+import { ResetDialog } from "./components/ResetDialog";
+import { SettingsModal } from "./components/SettingsModal";
+import { SetupDialog } from "./components/SetupDialog";
+import { UploadModal } from "./components/UploadModal";
+import { sampleReturns } from "./data/sampleData";
+import { isElectron } from "./lib/electron";
+import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
+import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
+import type { NavItem } from "./lib/types";
+import { extractYearFromFilename } from "./lib/year-extractor";
 
 export type UpdateStatus = "available" | "downloading" | "ready";
 
@@ -126,10 +118,7 @@ interface AppState {
 }
 
 async function fetchInitialState(): Promise<
-  Pick<
-    AppState,
-    "returns" | "hasStoredKey" | "hasUserData" | "isDemo" | "isDev"
-  >
+  Pick<AppState, "returns" | "hasStoredKey" | "hasUserData" | "isDemo" | "isDev">
 > {
   // In production (static hosting), skip API calls and use sample data
   if (isHostedEnvironment()) {
@@ -142,10 +131,7 @@ async function fetchInitialState(): Promise<
     };
   }
 
-  const [configRes, returnsRes] = await Promise.all([
-    fetch("/api/config"),
-    fetch("/api/returns"),
-  ]);
+  const [configRes, returnsRes] = await Promise.all([fetch("/api/config"), fetch("/api/returns")]);
   const { hasKey, isDemo, isDev } = await configRes.json();
   const returns = await returnsRes.json();
   const hasUserData = Object.keys(returns).length > 0;
@@ -207,27 +193,18 @@ export function App() {
     // Default: closed on mobile, open on desktop
     return typeof window !== "undefined" && window.innerWidth >= 768;
   });
-  const [openModal, setOpenModal] = useState<
-    "settings" | "reset" | "onboarding" | null
-  >(null);
+  const [openModal, setOpenModal] = useState<"settings" | "reset" | "onboarding" | null>(null);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [isOnboardingProcessing, setIsOnboardingProcessing] = useState(false);
-  const [onboardingProgress, setOnboardingProgress] = useState<FileProgress[]>(
-    [],
-  );
+  const [onboardingProgress, setOnboardingProgress] = useState<FileProgress[]>([]);
   const [isDark, setIsDark] = useState(
     () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches,
+      typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches,
   );
   const [devTriggerError, setDevTriggerError] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() =>
-    loadChatMessages(),
-  );
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => loadChatMessages());
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [pendingAutoMessage, setPendingAutoMessage] = useState<string | null>(
-    null,
-  );
+  const [pendingAutoMessage, setPendingAutoMessage] = useState<string | null>(null);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -303,17 +280,11 @@ export function App() {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      const currentId =
-        state.selectedYear === "summary"
-          ? "summary"
-          : String(state.selectedYear);
+      const currentId = state.selectedYear === "summary" ? "summary" : String(state.selectedYear);
       const selectedIndex = navItems.findIndex((item) => item.id === currentId);
 
       if (e.key === "j" && selectedIndex < navItems.length - 1) {
@@ -415,17 +386,13 @@ export function App() {
             const { year: extractedYear } = await yearRes.json();
             setPendingUploads((prev) =>
               prev.map((p) =>
-                p.id === pending.id
-                  ? { ...p, year: extractedYear, status: "parsing" }
-                  : p,
+                p.id === pending.id ? { ...p, year: extractedYear, status: "parsing" } : p,
               ),
             );
           } catch (err) {
             console.error("Year extraction failed:", err);
             setPendingUploads((prev) =>
-              prev.map((p) =>
-                p.id === pending.id ? { ...p, status: "parsing" } : p,
-              ),
+              prev.map((p) => (p.id === pending.id ? { ...p, status: "parsing" } : p)),
             );
           }
         }),
@@ -628,9 +595,7 @@ export function App() {
       }
 
       const newSelection =
-        s.selectedYear === year
-          ? getDefaultSelection(newReturns)
-          : s.selectedYear;
+        s.selectedYear === year ? getDefaultSelection(newReturns) : s.selectedYear;
       return {
         ...s,
         returns: newReturns,
@@ -646,17 +611,14 @@ export function App() {
 
   if (state.isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <span className="text-sm text-(--color-text-muted)">Loading...</span>
       </div>
     );
   }
 
   function getSelectedId(): string {
-    if (
-      typeof state.selectedYear === "string" &&
-      state.selectedYear.startsWith("pending:")
-    ) {
+    if (typeof state.selectedYear === "string" && state.selectedYear.startsWith("pending:")) {
       return state.selectedYear;
     }
     if (state.selectedYear === "summary") return "summary";
@@ -695,13 +657,7 @@ export function App() {
     };
 
     if (selectedPendingUpload) {
-      return (
-        <MainPanel
-          view="loading"
-          pendingUpload={selectedPendingUpload}
-          {...commonProps}
-        />
-      );
+      return <MainPanel view="loading" pendingUpload={selectedPendingUpload} {...commonProps} />;
     }
     if (state.selectedYear === "summary") {
       return <MainPanel view="summary" {...commonProps} />;
@@ -722,8 +678,7 @@ export function App() {
 
   // Find pending upload if selected
   const selectedPendingUpload =
-    typeof state.selectedYear === "string" &&
-    state.selectedYear.startsWith("pending:")
+    typeof state.selectedYear === "string" && state.selectedYear.startsWith("pending:")
       ? pendingUploads.find((p) => `pending:${p.id}` === state.selectedYear)
       : null;
 
@@ -733,16 +688,11 @@ export function App() {
   const showOnboarding =
     isOnboardingProcessing ||
     openModal === "onboarding" ||
-    (!effectiveIsDemo &&
-      !onboardingDismissed &&
-      !state.hasStoredKey &&
-      !state.hasUserData);
+    (!effectiveIsDemo && !onboardingDismissed && !state.hasStoredKey && !state.hasUserData);
 
   // Skip open animation only on first automatic show (not manual reopen)
   const skipOnboardingAnimation =
-    showOnboarding &&
-    !hasShownOnboardingRef.current &&
-    openModal !== "onboarding";
+    showOnboarding && !hasShownOnboardingRef.current && openModal !== "onboarding";
   if (showOnboarding && !hasShownOnboardingRef.current) {
     hasShownOnboardingRef.current = true;
   }
@@ -781,19 +731,13 @@ export function App() {
       const file = fileWithId.file;
       const id = fileWithId.id;
 
-      setOnboardingProgress((p) =>
-        p.map((f) => (f.id === id ? { ...f, status: "parsing" } : f)),
-      );
+      setOnboardingProgress((p) => p.map((f) => (f.id === id ? { ...f, status: "parsing" } : f)));
 
       try {
         const taxReturn = await processUpload(file, apiKey);
         uploadedYears.push(taxReturn.year);
         setOnboardingProgress((p) =>
-          p.map((f) =>
-            f.id === id
-              ? { ...f, status: "complete", year: taxReturn.year }
-              : f,
-          ),
+          p.map((f) => (f.id === id ? { ...f, status: "complete", year: taxReturn.year } : f)),
         );
       } catch (err) {
         setOnboardingProgress((p) =>
@@ -811,11 +755,7 @@ export function App() {
     }
 
     // Smart routing
-    const nav = getPostUploadNavigation(
-      existingYears,
-      uploadedYears,
-      files.length,
-    );
+    const nav = getPostUploadNavigation(existingYears, uploadedYears, files.length);
     setState((s) => ({ ...s, selectedYear: nav }));
 
     setIsOnboardingProcessing(false);
@@ -913,18 +853,16 @@ export function App() {
       {/* Demo island - show in demo mode when dialog is closed */}
       {effectiveIsDemo && !showOnboarding && (
         <>
-          <div className="bg-linear-to-t pointer-events-none z-90 from-white dark:from-black to-transparent fixed bottom-0 inset-x-0 md:h-128 h-96" />
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-90 h-96 bg-linear-to-t from-white to-transparent md:h-128 dark:from-black" />
           <button
             onClick={() => setOpenModal("onboarding")}
-            className="cursor-pointer z-100 fixed bottom-8 left-8 md:max-w-lg right-8 p-4 md:p-6 rounded-2xl bg-black dark:bg-neutral-800 text-white dark:shadow-contrast shadow-md ring-[0.5px] ring-black/10 flex flex-col gap-3"
+            className="dark:shadow-contrast fixed right-8 bottom-8 left-8 z-100 flex cursor-pointer flex-col gap-3 rounded-2xl bg-black p-4 text-white shadow-md ring-[0.5px] ring-black/10 md:max-w-lg md:p-6 dark:bg-neutral-800"
           >
-            <div className="text-lg mb-2 flex flex-col items-start justify-start text-left">
+            <div className="mb-2 flex flex-col items-start justify-start text-left text-lg">
               <span className="font-semibold text-(--color-brand)">Tax UI</span>
-              <span className="font-medium">
-                Visualize and chat with your tax returns
-              </span>
+              <span className="font-medium">Visualize and chat with your tax returns</span>
             </div>
-            <span className="bg-(--color-brand) text-white self-start text-neutral-900 text-base font-semibold px-3 py-1.5 rounded-lg">
+            <span className="self-start rounded-lg bg-(--color-brand) px-3 py-1.5 text-base font-semibold text-neutral-900 text-white">
               Get started
             </span>
           </button>
@@ -932,7 +870,7 @@ export function App() {
       )}
 
       {updater && (
-        <div className="get-started-pill fixed bottom-6 right-6 z-50 flex h-10 items-center gap-2 rounded-full bg-black pl-4 pr-1.5 text-sm text-white shadow-lg transition-all duration-300 ease-out dark:bg-zinc-800 dark:shadow-contrast">
+        <div className="get-started-pill dark:shadow-contrast fixed right-6 bottom-6 z-50 flex h-10 items-center gap-2 rounded-full bg-black pr-1.5 pl-4 text-sm text-white shadow-lg transition-all duration-300 ease-out dark:bg-zinc-800">
           {updater.status === "available" && (
             <>
               <span className="whitespace-nowrap">v{updater.version} available</span>
@@ -945,7 +883,9 @@ export function App() {
             </>
           )}
           {updater.status === "downloading" && (
-            <span className="whitespace-nowrap tabular-nums pr-2.5">Downloading {updater.progress}%</span>
+            <span className="pr-2.5 whitespace-nowrap tabular-nums">
+              Downloading {updater.progress}%
+            </span>
           )}
           {updater.status === "ready" && (
             <>

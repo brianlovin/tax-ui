@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { SetupDialogPreview } from "./SetupDialogPreview";
-import { setDevDemoOverride } from "../lib/env";
+
 import type { UpdateStatus } from "../App";
+import { setDevDemoOverride } from "../lib/env";
+import { SetupDialogPreview } from "./SetupDialogPreview";
 
 export function cycleDemoOverride(current: boolean | null): boolean | null {
   if (current === null) return true;
@@ -71,37 +72,35 @@ export function DevTools({
 
   return (
     <>
-      <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-(--color-border) p-2 shadow-lg">
+      <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-1.5 rounded-lg border border-(--color-border) bg-white p-2 shadow-lg dark:bg-zinc-900">
         <button
           onClick={handleDemoToggle}
-          className="px-2 py-1 text-xs font-mono rounded bg-(--color-bg-muted) border border-(--color-border) text-(--color-text-muted) hover:text-(--color-text) hover:border-(--color-text-muted)"
+          className="rounded border border-(--color-border) bg-(--color-bg-muted) px-2 py-1 font-mono text-xs text-(--color-text-muted) hover:border-(--color-text-muted) hover:text-(--color-text)"
         >
           {getDemoOverrideLabel(devDemoOverride)}
           <span className="ml-1.5 opacity-50">Shift+D</span>
         </button>
         <button
           onClick={handleUpdateToggle}
-          className="px-2 py-1 text-xs font-mono rounded bg-(--color-bg-muted) border border-(--color-border) text-(--color-text-muted) hover:text-(--color-text) hover:border-(--color-text-muted)"
+          className="rounded border border-(--color-border) bg-(--color-bg-muted) px-2 py-1 font-mono text-xs text-(--color-text-muted) hover:border-(--color-text-muted) hover:text-(--color-text)"
         >
           {getUpdateOverrideLabel(devUpdateOverride)}
           <span className="ml-1.5 opacity-50">Shift+U</span>
         </button>
         <button
           onClick={() => setShowPreview(true)}
-          className="px-2 py-1 text-xs font-mono rounded bg-(--color-bg-muted) border border-(--color-border) text-(--color-text-muted) hover:text-(--color-text) hover:border-(--color-text-muted)"
+          className="rounded border border-(--color-border) bg-(--color-bg-muted) px-2 py-1 font-mono text-xs text-(--color-text-muted) hover:border-(--color-text-muted) hover:text-(--color-text)"
         >
           preview states
         </button>
         <button
           onClick={onTriggerError}
-          className="px-2 py-1 text-xs font-mono rounded bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 hover:border-red-500/50"
+          className="rounded border border-red-500/30 bg-red-500/10 px-2 py-1 font-mono text-xs text-red-500 hover:border-red-500/50 hover:bg-red-500/20"
         >
           trigger error
         </button>
       </div>
-      {showPreview && (
-        <SetupDialogPreview onClose={() => setShowPreview(false)} />
-      )}
+      {showPreview && <SetupDialogPreview onClose={() => setShowPreview(false)} />}
     </>
   );
 }

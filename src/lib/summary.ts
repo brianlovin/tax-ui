@@ -1,5 +1,4 @@
 import type { TaxReturn } from "./schema";
-import { getTotalTax, getNetIncome } from "./tax-calculations";
 
 export interface AggregatedSummary {
   years: number[];
@@ -28,8 +27,12 @@ export interface AggregatedSummary {
 }
 
 export function aggregateSummary(returns: Record<number, TaxReturn>): AggregatedSummary | null {
-  const years = Object.keys(returns).map(Number).sort((a, b) => a - b);
-  const allReturns = years.map((year) => returns[year]).filter((r): r is TaxReturn => r !== undefined);
+  const years = Object.keys(returns)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const allReturns = years
+    .map((year) => returns[year])
+    .filter((r): r is TaxReturn => r !== undefined);
 
   if (allReturns.length === 0) return null;
 
@@ -40,12 +43,18 @@ export function aggregateSummary(returns: Record<number, TaxReturn>): Aggregated
       incomeItemsMap.set(item.label, (incomeItemsMap.get(item.label) || 0) + item.amount);
     }
   }
-  const incomeItems = Array.from(incomeItemsMap.entries()).map(([label, amount]) => ({ label, amount }));
+  const incomeItems = Array.from(incomeItemsMap.entries()).map(([label, amount]) => ({
+    label,
+    amount,
+  }));
 
   // Totals
   const totalIncome = allReturns.reduce((sum, r) => sum + r.income.total, 0);
   const totalFederalTax = allReturns.reduce((sum, r) => sum + r.federal.tax, 0);
-  const totalStateTax = allReturns.reduce((sum, r) => sum + r.states.reduce((s, st) => s + st.tax, 0), 0);
+  const totalStateTax = allReturns.reduce(
+    (sum, r) => sum + r.states.reduce((s, st) => s + st.tax, 0),
+    0,
+  );
   const totalTax = totalFederalTax + totalStateTax;
   const netIncome = totalIncome - totalTax;
 
@@ -53,10 +62,16 @@ export function aggregateSummary(returns: Record<number, TaxReturn>): Aggregated
   const federalDeductionsMap = new Map<string, number>();
   for (const r of allReturns) {
     for (const item of r.federal.deductions) {
-      federalDeductionsMap.set(item.label, (federalDeductionsMap.get(item.label) || 0) + item.amount);
+      federalDeductionsMap.set(
+        item.label,
+        (federalDeductionsMap.get(item.label) || 0) + item.amount,
+      );
     }
   }
-  const federalDeductions = Array.from(federalDeductionsMap.entries()).map(([label, amount]) => ({ label, amount }));
+  const federalDeductions = Array.from(federalDeductionsMap.entries()).map(([label, amount]) => ({
+    label,
+    amount,
+  }));
 
   // Aggregate state info
   const stateMap = new Map<string, number>();
@@ -69,7 +84,8 @@ export function aggregateSummary(returns: Record<number, TaxReturn>): Aggregated
 
   // Averages
   const avgAgi = allReturns.reduce((sum, r) => sum + r.federal.agi, 0) / allReturns.length;
-  const avgTaxableIncome = allReturns.reduce((sum, r) => sum + r.federal.taxableIncome, 0) / allReturns.length;
+  const avgTaxableIncome =
+    allReturns.reduce((sum, r) => sum + r.federal.taxableIncome, 0) / allReturns.length;
 
   // Net position totals
   const totalFederalRefund = allReturns.reduce((sum, r) => sum + r.summary.federalAmount, 0);
@@ -79,35 +95,64 @@ export function aggregateSummary(returns: Record<number, TaxReturn>): Aggregated
       stateRefundsMap.set(s.state, (stateRefundsMap.get(s.state) || 0) + s.amount);
     }
   }
-  const stateRefunds = Array.from(stateRefundsMap.entries()).map(([state, amount]) => ({ state, amount }));
+  const stateRefunds = Array.from(stateRefundsMap.entries()).map(([state, amount]) => ({
+    state,
+    amount,
+  }));
   const totalNetPosition = allReturns.reduce((sum, r) => sum + r.summary.netPosition, 0);
 
   // Average rates
   const returnsWithRates = allReturns.filter((r) => r.rates);
   let rates: AggregatedSummary["rates"] = null;
   if (returnsWithRates.length > 0) {
-    const avgFederalMarginal = returnsWithRates.reduce((sum, r) => sum + (r.rates?.federal.marginal || 0), 0) / returnsWithRates.length;
-    const avgFederalEffective = returnsWithRates.reduce((sum, r) => sum + (r.rates?.federal.effective || 0), 0) / returnsWithRates.length;
+    const avgFederalMarginal =
+      returnsWithRates.reduce((sum, r) => sum + (r.rates?.federal.marginal || 0), 0) /
+      returnsWithRates.length;
+    const avgFederalEffective =
+      returnsWithRates.reduce((sum, r) => sum + (r.rates?.federal.effective || 0), 0) /
+      returnsWithRates.length;
 
     const returnsWithStateRates = allReturns.filter((r) => r.rates?.state);
-    const stateRates = returnsWithStateRates.length > 0 ? {
-      marginal: returnsWithStateRates.reduce((sum, r) => sum + (r.rates?.state?.marginal || 0), 0) / returnsWithStateRates.length,
-      effective: returnsWithStateRates.reduce((sum, r) => sum + (r.rates?.state?.effective || 0), 0) / returnsWithStateRates.length,
-    } : null;
+    const stateRates =
+      returnsWithStateRates.length > 0
+        ? {
+            marginal:
+              returnsWithStateRates.reduce((sum, r) => sum + (r.rates?.state?.marginal || 0), 0) /
+              returnsWithStateRates.length,
+            effective:
+              returnsWithStateRates.reduce((sum, r) => sum + (r.rates?.state?.effective || 0), 0) /
+              returnsWithStateRates.length,
+          }
+        : null;
 
     const returnsWithCombinedRates = allReturns.filter((r) => r.rates?.combined);
-    const combinedRates = returnsWithCombinedRates.length > 0 ? {
-      marginal: returnsWithCombinedRates.reduce((sum, r) => sum + (r.rates?.combined?.marginal || 0), 0) / returnsWithCombinedRates.length,
-      effective: returnsWithCombinedRates.reduce((sum, r) => sum + (r.rates?.combined?.effective || 0), 0) / returnsWithCombinedRates.length,
-    } : null;
+    const combinedRates =
+      returnsWithCombinedRates.length > 0
+        ? {
+            marginal:
+              returnsWithCombinedRates.reduce(
+                (sum, r) => sum + (r.rates?.combined?.marginal || 0),
+                0,
+              ) / returnsWithCombinedRates.length,
+            effective:
+              returnsWithCombinedRates.reduce(
+                (sum, r) => sum + (r.rates?.combined?.effective || 0),
+                0,
+              ) / returnsWithCombinedRates.length,
+          }
+        : null;
 
-    rates = { federal: { marginal: avgFederalMarginal, effective: avgFederalEffective }, state: stateRates, combined: combinedRates };
+    rates = {
+      federal: { marginal: avgFederalMarginal, effective: avgFederalEffective },
+      state: stateRates,
+      combined: combinedRates,
+    };
   }
 
   // Monthly and hourly
   const grossMonthly = Math.round(totalIncome / 12 / allReturns.length);
   const netMonthly = Math.round(netIncome / 12 / allReturns.length);
-  const avgHourlyRate = (netIncome / allReturns.length) / 2080;
+  const avgHourlyRate = netIncome / allReturns.length / 2080;
 
   return {
     years,

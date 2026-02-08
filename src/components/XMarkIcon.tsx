@@ -6,11 +6,7 @@ interface XMarkIconProps {
   className?: string;
 }
 
-export function XMarkIcon({
-  size = 20,
-  strokeWidth = 2,
-  className,
-}: XMarkIconProps) {
+export function XMarkIcon({ size = 20, strokeWidth = 2, className }: XMarkIconProps) {
   return (
     <svg
       width={size}

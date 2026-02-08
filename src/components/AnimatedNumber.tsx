@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
 import { cn } from "../lib/cn";
 
 interface AnimatedNumberProps {
@@ -85,10 +86,7 @@ export function AnimatedNumber({
   }, [value, text, duration]);
 
   return (
-    <span
-      className={cn(className)}
-      style={minChars ? { minWidth: `${minChars}ch` } : undefined}
-    >
+    <span className={cn(className)} style={minChars ? { minWidth: `${minChars}ch` } : undefined}>
       {displayText}
     </span>
   );

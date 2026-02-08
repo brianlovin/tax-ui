@@ -1,32 +1,33 @@
+import { ContextMenu } from "@base-ui/react/context-menu";
+import { Tabs } from "@base-ui/react/tabs";
+import { LayoutGroup, motion } from "motion/react";
 import {
-  useState,
-  useRef,
-  useEffect,
+  createContext,
   useCallback,
+  useContext,
+  useEffect,
   useId,
   useMemo,
-  createContext,
-  useContext,
+  useRef,
+  useState,
   useSyncExternalStore,
 } from "react";
-import { Tabs } from "@base-ui/react/tabs";
-import { ContextMenu } from "@base-ui/react/context-menu";
-import { LayoutGroup, motion } from "motion/react";
+
 import { cn } from "../lib/cn";
-import type { TaxReturn, PendingUpload } from "../lib/schema";
+import { isElectron } from "../lib/electron";
+import type { PendingUpload, TaxReturn } from "../lib/schema";
 import type { NavItem } from "../lib/types";
-import { ReceiptView } from "./ReceiptView";
-import { StatsHeader } from "./StatsHeader";
-import { SummaryTable } from "./SummaryTable";
-import { SummaryReceiptView } from "./SummaryReceiptView";
-import { LoadingView } from "./LoadingView";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
-import { Menu, MenuItem, popupBaseClassName, itemBaseClassName } from "./Menu";
-import { TrashIcon } from "./TrashIcon";
-import { PlusIcon } from "./PlusIcon";
 import { FilePlusIcon } from "./FilePlusIcon";
-import { isElectron } from "../lib/electron";
+import { LoadingView } from "./LoadingView";
+import { itemBaseClassName, Menu, MenuItem, popupBaseClassName } from "./Menu";
+import { PlusIcon } from "./PlusIcon";
+import { ReceiptView } from "./ReceiptView";
+import { StatsHeader } from "./StatsHeader";
+import { SummaryReceiptView } from "./SummaryReceiptView";
+import { SummaryTable } from "./SummaryTable";
+import { TrashIcon } from "./TrashIcon";
 
 interface CommonProps {
   isChatOpen: boolean;
@@ -77,9 +78,7 @@ interface TabHighlightContextValue {
   setHovered: (id: string | null) => void;
 }
 
-const TabHighlightContext = createContext<TabHighlightContextValue | null>(
-  null,
-);
+const TabHighlightContext = createContext<TabHighlightContextValue | null>(null);
 
 function useTabHighlightStore() {
   const hoveredRef = useRef<string | null>(null);
@@ -127,10 +126,8 @@ function AnimatedTab({ id, label, isSelected, wrapper }: AnimatedTabProps) {
     <Tabs.Tab
       value={id}
       className={cn(
-        "relative px-2.5 py-1 text-sm font-medium rounded-lg shrink-0 outline-none",
-        isSelected
-          ? "text-(--color-text)"
-          : "text-(--color-text-muted) hover:text-(--color-text)",
+        "relative shrink-0 rounded-lg px-2.5 py-1 text-sm font-medium outline-none",
+        isSelected ? "text-(--color-text)" : "text-(--color-text-muted) hover:text-(--color-text)",
       )}
       onMouseEnter={() => ctx?.setHovered(id)}
     >
@@ -138,7 +135,7 @@ function AnimatedTab({ id, label, isSelected, wrapper }: AnimatedTabProps) {
       {showHighlight && ctx && (
         <motion.div
           layoutId={ctx.layoutId}
-          className="absolute inset-0 bg-(--color-bg-muted) dark:shadow-contrast rounded-lg"
+          className="dark:shadow-contrast absolute inset-0 rounded-lg bg-(--color-bg-muted)"
           initial={false}
           transition={{
             type: "spring",
@@ -155,8 +152,7 @@ function AnimatedTab({ id, label, isSelected, wrapper }: AnimatedTabProps) {
 }
 
 export function MainPanel(props: Props) {
-  const [summaryViewMode, setSummaryViewMode] =
-    useState<SummaryViewMode>("table");
+  const [summaryViewMode, setSummaryViewMode] = useState<SummaryViewMode>("table");
   const [visibleCount, setVisibleCount] = useState(props.navItems.length);
   const navRef = useRef<HTMLElement>(null);
 
@@ -175,9 +171,7 @@ export function MainPanel(props: Props) {
     if (!navRef.current) return;
     const availableWidth = navRef.current.offsetWidth;
     const reservedWidth = OVERFLOW_BUTTON_WIDTH + ADD_BUTTON_WIDTH;
-    const maxItems = Math.floor(
-      (availableWidth - reservedWidth) / ITEM_WIDTH,
-    );
+    const maxItems = Math.floor((availableWidth - reservedWidth) / ITEM_WIDTH);
     setVisibleCount(Math.max(1, Math.min(props.navItems.length, maxItems)));
   }, [props.navItems.length]);
 
@@ -211,14 +205,9 @@ export function MainPanel(props: Props) {
 
       e.preventDefault();
 
-      const currentIndex = props.navItems.findIndex(
-        (item) => item.id === props.selectedId,
-      );
+      const currentIndex = props.navItems.findIndex((item) => item.id === props.selectedId);
       const direction = e.key === "ArrowLeft" ? -1 : 1;
-      const nextIndex = Math.max(
-        0,
-        Math.min(props.navItems.length - 1, currentIndex + direction),
-      );
+      const nextIndex = Math.max(0, Math.min(props.navItems.length - 1, currentIndex + direction));
       const nextItem = props.navItems[nextIndex];
 
       if (nextItem && nextItem.id !== props.selectedId) {
@@ -241,15 +230,15 @@ export function MainPanel(props: Props) {
   const hasOverflow = overflowItems.length > 0;
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-(--color-bg)">
+    <div className="flex h-screen flex-1 flex-col overflow-hidden bg-(--color-bg)">
       {/* Header */}
       <header
         className={cn(
-          "h-12 pl-[calc(0.75rem+var(--electron-traffic-left))] pr-3 sm:pl-[calc(1.5rem+var(--electron-traffic-left))] sm:pr-3 flex items-center justify-between shrink-0 border-b border-(--color-border)",
+          "flex h-12 shrink-0 items-center justify-between border-b border-(--color-border) pr-3 pl-[calc(0.75rem+var(--electron-traffic-left))] sm:pr-3 sm:pl-[calc(1.5rem+var(--electron-traffic-left))]",
           isElectron() && "app-window-drag",
         )}
       >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {/* Hamburger Menu */}
           <Menu
             triggerClassName="-ml-1.5"
@@ -282,18 +271,9 @@ export function MainPanel(props: Props) {
               </MenuItem>
             )}
 
-            <MenuItem
-              onClick={() =>
-                window.open("https://github.com/brianlovin/tax-ui", "_blank")
-              }
-            >
-              <div className="w-5 h-5 flex items-center justify-center">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 15 15"
-                  fill="currentColor"
-                >
+            <MenuItem onClick={() => window.open("https://github.com/brianlovin/tax-ui", "_blank")}>
+              <div className="flex h-5 w-5 items-center justify-center">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor">
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
@@ -306,15 +286,10 @@ export function MainPanel(props: Props) {
           </Menu>
           <Tabs.Root
             value={props.selectedId}
-            onValueChange={(val: string | number | null) =>
-              val && props.onSelect(String(val))
-            }
-            className="flex-1 min-w-0"
+            onValueChange={(val: string | number | null) => val && props.onSelect(String(val))}
+            className="min-w-0 flex-1"
           >
-            <nav
-              ref={navRef}
-              className="flex items-center gap-2 flex-1 min-w-0"
-            >
+            <nav ref={navRef} className="flex min-w-0 flex-1 items-center gap-2">
               <Tabs.List
                 ref={tabListRef}
                 className="flex items-center gap-2 min-w-0 overflow-hidden pr-1"
@@ -322,13 +297,10 @@ export function MainPanel(props: Props) {
                 onMouseLeave={() => tabHighlightStore.setHovered(null)}
               >
                 <LayoutGroup>
-                  <TabHighlightContext.Provider
-                    value={tabHighlightContextValue}
-                  >
+                  <TabHighlightContext.Provider value={tabHighlightContextValue}>
                     {visibleItems.map((item) => {
                       const isYear = item.id !== "summary";
-                      const canDelete =
-                        isYear && !props.isDemo && props.onDeleteYear;
+                      const canDelete = isYear && !props.isDemo && props.onDeleteYear;
 
                       return (
                         <AnimatedTab
@@ -342,24 +314,16 @@ export function MainPanel(props: Props) {
                                   <ContextMenu.Root>
                                     <ContextMenu.Trigger render={tab} />
                                     <ContextMenu.Portal>
-                                      <ContextMenu.Positioner
-                                        className="z-50"
-                                        sideOffset={4}
-                                      >
+                                      <ContextMenu.Positioner className="z-50" sideOffset={4}>
                                         <ContextMenu.Popup
-                                          className={cn(
-                                            popupBaseClassName,
-                                            "z-50",
-                                          )}
+                                          className={cn(popupBaseClassName, "z-50")}
                                         >
                                           <ContextMenu.Item
                                             className={cn(
                                               itemBaseClassName,
                                               "data-[highlighted]:bg-(--color-bg-muted)",
                                             )}
-                                            onClick={() =>
-                                              props.onDeleteYear?.(item.id)
-                                            }
+                                            onClick={() => props.onDeleteYear?.(item.id)}
                                           >
                                             <TrashIcon />
                                             Remove {item.label} data
@@ -406,7 +370,7 @@ export function MainPanel(props: Props) {
                   variant="ghost"
                   size="sm"
                   onClick={props.onOpenStart}
-                  className="shrink-0 flex items-center gap-1 px-2.5 py-1"
+                  className="flex shrink-0 items-center gap-1 px-2.5 py-1"
                 >
                   <PlusIcon size={14} strokeWidth={2.5} />
                   Upload
@@ -431,7 +395,7 @@ export function MainPanel(props: Props) {
             variant="ghost"
             size="sm"
             onClick={props.onToggleChat}
-            className="shrink-0 flex items-center gap-2"
+            className="flex shrink-0 items-center gap-2"
           >
             Chat
             {props.isChatLoading && <BrailleSpinner className="text-xs" />}
@@ -447,10 +411,10 @@ export function MainPanel(props: Props) {
           status={props.pendingUpload.status}
         />
       ) : props.view === "summary" ? (
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col">
           <StatsHeader returns={props.returns} selectedYear="summary" />
           {summaryViewMode === "table" ? (
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-hidden">
               <SummaryTable returns={props.returns} />
             </div>
           ) : (
@@ -460,12 +424,9 @@ export function MainPanel(props: Props) {
           )}
         </div>
       ) : props.view === "receipt" ? (
-        <div className="flex-1 flex flex-col min-h-0">
-          <StatsHeader
-            returns={props.returns}
-            selectedYear={props.selectedYear as number}
-          />
-          <div className="flex-1 bg-neutral-50 dark:bg-neutral-950 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
+          <div className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-950">
             <ReceiptView data={props.data} />
           </div>
         </div>

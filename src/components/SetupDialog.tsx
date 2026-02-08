@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect } from "react";
 import { Input } from "@base-ui/react/input";
 import { AnimatePresence, motion } from "motion/react";
-import { Dialog } from "./Dialog";
-import { Button } from "./Button";
-import { FAQSection } from "./FAQSection";
-import { FileUploadPreview, type DisplayFile } from "./FileUploadPreview";
+import { useEffect, useRef, useState } from "react";
+
 import type { FileProgress, FileWithId } from "../lib/schema";
+import { Button } from "./Button";
+import { Dialog } from "./Dialog";
+import { FAQSection } from "./FAQSection";
+import { type DisplayFile, FileUploadPreview } from "./FileUploadPreview";
 
 interface Props {
   isOpen: boolean;
@@ -50,10 +51,7 @@ export function SetupDialog({
     }
   }, [isOpen, isProcessing]);
 
-  async function extractYearFromFile(
-    file: File,
-    key: string,
-  ): Promise<number | null> {
+  async function extractYearFromFile(file: File, key: string): Promise<number | null> {
     try {
       const formData = new FormData();
       formData.append("pdf", file);
@@ -115,8 +113,7 @@ export function SetupDialog({
           }
           return updated.map((f, i) => ({
             ...f,
-            isDuplicate:
-              f.year !== null ? checkDuplicate(f.year, i, updated) : false,
+            isDuplicate: f.year !== null ? checkDuplicate(f.year, i, updated) : false,
           }));
         });
       }),
@@ -227,10 +224,8 @@ export function SetupDialog({
   const nonDuplicateCount = files.filter((f) => !f.isDuplicate).length;
   const duplicateCount = files.filter((f) => f.isDuplicate).length;
 
-  const processingCount =
-    fileProgress?.filter((f) => f.status === "parsing").length ?? 0;
-  const completedCount =
-    fileProgress?.filter((f) => f.status === "complete").length ?? 0;
+  const processingCount = fileProgress?.filter((f) => f.status === "parsing").length ?? 0;
+  const completedCount = fileProgress?.filter((f) => f.status === "complete").length ?? 0;
   const totalCount = fileProgress?.length ?? 0;
   const currentIndex = completedCount + processingCount;
 
@@ -256,11 +251,7 @@ export function SetupDialog({
       open={isOpen}
       onClose={onClose}
       title={hasStoredKey ? "Upload tax returns" : "Tax UI"}
-      description={
-        hasStoredKey
-          ? "Upload more tax returns"
-          : "Make sense of your tax returns"
-      }
+      description={hasStoredKey ? "Upload more tax returns" : "Make sense of your tax returns"}
       size="lg"
       fullScreenMobile
       showClose={!isProcessing}
@@ -271,11 +262,9 @@ export function SetupDialog({
       <div>
         {/* API Key Section - always visible */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">
-            Anthropic API Key
-          </label>
+          <label className="mb-2 block text-sm font-medium">Anthropic API Key</label>
           {hasStoredKey ? (
-            <div className="w-full px-3 py-2.5 border border-(--color-border) bg-(--color-bg-muted) rounded-lg text-sm text-(--color-text-muted)">
+            <div className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2.5 text-sm text-(--color-text-muted)">
               sk-ant-•••••••••••••••
             </div>
           ) : (
@@ -290,9 +279,9 @@ export function SetupDialog({
                 autoComplete="off"
                 data-1p-ignore
                 data-lpignore="true"
-                className="w-full px-3 py-2.5 border border-(--color-border) bg-(--color-bg-muted) rounded-lg text-sm placeholder:text-(--color-text-muted) focus:outline-none focus:border-(--color-text-muted) disabled:opacity-50"
+                className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2.5 text-sm placeholder:text-(--color-text-muted) focus:border-(--color-text-muted) focus:outline-none disabled:opacity-50"
               />
-              <p className="text-xs text-(--color-text-muted) mt-2">
+              <p className="mt-2 text-xs text-(--color-text-muted)">
                 Get your API key from{" "}
                 <a
                   href="https://console.anthropic.com/settings/keys"
@@ -309,25 +298,21 @@ export function SetupDialog({
 
         {/* Upload Section - always visible, disabled during processing */}
         <div className="mb-6">
-          <label className="block sr-only text-sm font-medium mb-2">
-            Files
-          </label>
+          <label className="sr-only mb-2 block text-sm font-medium">Files</label>
 
           {/* Drop zone */}
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() =>
-              !isInteractionDisabled && fileInputRef.current?.click()
-            }
+            onClick={() => !isInteractionDisabled && fileInputRef.current?.click()}
             className={[
-              "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200",
+              "rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200",
               isDragging
                 ? "border-(--color-text-muted) bg-(--color-bg-muted)"
                 : "border-(--color-border) hover:border-(--color-text-muted)",
               isInteractionDisabled
-                ? "opacity-50 cursor-not-allowed pointer-events-none"
+                ? "pointer-events-none cursor-not-allowed opacity-50"
                 : "cursor-pointer",
             ].join(" ")}
           >
@@ -342,7 +327,7 @@ export function SetupDialog({
             />
             <div className="text-(--color-text-muted)">
               <p className="text-sm">Drop your tax return PDFs here</p>
-              <p className="text-xs mt-1 opacity-70">Click to browse</p>
+              <p className="mt-1 text-xs opacity-70">Click to browse</p>
             </div>
           </div>
 
@@ -360,7 +345,7 @@ export function SetupDialog({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-4 text-sm text-(--color-negative) overflow-hidden"
+              className="mb-4 overflow-hidden text-sm text-(--color-negative)"
             >
               {error}
             </motion.div>
@@ -368,11 +353,7 @@ export function SetupDialog({
         </AnimatePresence>
 
         {/* Submit button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitDisabled}
-          className="w-full"
-        >
+        <Button onClick={handleSubmit} disabled={isSubmitDisabled} className="w-full">
           {getButtonText()}
         </Button>
       </div>

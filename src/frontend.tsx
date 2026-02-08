@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+
 import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { applyElectronDocumentAttributes } from "./lib/electron";
@@ -9,7 +10,7 @@ function start() {
   root.render(
     <ErrorBoundary name="Application">
       <App />
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 }
 

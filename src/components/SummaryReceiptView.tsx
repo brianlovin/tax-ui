@@ -1,11 +1,17 @@
 import { useMemo, useState } from "react";
+
 import { cn } from "../lib/cn";
-import type { TaxReturn } from "../lib/schema";
 import { formatPercent } from "../lib/format";
+import type { TaxReturn } from "../lib/schema";
 import { aggregateSummary } from "../lib/summary";
-import { type TimeUnit, TIME_UNIT_LABELS, convertToTimeUnit, formatTimeUnitValue } from "../lib/time-units";
-import { Row, RateRow } from "./Row";
-import { Separator, DoubleSeparator, SectionHeader } from "./Section";
+import {
+  convertToTimeUnit,
+  formatTimeUnitValue,
+  TIME_UNIT_LABELS,
+  type TimeUnit,
+} from "../lib/time-units";
+import { RateRow, Row } from "./Row";
+import { DoubleSeparator, SectionHeader, Separator } from "./Section";
 
 interface Props {
   returns: Record<number, TaxReturn>;
@@ -17,22 +23,23 @@ export function SummaryReceiptView({ returns }: Props) {
 
   if (!data) {
     return (
-      <div className="max-w-md mx-auto px-6 py-12 font-mono text-sm text-(--color-text-muted)">
+      <div className="mx-auto max-w-md px-6 py-12 font-mono text-sm text-(--color-text-muted)">
         No tax returns available.
       </div>
     );
   }
 
   const timeUnitValue = convertToTimeUnit(data.avgHourlyRate, timeUnit);
-  const yearRange = data.years.length > 1
-    ? `${data.years[0]}–${data.years[data.years.length - 1]}`
-    : String(data.years[0]);
+  const yearRange =
+    data.years.length > 1
+      ? `${data.years[0]}–${data.years[data.years.length - 1]}`
+      : String(data.years[0]);
 
   return (
-    <div className="max-w-md mx-auto px-6 py-12 font-mono text-sm">
+    <div className="mx-auto max-w-md px-6 py-12 font-mono text-sm">
       <header className="mb-2">
         <h1 className="text-lg font-bold tracking-tight">TAX SUMMARY</h1>
-        <p className="text-(--color-text-muted) text-xs">
+        <p className="text-xs text-(--color-text-muted)">
           {data.yearCount} year{data.yearCount > 1 ? "s" : ""}: {yearRange}
         </p>
       </header>
@@ -89,7 +96,7 @@ export function SummaryReceiptView({ returns }: Props) {
         <>
           <SectionHeader>AVERAGE TAX RATES</SectionHeader>
           <Separator />
-          <div className="flex justify-between py-0.5 text-(--color-text-muted) text-xs">
+          <div className="flex justify-between py-0.5 text-xs text-(--color-text-muted)">
             <span className="w-32" />
             <span className="w-20 text-right">Marginal</span>
             <span className="w-20 text-right">Effective</span>
@@ -129,23 +136,25 @@ export function SummaryReceiptView({ returns }: Props) {
           Avg. {TIME_UNIT_LABELS[timeUnit].toLowerCase()} take-home
           {timeUnit === "hourly" && (
             <span
-              className="text-[10px] text-(--color-text-muted) cursor-help"
+              className="cursor-help text-[10px] text-(--color-text-muted)"
               title="Based on 2,080 working hours per year (40 hrs x 52 weeks)"
             >
               ?
             </span>
           )}
         </span>
-        <span className="tabular-nums slashed-zero">{formatTimeUnitValue(timeUnitValue, timeUnit)}</span>
+        <span className="slashed-zero tabular-nums">
+          {formatTimeUnitValue(timeUnitValue, timeUnit)}
+        </span>
       </div>
 
-      <div className="flex gap-1 mt-1 mb-4">
+      <div className="mt-1 mb-4 flex gap-1">
         {(["daily", "hourly", "minute", "second"] as TimeUnit[]).map((unit) => (
           <button
             key={unit}
             onClick={() => setTimeUnit(unit)}
             className={cn(
-              "px-2.5 py-1 text-xs rounded-lg border",
+              "rounded-lg border px-2.5 py-1 text-xs",
               timeUnit === unit
                 ? "border-(--color-text) bg-(--color-text) text-(--color-bg)"
                 : "border-(--color-border) text-(--color-text-muted) hover:border-(--color-text-muted)",
@@ -156,7 +165,7 @@ export function SummaryReceiptView({ returns }: Props) {
         ))}
       </div>
 
-      <footer className="mt-12 pt-4 border-t border-(--color-border) text-(--color-text-muted) text-xs text-center">
+      <footer className="mt-12 border-t border-(--color-border) pt-4 text-center text-xs text-(--color-text-muted)">
         Summary for {yearRange}
       </footer>
     </div>

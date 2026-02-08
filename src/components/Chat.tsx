@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
+
 import { cn } from "../lib/cn";
 import { isElectron } from "../lib/electron";
 import { BrailleSpinner } from "./BrailleSpinner";
@@ -92,10 +93,7 @@ export function Chat({
 
     const handleMouseMove = (e: MouseEvent) => {
       const maxWidth = window.innerWidth * MAX_WIDTH_PERCENT;
-      const newWidth = Math.min(
-        maxWidth,
-        Math.max(MIN_WIDTH, window.innerWidth - e.clientX),
-      );
+      const newWidth = Math.min(maxWidth, Math.max(MIN_WIDTH, window.innerWidth - e.clientX));
       setWidth(newWidth);
     };
 
@@ -124,8 +122,7 @@ export function Chat({
       setHasTopOverflow(hasVerticalScroll && container.scrollTop > 1);
       setHasBottomOverflow(
         hasVerticalScroll &&
-          container.scrollTop <
-            container.scrollHeight - container.clientHeight - 1,
+          container.scrollTop < container.scrollHeight - container.clientHeight - 1,
       );
     };
 
@@ -184,7 +181,7 @@ export function Chat({
   return (
     <div
       className={cn(
-        "flex flex-col h-full bg-(--color-bg) border-l border-(--color-border) relative",
+        "relative flex h-full flex-col border-l border-(--color-border) bg-(--color-bg)",
         isMobile && "fixed inset-0 z-40",
       )}
       style={isMobile ? undefined : { width }}
@@ -192,10 +189,15 @@ export function Chat({
       {/* Resize handle */}
       <div
         onMouseDown={handleMouseDown}
-        className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-(--color-border) z-10 hidden md:block"
+        className="absolute top-0 bottom-0 left-0 z-10 hidden w-1 cursor-col-resize hover:bg-(--color-border) md:block"
       />
       {/* Header */}
-      <header className={cn("h-12 pl-4 pr-2 flex items-center justify-between border-b border-(--color-border)", isElectron() && "app-window-drag")}>
+      <header
+        className={cn(
+          "flex h-12 items-center justify-between border-b border-(--color-border) pr-2 pl-4",
+          isElectron() && "app-window-drag",
+        )}
+      >
         <span className="text-sm font-semibold">Chat</span>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
@@ -210,11 +212,11 @@ export function Chat({
       </header>
 
       {/* Messages */}
-      <div className="relative flex-1 min-h-0">
+      <div className="relative min-h-0 flex-1">
         {/* Top shadow */}
         <div
           className={cn(
-            "absolute top-0 left-0 right-0 h-4 pointer-events-none z-10 transition-opacity duration-150",
+            "pointer-events-none absolute top-0 right-0 left-0 z-10 h-4 transition-opacity duration-150",
             hasTopOverflow
               ? "opacity-100 shadow-[0_8px_16px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_16px_-8px_rgba(0,0,0,0.3)]"
               : "opacity-0",
@@ -228,7 +230,7 @@ export function Chat({
               {messages.map((message) => (
                 <div key={message.id}>
                   <div
-                    className="text-xs mb-1"
+                    className="mb-1 text-xs"
                     style={{
                       color:
                         message.role === "assistant"
@@ -238,7 +240,7 @@ export function Chat({
                   >
                     {message.role === "user" ? "You" : "Claude"}
                   </div>
-                  <div className="text-sm prose-chat">
+                  <div className="prose-chat text-sm">
                     <Markdown
                       components={{
                         a: ({ href, children }) => (
@@ -252,34 +254,30 @@ export function Chat({
                           </a>
                         ),
                         code: ({ children }) => (
-                          <code className="prose-code px-1 py-0.5 bg-(--color-bg-muted) rounded text-xs font-mono">
+                          <code className="prose-code rounded bg-(--color-bg-muted) px-1 py-0.5 font-mono text-xs">
                             {children}
                           </code>
                         ),
                         pre: ({ children }) => (
-                          <pre className="my-2 p-2 bg-(--color-bg-muted) rounded text-xs font-mono overflow-x-auto">
+                          <pre className="my-2 overflow-x-auto rounded bg-(--color-bg-muted) p-2 font-mono text-xs">
                             {children}
                           </pre>
                         ),
                         table: ({ children }) => (
                           <div className="my-2 overflow-x-auto">
-                            <table className="text-xs border-collapse">
-                              {children}
-                            </table>
+                            <table className="border-collapse text-xs">{children}</table>
                           </div>
                         ),
                         thead: ({ children }) => (
-                          <thead className="border-b border-(--color-border)">
-                            {children}
-                          </thead>
+                          <thead className="border-b border-(--color-border)">{children}</thead>
                         ),
                         th: ({ children }) => (
-                          <th className="text-left py-1 pr-4 font-medium text-(--color-text-muted)">
+                          <th className="py-1 pr-4 text-left font-medium text-(--color-text-muted)">
                             {children}
                           </th>
                         ),
                         td: ({ children }) => (
-                          <td className="py-1 pr-4 tabular-nums slashed-zero">{children}</td>
+                          <td className="py-1 pr-4 slashed-zero tabular-nums">{children}</td>
                         ),
                       }}
                     >
@@ -290,10 +288,7 @@ export function Chat({
               ))}
               {isLoading && (
                 <div>
-                  <div
-                    className="text-xs mb-1"
-                    style={{ color: "rgb(217, 119, 87)" }}
-                  >
+                  <div className="mb-1 text-xs" style={{ color: "rgb(217, 119, 87)" }}>
                     Claude
                   </div>
                   <BrailleSpinner className="text-sm" />
@@ -308,11 +303,10 @@ export function Chat({
       {/* Dynamic follow-up suggestions */}
       {messages.length > 0 &&
         !isLoading &&
-        (isLoadingSuggestions ||
-          (followUpSuggestions && followUpSuggestions.length > 0)) && (
+        (isLoadingSuggestions || (followUpSuggestions && followUpSuggestions.length > 0)) && (
           <div
             className={cn(
-              "px-4 pb-2 pt-4 flex flex-wrap gap-2 transition-opacity duration-150 border-t border-(--color-border)",
+              "flex flex-wrap gap-2 border-t border-(--color-border) px-4 pt-4 pb-2 transition-opacity duration-150",
               hasBottomOverflow &&
                 "shadow-[0_-8px_8px_-8px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.3)]",
             )}
@@ -322,9 +316,7 @@ export function Chat({
             }}
           >
             {!isLoadingSuggestions && (
-              <span className="text-xs text-(--color-text-muted) mb-1">
-                Suggested follow-ups
-              </span>
+              <span className="mb-1 text-xs text-(--color-text-muted)">Suggested follow-ups</span>
             )}
             {isLoadingSuggestions ? (
               <BrailleSpinner className="text-xs text-(--color-text-muted)" />
@@ -347,7 +339,7 @@ export function Chat({
       {/* Suggestions - show when empty and no input */}
       {messages.length === 0 && (isDemo || hasApiKey) && (
         <div
-          className="px-4 pb-2 space-y-2 transition-opacity duration-150"
+          className="space-y-2 px-4 pb-2 transition-opacity duration-150"
           style={{
             opacity: input ? 0 : 1,
             pointerEvents: input ? "none" : "auto",
@@ -380,8 +372,7 @@ export function Chat({
             !(
               messages.length > 0 &&
               !isLoading &&
-              (isLoadingSuggestions ||
-                (followUpSuggestions && followUpSuggestions.length > 0))
+              (isLoadingSuggestions || (followUpSuggestions && followUpSuggestions.length > 0))
             ) &&
             "shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.3)]",
         )}
@@ -394,7 +385,7 @@ export function Chat({
           placeholder={isDemo || hasApiKey ? "Ask anything..." : "Need API key"}
           disabled={(!isDemo && !hasApiKey) || isLoading}
           rows={3}
-          className="w-full px-3 py-2.5 bg-(--color-bg-muted) rounded-lg text-base md:text-sm placeholder:text-(--color-text-muted) resize-none focus:outline-none disabled:opacity-50 overflow-y-auto"
+          className="w-full resize-none overflow-y-auto rounded-lg bg-(--color-bg-muted) px-3 py-2.5 text-base placeholder:text-(--color-text-muted) focus:outline-none disabled:opacity-50 md:text-sm"
         />
       </form>
     </div>

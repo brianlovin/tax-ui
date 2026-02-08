@@ -2,14 +2,15 @@ import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { LayoutGroup, motion } from "motion/react";
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useId,
   useMemo,
   useRef,
   useSyncExternalStore,
-  type ReactNode,
 } from "react";
+
 import { cn } from "../lib/cn";
 
 type Side = "top" | "bottom" | "left" | "right";
@@ -114,9 +115,7 @@ export function Menu({
   );
 
   const baseClassName =
-    triggerVariant === "inline"
-      ? triggerInlineClassName
-      : triggerButtonClassName;
+    triggerVariant === "inline" ? triggerInlineClassName : triggerButtonClassName;
 
   const positionerProps = {
     className: "z-50",
@@ -137,16 +136,12 @@ export function Menu({
 
   return (
     <BaseMenu.Root onOpenChange={handleOpenChange}>
-      <BaseMenu.Trigger className={cn(baseClassName, triggerClassName)}>
-        {trigger}
-      </BaseMenu.Trigger>
+      <BaseMenu.Trigger className={cn(baseClassName, triggerClassName)}>{trigger}</BaseMenu.Trigger>
       <BaseMenu.Portal>
         <BaseMenu.Positioner {...positionerProps}>
           <BaseMenu.Popup className={cn(popupBaseClassName, popupClassName)}>
             <LayoutGroup>
-              <MenuContext.Provider value={contextValue}>
-                {children}
-              </MenuContext.Provider>
+              <MenuContext.Provider value={contextValue}>{children}</MenuContext.Provider>
             </LayoutGroup>
           </BaseMenu.Popup>
         </BaseMenu.Positioner>
@@ -155,12 +150,7 @@ export function Menu({
   );
 }
 
-export function MenuItem({
-  children,
-  onClick,
-  className,
-  selected,
-}: MenuItemProps) {
+export function MenuItem({ children, onClick, className, selected }: MenuItemProps) {
   const ctx = useContext(MenuContext);
   const itemId = useId();
   const prevHighlightedRef = useRef(false);
@@ -186,20 +176,19 @@ export function MenuItem({
         }
 
         // Show static background for selected items when nothing is highlighted
-        const showSelectedBackground =
-          selected && !hasAnyHighlight && !isHighlighted;
+        const showSelectedBackground = selected && !hasAnyHighlight && !isHighlighted;
 
         return (
           <div {...props}>
             {/* Static background for selected items (no animation) */}
             {showSelectedBackground && (
-              <div className="absolute inset-0 bg-(--color-bg-muted) rounded-lg" />
+              <div className="absolute inset-0 rounded-lg bg-(--color-bg-muted)" />
             )}
             {/* Animated highlight - only ONE of these exists at a time across all items */}
             {isHighlighted && ctx && (
               <motion.div
                 layoutId={ctx.layoutId}
-                className="absolute inset-0 bg-(--color-bg-muted) rounded-lg"
+                className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
                 initial={false}
                 transition={{
                   type: "spring",
@@ -208,9 +197,7 @@ export function MenuItem({
                 }}
               />
             )}
-            <span className="relative z-10 flex items-center gap-2.5">
-              {children}
-            </span>
+            <span className="relative z-10 flex items-center gap-2.5">{children}</span>
           </div>
         );
       }}
@@ -219,7 +206,5 @@ export function MenuItem({
 }
 
 export function MenuItemSeparator() {
-  return (
-    <BaseMenu.Separator className="my-2 w-full h-px bg-(--color-border)" />
-  );
+  return <BaseMenu.Separator className="my-2 h-px w-full bg-(--color-border)" />;
 }

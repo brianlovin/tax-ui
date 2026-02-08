@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import type { TaxReturn } from "./lib/schema";
 
 // Extract and test the pure functions from App.tsx
@@ -7,14 +8,18 @@ import type { TaxReturn } from "./lib/schema";
 type SelectedView = "summary" | "demo" | number;
 
 function getDefaultSelection(returns: Record<number, TaxReturn>): SelectedView {
-  const years = Object.keys(returns).map(Number).sort((a, b) => a - b);
+  const years = Object.keys(returns)
+    .map(Number)
+    .sort((a, b) => a - b);
   if (years.length === 0) return "demo";
   if (years.length === 1) return years[0] ?? "demo";
   return "summary";
 }
 
 function buildSidebarItems(returns: Record<number, TaxReturn>): { id: string; label: string }[] {
-  const years = Object.keys(returns).map(Number).sort((a, b) => a - b);
+  const years = Object.keys(returns)
+    .map(Number)
+    .sort((a, b) => a - b);
 
   if (years.length === 0) {
     return [{ id: "demo", label: "Demo" }];
@@ -42,37 +47,39 @@ describe("getDefaultSelection", () => {
   });
 
   test("returns summary when multiple returns exist", () => {
-    expect(getDefaultSelection({
-      2022: { ...mockReturn, year: 2022 },
-      2023: mockReturn,
-    })).toBe("summary");
+    expect(
+      getDefaultSelection({
+        2022: { ...mockReturn, year: 2022 },
+        2023: mockReturn,
+      }),
+    ).toBe("summary");
 
-    expect(getDefaultSelection({
-      2021: { ...mockReturn, year: 2021 },
-      2022: { ...mockReturn, year: 2022 },
-      2023: mockReturn,
-    })).toBe("summary");
+    expect(
+      getDefaultSelection({
+        2021: { ...mockReturn, year: 2021 },
+        2022: { ...mockReturn, year: 2022 },
+        2023: mockReturn,
+      }),
+    ).toBe("summary");
   });
 });
 
 describe("buildSidebarItems", () => {
   test("shows only Demo when no returns exist", () => {
-    expect(buildSidebarItems({})).toEqual([
-      { id: "demo", label: "Demo" },
-    ]);
+    expect(buildSidebarItems({})).toEqual([{ id: "demo", label: "Demo" }]);
   });
 
   test("shows only the year when exactly one return exists", () => {
-    expect(buildSidebarItems({ 2023: mockReturn })).toEqual([
-      { id: "2023", label: "2023" },
-    ]);
+    expect(buildSidebarItems({ 2023: mockReturn })).toEqual([{ id: "2023", label: "2023" }]);
   });
 
   test("shows Summary + years when multiple returns exist", () => {
-    expect(buildSidebarItems({
-      2022: { ...mockReturn, year: 2022 },
-      2023: mockReturn,
-    })).toEqual([
+    expect(
+      buildSidebarItems({
+        2022: { ...mockReturn, year: 2022 },
+        2023: mockReturn,
+      }),
+    ).toEqual([
       { id: "summary", label: "Summary" },
       { id: "2022", label: "2022" },
       { id: "2023", label: "2023" },
@@ -86,6 +93,6 @@ describe("buildSidebarItems", () => {
       2022: { ...mockReturn, year: 2022 },
     });
 
-    expect(items.map(i => i.id)).toEqual(["summary", "2021", "2022", "2023"]);
+    expect(items.map((i) => i.id)).toEqual(["summary", "2021", "2022", "2023"]);
   });
 });

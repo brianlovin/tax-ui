@@ -6,11 +6,7 @@ interface InfoIconProps {
   className?: string;
 }
 
-export function InfoIcon({
-  size = 20,
-  strokeWidth = 2,
-  className,
-}: InfoIconProps) {
+export function InfoIcon({ size = 20, strokeWidth = 2, className }: InfoIconProps) {
   return (
     <svg
       width={size}

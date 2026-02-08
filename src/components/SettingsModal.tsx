@@ -1,7 +1,8 @@
-import { useState } from "react";
 import { Input } from "@base-ui/react/input";
-import { Dialog } from "./Dialog";
+import { useState } from "react";
+
 import { Button } from "./Button";
+import { Dialog } from "./Dialog";
 
 interface Props {
   isOpen: boolean;
@@ -11,13 +12,7 @@ interface Props {
   onClearData: () => Promise<void>;
 }
 
-export function SettingsModal({
-  isOpen,
-  onClose,
-  hasApiKey,
-  onSaveApiKey,
-  onClearData,
-}: Props) {
+export function SettingsModal({ isOpen, onClose, hasApiKey, onSaveApiKey, onClearData }: Props) {
   const [apiKey, setApiKey] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -62,13 +57,11 @@ export function SettingsModal({
       <div className="space-y-6">
         {/* API Key Section */}
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Anthropic API Key
-          </label>
+          <label className="mb-2 block text-sm font-medium">Anthropic API Key</label>
           {hasApiKey ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-(--color-text-muted)">
-                <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
                 API key configured
               </div>
               <Input
@@ -79,7 +72,7 @@ export function SettingsModal({
                 autoComplete="off"
                 data-1p-ignore
                 data-lpignore="true"
-                className="w-full px-3 py-2 text-sm bg-(--color-bg-muted) border border-(--color-border) rounded-lg focus:outline-none focus:border-(--color-text-muted)"
+                className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2 text-sm focus:border-(--color-text-muted) focus:outline-none"
               />
             </div>
           ) : (
@@ -91,26 +84,19 @@ export function SettingsModal({
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"
-              className="w-full px-3 py-2 text-sm bg-(--color-bg-muted) border border-(--color-border) rounded-lg focus:outline-none focus:border-(--color-text-muted)"
+              className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2 text-sm focus:border-(--color-text-muted) focus:outline-none"
             />
           )}
           {apiKey.trim() && (
-            <Button
-              onClick={handleSaveKey}
-              disabled={isSaving}
-              size="sm"
-              className="mt-2"
-            >
+            <Button onClick={handleSaveKey} disabled={isSaving} size="sm" className="mt-2">
               {isSaving ? "Saving..." : "Save API key"}
             </Button>
           )}
         </div>
 
         {/* Clear Data Section */}
-        <div className="pt-4 border-t border-(--color-border)">
-          <label className="block text-sm font-medium mb-2">
-            Data Management
-          </label>
+        <div className="border-t border-(--color-border) pt-4">
+          <label className="mb-2 block text-sm font-medium">Data Management</label>
           <Button
             variant="danger-outline"
             size="sm"

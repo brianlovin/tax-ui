@@ -1,8 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { aggregateSummary } from "./summary";
-import type { TaxReturn } from "./schema";
 
-const makeReturn = (year: number, income: number, federalTax: number, stateTax: number): TaxReturn => ({
+import type { TaxReturn } from "./schema";
+import { aggregateSummary } from "./summary";
+
+const makeReturn = (
+  year: number,
+  income: number,
+  federalTax: number,
+  stateTax: number,
+): TaxReturn => ({
   year,
   name: "Test User",
   filingStatus: "single",

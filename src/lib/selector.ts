@@ -1,4 +1,4 @@
-import type { PageClassification, FormType } from "./classifier";
+import type { FormType, PageClassification } from "./classifier";
 
 export interface PageSelection {
   selectedPages: number[];

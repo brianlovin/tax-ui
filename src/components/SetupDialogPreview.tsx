@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { FileUploadPreview, type DisplayFile } from "./FileUploadPreview";
+
 import { Button } from "./Button";
+import { type DisplayFile, FileUploadPreview } from "./FileUploadPreview";
 
 interface Scenario {
   name: string;
@@ -245,9 +246,7 @@ const SCENARIOS: Scenario[] = [
 
 function getButtonText(scenario: Scenario): string {
   if (scenario.isProcessing) {
-    const complete = scenario.files.filter(
-      (f) => f.status === "complete"
-    ).length;
+    const complete = scenario.files.filter((f) => f.status === "complete").length;
     const total = scenario.files.length;
     if (complete === total) return "Done";
     return `Processing ${complete + 1} of ${total}...`;
@@ -273,8 +272,7 @@ export function SetupDialogPreview({ onClose }: Props) {
   const scenario = SCENARIOS[scenarioIndex]!;
 
   const next = () => setScenarioIndex((i) => (i + 1) % SCENARIOS.length);
-  const prev = () =>
-    setScenarioIndex((i) => (i - 1 + SCENARIOS.length) % SCENARIOS.length);
+  const prev = () => setScenarioIndex((i) => (i - 1 + SCENARIOS.length) % SCENARIOS.length);
 
   useHotkeys("left", prev, { preventDefault: true });
   useHotkeys("right", next, { preventDefault: true });
@@ -289,32 +287,28 @@ export function SetupDialogPreview({ onClose }: Props) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-(--color-overlay) backdrop-blur-[3px] z-40"
+        className="fixed inset-0 z-40 bg-(--color-overlay) backdrop-blur-[3px]"
         onClick={onClose}
       />
 
       {/* Container for dialog + controls */}
-      <div className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg flex flex-col gap-6">
+      <div className="fixed top-1/2 left-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-6">
         {/* Dialog - matches Dialog.tsx styling */}
-        <div className="bg-(--color-bg-elevated) shadow-2xl ring ring-(--color-ring-elevated) rounded-2xl">
+        <div className="rounded-2xl bg-(--color-bg-elevated) shadow-2xl ring ring-(--color-ring-elevated)">
           <div className="p-6">
             {/* Header - matches Dialog.tsx */}
             <div className="mb-4 pr-8">
               <h2 className="text-lg font-semibold">{dialogTitle}</h2>
-              <p className="text-sm text-(--color-text-muted) mt-1">
-                {dialogDescription}
-              </p>
+              <p className="mt-1 text-sm text-(--color-text-muted)">{dialogDescription}</p>
             </div>
 
             {/* Content - matches SetupDialog.tsx structure */}
             <div>
               {/* API Key Section */}
               <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">
-                  Anthropic API Key
-                </label>
+                <label className="mb-2 block text-sm font-medium">Anthropic API Key</label>
                 {scenario.hasStoredKey ? (
-                  <div className="w-full px-3 py-2.5 border border-(--color-border) bg-(--color-bg-muted) rounded-lg text-sm text-(--color-text-muted)">
+                  <div className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2.5 text-sm text-(--color-text-muted)">
                     sk-ant-•••••••••••••••
                   </div>
                 ) : (
@@ -323,11 +317,10 @@ export function SetupDialogPreview({ onClose }: Props) {
                       type="text"
                       placeholder="sk-ant-..."
                       disabled={scenario.isProcessing}
-                      className="w-full px-3 py-2.5 border border-(--color-border) bg-(--color-bg-muted) rounded-lg text-sm placeholder:text-(--color-text-muted) focus:outline-none focus:border-(--color-text-muted) disabled:opacity-50"
+                      className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2.5 text-sm placeholder:text-(--color-text-muted) focus:border-(--color-text-muted) focus:outline-none disabled:opacity-50"
                     />
-                    <p className="text-xs text-(--color-text-muted) mt-2">
-                      Get your API key from{" "}
-                      <span className="underline">console.anthropic.com</span>
+                    <p className="mt-2 text-xs text-(--color-text-muted)">
+                      Get your API key from <span className="underline">console.anthropic.com</span>
                     </p>
                   </>
                 )}
@@ -338,16 +331,14 @@ export function SetupDialogPreview({ onClose }: Props) {
                 {/* Drop zone - matches SetupDialog.tsx */}
                 <div
                   className={[
-                    "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200",
+                    "rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200",
                     "border-(--color-border) hover:border-(--color-text-muted)",
-                    scenario.isProcessing
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer",
+                    scenario.isProcessing ? "cursor-not-allowed opacity-50" : "cursor-pointer",
                   ].join(" ")}
                 >
                   <div className="text-(--color-text-muted)">
                     <p className="text-sm">Drop your tax return PDFs here</p>
-                    <p className="text-xs mt-1 opacity-70">Click to browse</p>
+                    <p className="mt-1 text-xs opacity-70">Click to browse</p>
                   </div>
                 </div>
 
@@ -368,24 +359,22 @@ export function SetupDialogPreview({ onClose }: Props) {
         </div>
 
         {/* Control panel */}
-        <div className="bg-(--color-bg-elevated) shadow-xl ring ring-(--color-ring-elevated) rounded-xl px-4 py-2.5 flex items-center justify-between">
+        <div className="flex items-center justify-between rounded-xl bg-(--color-bg-elevated) px-4 py-2.5 shadow-xl ring ring-(--color-ring-elevated)">
           <button
             onClick={prev}
-            className="px-2.5 py-1 text-sm rounded-lg bg-(--color-bg-muted) hover:bg-(--color-border) select-none"
+            className="rounded-lg bg-(--color-bg-muted) px-2.5 py-1 text-sm select-none hover:bg-(--color-border)"
           >
             ←
           </button>
 
           <div className="text-center">
-            <div className="font-medium text-sm">{scenario.name}</div>
-            <div className="text-xs text-(--color-text-muted)">
-              {scenario.description}
-            </div>
+            <div className="text-sm font-medium">{scenario.name}</div>
+            <div className="text-xs text-(--color-text-muted)">{scenario.description}</div>
           </div>
 
           <button
             onClick={next}
-            className="px-2.5 py-1 text-sm rounded-lg bg-(--color-bg-muted) hover:bg-(--color-border) select-none"
+            className="rounded-lg bg-(--color-bg-muted) px-2.5 py-1 text-sm select-none hover:bg-(--color-border)"
           >
             →
           </button>

@@ -1,6 +1,7 @@
-import { useState } from "react";
 import { Accordion } from "@base-ui/react/accordion";
 import { motion } from "motion/react";
+import { useState } from "react";
+
 import { Button } from "./Button";
 
 const AI_PRIVACY_PROMPT = `I want you to perform a security and privacy audit of Tax UI, an open source tax return parser.
@@ -58,17 +59,13 @@ export function FAQSection() {
 
   return (
     <div className="shrink-0 border-t border-(--color-border) p-4 px-3">
-      <Accordion.Root
-        className="space-y-px"
-        value={openItems}
-        onValueChange={setOpenItems}
-      >
+      <Accordion.Root className="space-y-px" value={openItems} onValueChange={setOpenItems}>
         <Accordion.Item value="data-safe">
           <Accordion.Header>
-            <Accordion.Trigger className="w-full text-sm font-medium cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-lg group focus:outline-none hover:bg-(--color-bg-muted) transition-colors">
+            <Accordion.Trigger className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-(--color-bg-muted) focus:outline-none">
               <span>How data is processed</span>
               <motion.svg
-                className="w-4 h-4 text-(--color-text-muted)"
+                className="h-4 w-4 text-(--color-text-muted)"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -94,15 +91,13 @@ export function FAQSection() {
               transition={{ duration: 0.2, ease: "easeInOut" }}
               style={{ overflow: "hidden" }}
             >
-              <div className="text-sm text-(--color-text-muted) space-y-2 px-3 pt-1 pb-3">
+              <div className="space-y-2 px-3 pt-1 pb-3 text-sm text-(--color-text-muted)">
                 <p>
-                  Your tax data is processed locally and sent directly to
-                  Anthropic's API using your own API key. No data is stored on
-                  any third-party servers.
+                  Your tax data is processed locally and sent directly to Anthropic's API using your
+                  own API key. No data is stored on any third-party servers.
                 </p>
                 <p>
-                  Anthropic's commercial terms prohibit training models on API
-                  customer data.{" "}
+                  Anthropic's commercial terms prohibit training models on API customer data.{" "}
                   <a
                     href="https://www.anthropic.com/legal/privacy"
                     target="_blank"
@@ -119,10 +114,10 @@ export function FAQSection() {
 
         <Accordion.Item value="how-sure">
           <Accordion.Header>
-            <Accordion.Trigger className="w-full text-sm font-medium cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-lg group focus:outline-none hover:bg-(--color-bg-muted) transition-colors">
+            <Accordion.Trigger className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-(--color-bg-muted) focus:outline-none">
               <span>Ask AI about privacy and security</span>
               <motion.svg
-                className="w-4 h-4 text-(--color-text-muted)"
+                className="h-4 w-4 text-(--color-text-muted)"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -148,17 +143,12 @@ export function FAQSection() {
               transition={{ duration: 0.2, ease: "easeInOut" }}
               style={{ overflow: "hidden" }}
             >
-              <div className="text-sm text-(--color-text-muted) space-y-3 px-3 pt-1 pb-2">
+              <div className="space-y-3 px-3 pt-1 pb-2 text-sm text-(--color-text-muted)">
                 <p>
-                  Tax UI is open source. You can review the code yourself, or
-                  ask an AI to audit it for you.
+                  Tax UI is open source. You can review the code yourself, or ask an AI to audit it
+                  for you.
                 </p>
-                <Button
-                  onClick={handleCopyPrompt}
-                  variant="secondary"
-                  size="sm"
-                  className="w-full"
-                >
+                <Button onClick={handleCopyPrompt} variant="secondary" size="sm" className="w-full">
                   {copied ? "Copied!" : "Copy prompt"}
                 </Button>
               </div>

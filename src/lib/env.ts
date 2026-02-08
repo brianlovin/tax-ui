@@ -33,10 +33,7 @@ export function setDevDemoOverride(value: boolean | null): void {
   }
 }
 
-export function resolveDemoMode(
-  override: boolean | null,
-  serverIsDemo: boolean,
-): boolean {
+export function resolveDemoMode(override: boolean | null, serverIsDemo: boolean): boolean {
   if (override !== null) return override;
   if (isElectron()) return false;
   if (serverIsDemo) return true;

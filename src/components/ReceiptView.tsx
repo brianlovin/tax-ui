@@ -1,6 +1,7 @@
 import React from "react";
-import type { TaxReturn } from "../lib/schema";
+
 import { formatCurrency, formatPercent } from "../lib/format";
+import type { TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
 
 interface Props {
@@ -31,7 +32,7 @@ function DataRow({
   return (
     <tr className={isMuted ? "text-(--color-text-muted)" : ""}>
       <td className="py-1.5 text-sm">{label}</td>
-      <td className="py-1.5 text-sm text-right tabular-nums slashed-zero">
+      <td className="py-1.5 text-right text-sm slashed-zero tabular-nums">
         {showSign && amount >= 0 ? "+" : ""}
         {formatCurrency(amount)}
       </td>
@@ -53,9 +54,9 @@ function TotalRow({
       <tr>
         <td colSpan={2} className="h-2" />
       </tr>
-      <tr className="font-semibold border-t border-(--color-border)">
+      <tr className="border-t border-(--color-border) font-semibold">
         <td className="py-2 pt-4 text-sm">{label}</td>
-        <td className="py-2 pt-4 text-sm text-right tabular-nums slashed-zero">
+        <td className="py-2 pt-4 text-right text-sm slashed-zero tabular-nums">
           {showSign && amount >= 0 ? "+" : ""}
           {formatCurrency(amount)}
         </td>
@@ -64,46 +65,30 @@ function TotalRow({
   );
 }
 
-function RatesSection({
-  rates,
-  stateName,
-}: {
-  rates: TaxReturn["rates"];
-  stateName?: string;
-}) {
+function RatesSection({ rates, stateName }: { rates: TaxReturn["rates"]; stateName?: string }) {
   if (!rates) return null;
   return (
     <>
       <tr>
-        <td className="pt-6 pb-2 text-xs text-(--color-text-muted)">
-          Tax Rates
-        </td>
-        <td className="pt-6 pb-2 text-xs text-(--color-text-muted) text-right">
+        <td className="pt-6 pb-2 text-xs text-(--color-text-muted)">Tax Rates</td>
+        <td className="pt-6 pb-2 text-right text-xs text-(--color-text-muted)">
           <span className="inline-block w-16">Marginal</span>
           <span className="inline-block w-16">Effective</span>
         </td>
       </tr>
       <tr>
         <td className="py-1.5 text-sm">Federal</td>
-        <td className="py-1.5 text-sm text-right tabular-nums slashed-zero">
-          <span className="inline-block w-16">
-            {formatPercent(rates.federal.marginal)}
-          </span>
-          <span className="inline-block w-16">
-            {formatPercent(rates.federal.effective)}
-          </span>
+        <td className="py-1.5 text-right text-sm slashed-zero tabular-nums">
+          <span className="inline-block w-16">{formatPercent(rates.federal.marginal)}</span>
+          <span className="inline-block w-16">{formatPercent(rates.federal.effective)}</span>
         </td>
       </tr>
       {rates.state && (
         <tr>
           <td className="py-1.5 text-sm">{stateName || "State"}</td>
-          <td className="py-1.5 text-sm text-right tabular-nums slashed-zero">
-            <span className="inline-block w-16">
-              {formatPercent(rates.state.marginal)}
-            </span>
-            <span className="inline-block w-16">
-              {formatPercent(rates.state.effective)}
-            </span>
+          <td className="py-1.5 text-right text-sm slashed-zero tabular-nums">
+            <span className="inline-block w-16">{formatPercent(rates.state.marginal)}</span>
+            <span className="inline-block w-16">{formatPercent(rates.state.effective)}</span>
           </td>
         </tr>
       )}
@@ -114,13 +99,9 @@ function RatesSection({
           </tr>
           <tr className="border-t border-(--color-border)">
             <td className="py-2 pt-4 text-sm font-medium">Combined</td>
-            <td className="py-2 pt-4 text-sm text-right tabular-nums slashed-zero font-medium">
-              <span className="inline-block w-16">
-                {formatPercent(rates.combined.marginal)}
-              </span>
-              <span className="inline-block w-16">
-                {formatPercent(rates.combined.effective)}
-              </span>
+            <td className="py-2 pt-4 text-right text-sm font-medium slashed-zero tabular-nums">
+              <span className="inline-block w-16">{formatPercent(rates.combined.marginal)}</span>
+              <span className="inline-block w-16">{formatPercent(rates.combined.effective)}</span>
             </td>
           </tr>
         </>
@@ -136,8 +117,8 @@ export function ReceiptView({ data }: Props) {
   const netMonthly = Math.round(netIncome / 12);
 
   return (
-    <div className="px-4 md:px-0 py-4 md:py-8 md:pb-12">
-      <div className="max-w-2xl bg-white dark:bg-neutral-900 rounded-lg dark:shadow-contrast mx-auto shadow-md ring-[0.5px] ring-black/5">
+    <div className="px-4 py-4 md:px-0 md:py-8 md:pb-12">
+      <div className="dark:shadow-contrast mx-auto max-w-2xl rounded-lg bg-white shadow-md ring-[0.5px] ring-black/5 dark:bg-neutral-900">
         {/* Content Table */}
         <div className="px-6 pb-6">
           <table className="w-full">
@@ -153,38 +134,17 @@ export function ReceiptView({ data }: Props) {
               <TotalRow label="Total income" amount={data.income.total} />
 
               <CategoryHeader>Federal</CategoryHeader>
-              <DataRow
-                label="Adjusted gross income"
-                amount={data.federal.agi}
-              />
+              <DataRow label="Adjusted gross income" amount={data.federal.agi} />
               {data.federal.deductions.map((item, i) => (
-                <DataRow
-                  key={i}
-                  label={item.label}
-                  amount={item.amount}
-                  isMuted
-                />
+                <DataRow key={i} label={item.label} amount={item.amount} isMuted />
               ))}
-              <DataRow
-                label="Taxable income"
-                amount={data.federal.taxableIncome}
-              />
+              <DataRow label="Taxable income" amount={data.federal.taxableIncome} />
               <DataRow label="Tax" amount={data.federal.tax} />
               {data.federal.credits.map((item, i) => (
-                <DataRow
-                  key={i}
-                  label={item.label}
-                  amount={item.amount}
-                  isMuted
-                />
+                <DataRow key={i} label={item.label} amount={item.amount} isMuted />
               ))}
               {data.federal.payments.map((item, i) => (
-                <DataRow
-                  key={i}
-                  label={item.label}
-                  amount={item.amount}
-                  isMuted
-                />
+                <DataRow key={i} label={item.label} amount={item.amount} isMuted />
               ))}
               <TotalRow
                 label={data.federal.refundOrOwed >= 0 ? "Refund" : "Owed"}
@@ -197,28 +157,15 @@ export function ReceiptView({ data }: Props) {
                   <CategoryHeader>{state.name}</CategoryHeader>
                   <DataRow label="Adjusted gross income" amount={state.agi} />
                   {state.deductions.map((item, j) => (
-                    <DataRow
-                      key={j}
-                      label={item.label}
-                      amount={item.amount}
-                      isMuted
-                    />
+                    <DataRow key={j} label={item.label} amount={item.amount} isMuted />
                   ))}
-                  <DataRow
-                    label="Taxable income"
-                    amount={state.taxableIncome}
-                  />
+                  <DataRow label="Taxable income" amount={state.taxableIncome} />
                   <DataRow label="Tax" amount={state.tax} />
                   {state.adjustments.map((item, j) => (
                     <DataRow key={j} label={item.label} amount={item.amount} />
                   ))}
                   {state.payments.map((item, j) => (
-                    <DataRow
-                      key={j}
-                      label={item.label}
-                      amount={item.amount}
-                      isMuted
-                    />
+                    <DataRow key={j} label={item.label} amount={item.amount} isMuted />
                   ))}
                   <TotalRow
                     label={state.refundOrOwed >= 0 ? "Refund" : "Owed"}
@@ -242,16 +189,9 @@ export function ReceiptView({ data }: Props) {
                   showSign
                 />
               ))}
-              <TotalRow
-                label="Net"
-                amount={data.summary.netPosition}
-                showSign
-              />
+              <TotalRow label="Net" amount={data.summary.netPosition} showSign />
 
-              <RatesSection
-                rates={data.rates}
-                stateName={data.states[0]?.name}
-              />
+              <RatesSection rates={data.rates} stateName={data.states[0]?.name} />
             </tbody>
           </table>
         </div>

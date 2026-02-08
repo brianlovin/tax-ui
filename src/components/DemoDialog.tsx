@@ -22,8 +22,8 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
     >
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-medium mb-2">Run locally</h3>
-          <div className="bg-(--color-bg-muted) rounded-lg p-3 font-mono text-sm">
+          <h3 className="mb-2 text-sm font-medium">Run locally</h3>
+          <div className="rounded-lg bg-(--color-bg-muted) p-3 font-mono text-sm">
             <div className="text-(--color-text-muted)"># Clone and run</div>
             <div>git clone https://github.com/brianlovin/tax-ui</div>
             <div>cd tax-ui</div>

@@ -1,14 +1,9 @@
 import { AnimatePresence, motion } from "motion/react";
-import { Button } from "./Button";
-import { BrailleSpinner } from "./BrailleSpinner";
 
-type FileStatus =
-  | "pending"
-  | "extracting"
-  | "ready"
-  | "parsing"
-  | "complete"
-  | "error";
+import { BrailleSpinner } from "./BrailleSpinner";
+import { Button } from "./Button";
+
+type FileStatus = "pending" | "extracting" | "ready" | "parsing" | "complete" | "error";
 
 export interface DisplayFile {
   id: string;
@@ -43,15 +38,13 @@ export function FileUploadPreview({ files, onRemove, disabled }: Props) {
           >
             <div
               className={[
-                "flex items-center gap-2 text-sm rounded-lg px-3 h-9",
+                "flex h-9 items-center gap-2 rounded-lg px-3 text-sm",
                 file.isDuplicate
-                  ? "bg-(--color-negative)/10 border border-(--color-negative)/20"
+                  ? "border border-(--color-negative)/20 bg-(--color-negative)/10"
                   : "bg-(--color-bg-muted)",
               ].join(" ")}
             >
-              <span className="truncate flex-1 text-[13px]">
-                {file.filename}
-              </span>
+              <span className="flex-1 truncate text-[13px]">{file.filename}</span>
 
               <div className="flex items-center">
                 <FileStatusIndicator file={file} />
@@ -133,17 +126,12 @@ function FileStatusIndicator({ file }: { file: DisplayFile }) {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0 }}
           transition={{ duration: 0.15 }}
-          className="w-4 h-4 text-(--color-positive)"
+          className="h-4 w-4 text-(--color-positive)"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 13l4 4L19 7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </motion.svg>
       )}
       {file.status === "error" && (
@@ -166,7 +154,7 @@ function FileStatusIndicator({ file }: { file: DisplayFile }) {
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.15 }}
           className={[
-            "text-xs px-1.5 py-0.5 rounded",
+            "rounded px-1.5 py-0.5 text-xs",
             file.isDuplicate
               ? "bg-(--color-negative)/20 text-(--color-negative)"
               : "bg-(--color-bg-muted)",

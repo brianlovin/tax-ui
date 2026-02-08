@@ -6,11 +6,7 @@ interface TrashIconProps {
   className?: string;
 }
 
-export function TrashIcon({
-  size = 20,
-  strokeWidth = 2,
-  className,
-}: TrashIconProps) {
+export function TrashIcon({ size = 20, strokeWidth = 2, className }: TrashIconProps) {
   return (
     <svg
       width={size}

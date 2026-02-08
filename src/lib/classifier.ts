@@ -59,7 +59,7 @@ Classify ALL pages in the document.`;
 
 export async function classifyPages(
   pdfBase64: string,
-  client: Anthropic
+  client: Anthropic,
 ): Promise<PageClassification[]> {
   const pdfBytes = Buffer.from(pdfBase64, "base64");
   const pdfDoc = await PDFDocument.load(pdfBytes);

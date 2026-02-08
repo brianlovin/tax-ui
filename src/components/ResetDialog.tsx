@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Dialog } from "./Dialog";
+
 import { Button } from "./Button";
+import { Dialog } from "./Dialog";
 
 interface Props {
   isOpen: boolean;
@@ -34,15 +35,10 @@ export function ResetDialog({ isOpen, onClose, onReset }: Props) {
     <Dialog open={isOpen} onClose={handleClose} title="Reset" size="sm">
       <div className="space-y-4">
         <p className="text-sm text-(--color-text-muted)">
-          Clear all stored data and start fresh. This will remove your API key,
-          tax returns, and chat history.
+          Clear all stored data and start fresh. This will remove your API key, tax returns, and
+          chat history.
         </p>
-        <Button
-          variant="danger-outline"
-          size="sm"
-          onClick={handleReset}
-          disabled={isResetting}
-        >
+        <Button variant="danger-outline" size="sm" onClick={handleReset} disabled={isResetting}>
           {isResetting ? "Resetting" : "Reset data"}
         </Button>
       </div>

@@ -5,7 +5,8 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import { cn } from "../lib/cn";
 
 export interface ColumnMeta {
@@ -22,7 +23,13 @@ interface TableProps<TData> {
   isRowHoverDisabled?: (row: TData) => boolean;
 }
 
-export function Table<TData>({ data, columns, storageKey, getRowClassName, isRowHoverDisabled }: TableProps<TData>) {
+export function Table<TData>({
+  data,
+  columns,
+  storageKey,
+  getRowClassName,
+  isRowHoverDisabled,
+}: TableProps<TData>) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,8 +89,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
 
         if (deltaX > THRESHOLD || deltaY > THRESHOLD) {
           lockedAxis = deltaX > deltaY ? "x" : "y";
-          lockedScrollValue =
-            lockedAxis === "x" ? container.scrollTop : container.scrollLeft;
+          lockedScrollValue = lockedAxis === "x" ? container.scrollTop : container.scrollLeft;
         }
       }
     };
@@ -93,10 +99,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
 
       if (lockedAxis === "x" && container.scrollTop !== lockedScrollValue) {
         container.scrollTop = lockedScrollValue;
-      } else if (
-        lockedAxis === "y" &&
-        container.scrollLeft !== lockedScrollValue
-      ) {
+      } else if (lockedAxis === "y" && container.scrollLeft !== lockedScrollValue) {
         container.scrollLeft = lockedScrollValue;
       }
     };
@@ -136,10 +139,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
 
   useEffect(() => {
     if (storageKey && Object.keys(columnSizing).length > 0) {
-      localStorage.setItem(
-        `${storageKey}-column-sizes`,
-        JSON.stringify(columnSizing)
-      );
+      localStorage.setItem(`${storageKey}-column-sizes`, JSON.stringify(columnSizing));
     }
   }, [columnSizing, storageKey]);
 
@@ -156,7 +156,10 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
   });
 
   return (
-    <div ref={containerRef} className="overflow-auto w-full h-full [-webkit-overflow-scrolling:touch] overscroll-contain">
+    <div
+      ref={containerRef}
+      className="h-full w-full overflow-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+    >
       <table className="w-full border-collapse" style={{ minWidth: "max-content" }}>
         <thead className="sticky top-0 z-20">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -180,7 +183,7 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
                     colSpan={header.colSpan}
                     className={cn(
                       alignClass,
-                      "py-2 px-4 text-xs text-(--color-text-muted) font-normal bg-(--color-bg)",
+                      "bg-(--color-bg) px-4 py-2 text-xs font-normal text-(--color-text-muted)",
                       meta?.sticky ? "sticky top-0 left-0 z-30" : "relative",
                     )}
                     style={{
@@ -212,45 +215,44 @@ export function Table<TData>({ data, columns, storageKey, getRowClassName, isRow
             const rowHoverClass = hoverDisabled ? "" : "hover:bg-(--color-row-hover)";
             const noZebraClass = hoverDisabled ? "no-zebra" : "";
             return (
-            <tr
-              key={row.id}
-              className={cn("group", rowHoverClass, noZebraClass, customClassName)}
-            >
-              {row.getVisibleCells().map((cell) => {
-                const meta = cell.column.columnDef.meta as ColumnMeta | undefined;
-                const stickyCellHover = hoverDisabled ? "" : "group-hover:bg-(--color-row-hover)";
-                const stickyClass = meta?.sticky
-                  ? `sticky left-0 z-10 sticky-cell ${stickyCellHover}`
-                  : "";
+              <tr
+                key={row.id}
+                className={cn("group", rowHoverClass, noZebraClass, customClassName)}
+              >
+                {row.getVisibleCells().map((cell) => {
+                  const meta = cell.column.columnDef.meta as ColumnMeta | undefined;
+                  const stickyCellHover = hoverDisabled ? "" : "group-hover:bg-(--color-row-hover)";
+                  const stickyClass = meta?.sticky
+                    ? `sticky left-0 z-10 sticky-cell ${stickyCellHover}`
+                    : "";
 
-                const cellShadows: string[] = [];
-                if (meta?.sticky && (isScrolled || isMobile)) {
-                  cellShadows.push("inset -1px 0 0 var(--color-border-opaque)");
-                }
-                if (meta?.borderLeft) {
-                  cellShadows.push("inset 1px 0 0 var(--color-border-opaque)");
-                }
+                  const cellShadows: string[] = [];
+                  if (meta?.sticky && (isScrolled || isMobile)) {
+                    cellShadows.push("inset -1px 0 0 var(--color-border-opaque)");
+                  }
+                  if (meta?.borderLeft) {
+                    cellShadows.push("inset 1px 0 0 var(--color-border-opaque)");
+                  }
 
-                return (
-                  <td
-                    key={cell.id}
-                    className={cn("py-2 px-4 text-sm", stickyClass)}
-                    style={{
-                      width: isMobile && meta?.sticky ? "40vw" : cell.column.getSize(),
-                      maxWidth: isMobile && meta?.sticky ? "40vw" : undefined,
-                      ...(cellShadows.length > 0 ? { boxShadow: cellShadows.join(", ") } : {}),
-                    }}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                );
-              })}
-            </tr>
-          );
+                  return (
+                    <td
+                      key={cell.id}
+                      className={cn("px-4 py-2 text-sm", stickyClass)}
+                      style={{
+                        width: isMobile && meta?.sticky ? "40vw" : cell.column.getSize(),
+                        maxWidth: isMobile && meta?.sticky ? "40vw" : undefined,
+                        ...(cellShadows.length > 0 ? { boxShadow: cellShadows.join(", ") } : {}),
+                      }}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
           })}
         </tbody>
       </table>
     </div>
   );
 }
-

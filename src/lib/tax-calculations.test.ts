@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { getTotalTax, getNetIncome, getEffectiveRate } from "./tax-calculations";
+
 import type { TaxReturn } from "./schema";
+import { getEffectiveRate, getNetIncome, getTotalTax } from "./tax-calculations";
 
 const baseTaxReturn: TaxReturn = {
   year: 2024,

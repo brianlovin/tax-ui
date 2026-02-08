@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, formatCompact } from "./format";
+import { formatCompact, formatCurrency, formatCurrencyCents } from "./format";
 
 export type TimeUnit = "daily" | "hourly" | "minute" | "second";
 
