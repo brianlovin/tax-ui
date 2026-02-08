@@ -1,8 +1,7 @@
 import { useState, useCallback } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { SetupDialogPreview } from "./SetupDialogPreview";
-
-const DEV_DEMO_OVERRIDE_KEY = "dev-demo-override";
+import { setDevDemoOverride } from "../lib/env";
 
 export function cycleDemoOverride(current: boolean | null): boolean | null {
   if (current === null) return true;
@@ -31,11 +30,7 @@ export function DevTools({
 
   const handleDemoToggle = useCallback(() => {
     const newValue = cycleDemoOverride(devDemoOverride);
-    if (newValue === null) {
-      localStorage.removeItem(DEV_DEMO_OVERRIDE_KEY);
-    } else {
-      localStorage.setItem(DEV_DEMO_OVERRIDE_KEY, String(newValue));
-    }
+    setDevDemoOverride(newValue);
     onDemoOverrideChange(newValue);
   }, [devDemoOverride, onDemoOverrideChange]);
 

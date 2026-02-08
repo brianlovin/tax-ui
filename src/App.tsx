@@ -18,18 +18,15 @@ import { Button } from "./components/Button";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { DevTools, cycleDemoOverride } from "./components/DevTools";
 import { extractYearFromFilename } from "./lib/year-extractor";
+import {
+  getDevDemoOverride,
+  isHostedEnvironment,
+  resolveDemoMode,
+} from "./lib/env";
 import "./index.css";
 
 const CHAT_OPEN_KEY = "tax-chat-open";
 const CHAT_HISTORY_KEY = "tax-chat-history";
-const DEV_DEMO_OVERRIDE_KEY = "dev-demo-override";
-
-function isClientDemo(): boolean {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  return host !== "localhost" && host !== "127.0.0.1";
-}
-
 const DEMO_RESPONSE = `This is a demo with sample data. To chat about your own tax returns, clone and run [Tax UI](https://github.com/brianlovin/tax-ui) locally:
 \`\`\`
 git clone https://github.com/brianlovin/tax-ui
@@ -72,7 +69,7 @@ async function fetchInitialState(): Promise<
   >
 > {
   // In production (static hosting), skip API calls and use sample data
-  if (isClientDemo()) {
+  if (isHostedEnvironment()) {
     return {
       hasStoredKey: false,
       returns: {},
@@ -130,13 +127,10 @@ export function App() {
     selectedYear: "summary",
     isLoading: true,
     hasUserData: false,
-    isDemo: isClientDemo(),
+    isDemo: isHostedEnvironment(),
     isDev: false,
   });
-  const [devDemoOverride, setDevDemoOverride] = useState<boolean | null>(() => {
-    const stored = localStorage.getItem(DEV_DEMO_OVERRIDE_KEY);
-    return stored === null ? null : stored === "true";
-  });
+  const [devDemoOverride, setDevDemoOverride] = useState<boolean | null>(getDevDemoOverride);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -177,8 +171,7 @@ export function App() {
   const hasShownOnboardingRef = useRef(false);
 
   // Compute effective demo mode early (dev override takes precedence)
-  const effectiveIsDemo =
-    devDemoOverride !== null ? devDemoOverride : state.isDemo;
+  const effectiveIsDemo = resolveDemoMode(devDemoOverride, state.isDemo);
 
   // Hide chat on mobile in demo mode
   const shouldShowChat = !effectiveIsDemo || !isMobile;

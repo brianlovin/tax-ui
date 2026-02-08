@@ -26,6 +26,7 @@ import { Menu, MenuItem, popupBaseClassName, itemBaseClassName } from "./Menu";
 import { TrashIcon } from "./TrashIcon";
 import { PlusIcon } from "./PlusIcon";
 import { FilePlusIcon } from "./FilePlusIcon";
+import { isElectron } from "../lib/electron";
 
 interface CommonProps {
   isChatOpen: boolean;
@@ -242,7 +243,12 @@ export function MainPanel(props: Props) {
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-(--color-bg)">
       {/* Header */}
-      <header className="h-12 px-3 sm:pl-6 sm:pr-3 flex items-center justify-between shrink-0 border-b border-(--color-border)">
+      <header
+        className={cn(
+          "h-12 pl-[calc(0.75rem+var(--electron-traffic-left))] pr-3 sm:pl-[calc(1.5rem+var(--electron-traffic-left))] sm:pr-3 flex items-center justify-between shrink-0 border-b border-(--color-border)",
+          isElectron() && "app-window-drag",
+        )}
+      >
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Hamburger Menu */}
           <Menu

@@ -1,7 +1,9 @@
+import path from "path";
 import type { TaxReturn } from "./schema";
 
-const RETURNS_FILE = ".tax-returns.json";
-const ENV_FILE = ".env";
+const DATA_DIR = process.env.TAX_UI_DATA_DIR || process.cwd();
+const RETURNS_FILE = path.join(DATA_DIR, ".tax-returns.json");
+const ENV_FILE = path.join(DATA_DIR, ".env");
 
 export async function getReturns(): Promise<Record<number, TaxReturn>> {
   const file = Bun.file(RETURNS_FILE);

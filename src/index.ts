@@ -1,5 +1,7 @@
 import { serve, argv } from "bun";
 import Anthropic from "@anthropic-ai/sdk";
+import path from "path";
+import { fileURLToPath } from "url";
 import { getReturns, saveReturn, deleteReturn, getApiKey, saveApiKey, removeApiKey, clearAllData } from "./lib/storage";
 import { parseTaxReturn, extractYearFromPdf } from "./lib/parser";
 import index from "./index.html";
@@ -20,6 +22,10 @@ function parsePort(): number {
   return Number(argv[idx + 1]) || 3000;
 }
 const port = parsePort();
+const isProd = process.env.NODE_ENV === "production";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const STATIC_ROOT = process.env.TAX_UI_STATIC_DIR || __dirname;
 
 function buildChatSystemPrompt(returns: Record<number, unknown>): string {
   const years = Object.keys(returns).map(Number).sort((a, b) => a - b);
@@ -40,9 +46,7 @@ ${JSON.stringify(returns, null, 2)}
 Answer questions about the user's income, taxes, deductions, credits, and tax rates based on this data.`;
 }
 
-const server = serve({
-  port,
-  routes: {
+const routes: Record<string, any> = {
     "/api/config": {
       GET: () => {
         const hasKey = Boolean(getApiKey());
@@ -52,7 +56,7 @@ const server = serve({
       },
     },
     "/api/config/key": {
-      POST: async (req) => {
+      POST: async (req: Request) => {
         const { apiKey } = await req.json();
         if (!apiKey || typeof apiKey !== "string") {
           return Response.json({ error: "Invalid API key" }, { status: 400 });
@@ -90,7 +94,7 @@ const server = serve({
       },
     },
     "/api/returns/:year": {
-      DELETE: async (req) => {
+      DELETE: async (req: Request & { params: { year: string } }) => {
         const year = Number(req.params.year);
         if (isNaN(year)) {
           return Response.json({ error: "Invalid year" }, { status: 400 });
@@ -100,7 +104,7 @@ const server = serve({
       },
     },
     "/api/extract-year": {
-      POST: async (req) => {
+      POST: async (req: Request) => {
         const formData = await req.formData();
         const file = formData.get("pdf") as File | null;
 
@@ -131,7 +135,7 @@ const server = serve({
       },
     },
     "/api/chat": {
-      POST: async (req) => {
+      POST: async (req: Request) => {
         const { prompt, history, returns: clientReturns } = await req.json();
 
         if (!prompt || typeof prompt !== "string") {
@@ -183,7 +187,7 @@ const server = serve({
       },
     },
     "/api/suggestions": {
-      POST: async (req) => {
+      POST: async (req: Request) => {
         const { history, returns: clientReturns } = await req.json();
 
         const apiKey = getApiKey();
@@ -232,7 +236,7 @@ const server = serve({
       },
     },
     "/api/parse": {
-      POST: async (req) => {
+      POST: async (req: Request) => {
         const formData = await req.formData();
         const file = formData.get("pdf") as File | null;
         const apiKeyFromForm = formData.get("apiKey") as string | null;
@@ -276,8 +280,33 @@ const server = serve({
         }
       },
     },
-    "/*": index,
-  },
+  };
+
+if (!isProd) {
+  routes["/*"] = index;
+}
+
+const server = serve({
+  port,
+  routes,
+  fetch: isProd
+    ? async (req) => {
+        const url = new URL(req.url);
+        const pathname = url.pathname === "/" ? "/index.html" : url.pathname;
+        const resolvedPath = path.resolve(STATIC_ROOT, `.${pathname}`);
+
+        if (!resolvedPath.startsWith(STATIC_ROOT)) {
+          return new Response("Not found", { status: 404 });
+        }
+
+        const file = Bun.file(resolvedPath);
+        if (await file.exists()) {
+          return new Response(file);
+        }
+
+        return new Response("Not found", { status: 404 });
+      }
+    : undefined,
   development: process.env.NODE_ENV !== "production" && {
     hmr: true,
     console: true,

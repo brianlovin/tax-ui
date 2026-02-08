@@ -44,6 +44,8 @@
 
         /* Brand */
         --color-brand: #fc532a;
+
+        --electron-traffic-left: 0px;
     }
 
     .dark {
@@ -77,6 +79,10 @@
 
         /* Brand */
         --color-brand: #fc532a;
+    }
+
+    [data-electron="true"][data-platform="darwin"] {
+        --electron-traffic-left: 72px;
     }
 
     html {
@@ -114,6 +120,21 @@
 
     body {
         @apply bg-[var(--color-bg)] text-[var(--color-text)] m-0 p-0 min-h-screen;
+    }
+
+    .app-window-drag {
+        -webkit-app-region: drag;
+    }
+
+    .app-window-drag button,
+    .app-window-drag a,
+    .app-window-drag input,
+    .app-window-drag textarea,
+    .app-window-drag select,
+    .app-window-drag [role="button"],
+    .app-window-drag [role="tab"],
+    .app-window-drag [data-no-drag="true"] {
+        -webkit-app-region: no-drag;
     }
 
     /* Text selection colors */
