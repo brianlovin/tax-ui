@@ -28,11 +28,7 @@ function getBunPath(): string {
 }
 
 function getServerPath(): string {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, "server", "index.js");
-  }
-
-  return path.join(app.getAppPath(), "..", "src", "index.ts");
+  return path.join(process.resourcesPath, "server", "index.js");
 }
 
 export async function startServer(): Promise<number> {
@@ -123,8 +119,4 @@ export function stopServer(): void {
     serverProcess = null;
     currentPort = null;
   }
-}
-
-export function getServerPort(): number | null {
-  return currentPort;
 }

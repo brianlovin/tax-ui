@@ -1,4 +1,3 @@
-import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { app, ipcMain } from "electron";
@@ -20,6 +19,8 @@ const __dirname = path.dirname(__filename);
 
 const DEV_SERVER_URL = process.env.ELECTRON_DEV_URL;
 const isDev = !!DEV_SERVER_URL;
+
+let appPort: number | null = null;
 
 async function getServerPort(): Promise<number> {
   if (isDev && DEV_SERVER_URL) {
@@ -47,26 +48,12 @@ if (!gotLock) {
   app.whenReady().then(async () => {
     try {
       if (!app.isPackaged && process.platform === "darwin") {
-        const devIconPath = path.join(
-          __dirname,
-          "..",
-          "..",
-          "assets",
-          "app-icon-dev.png",
-        );
-        if (fs.existsSync(devIconPath)) {
-          try {
-            app.dock.setIcon(devIconPath);
-          } catch (error) {
-            log.warn("Failed to set dev dock icon:", error);
-          }
-        } else {
-          log.warn("Dev icon not found:", devIconPath);
-        }
+        const devIconPath = path.join(__dirname, "..", "..", "assets", "app-icon-dev.png");
+        try { app.dock.setIcon(devIconPath); } catch {}
       }
 
-      const port = await getServerPort();
-      createWindow(port);
+      appPort = await getServerPort();
+      createWindow(appPort);
 
       if (app.isPackaged) {
         setupAutoUpdater();
@@ -78,14 +65,9 @@ if (!gotLock) {
     }
   });
 
-  app.on("activate", async () => {
-    if (!getMainWindow()) {
-      try {
-        const port = await getServerPort();
-        createWindow(port);
-      } catch (error) {
-        log.error("Failed to create window:", error);
-      }
+  app.on("activate", () => {
+    if (!getMainWindow() && appPort) {
+      createWindow(appPort);
     }
   });
 

@@ -12,20 +12,10 @@ const electronAPI = {
     download: () => ipcRenderer.invoke("update:download"),
     install: () => ipcRenderer.invoke("update:install"),
 
-    onChecking: (callback: () => void) => {
-      const handler = () => callback();
-      ipcRenderer.on("update:checking", handler);
-      return () => ipcRenderer.removeListener("update:checking", handler);
-    },
     onAvailable: (callback: (data: { version: string }) => void) => {
       const handler: IpcHandler<{ version: string }> = (_, data) => callback(data);
       ipcRenderer.on("update:available", handler);
       return () => ipcRenderer.removeListener("update:available", handler);
-    },
-    onNotAvailable: (callback: () => void) => {
-      const handler = () => callback();
-      ipcRenderer.on("update:not-available", handler);
-      return () => ipcRenderer.removeListener("update:not-available", handler);
     },
     onProgress: (callback: (data: { percent: number }) => void) => {
       const handler: IpcHandler<{ percent: number }> = (_, data) => callback(data);
@@ -46,9 +36,3 @@ const electronAPI = {
 };
 
 contextBridge.exposeInMainWorld("electronAPI", electronAPI);
-
-declare global {
-  interface Window {
-    electronAPI: typeof electronAPI;
-  }
-}
