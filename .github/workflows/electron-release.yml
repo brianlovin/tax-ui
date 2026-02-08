@@ -67,7 +67,7 @@ jobs:
           CSC_KEYCHAIN: build.keychain
         run: |
           cd electron
-          npm run dist:mac -- --${{ matrix.arch }}
+          npm run dist:mac -- --${{ matrix.arch }} --publish never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -113,7 +113,7 @@ jobs:
         run: cd electron && npm ci
 
       - name: Build Electron app
-        run: cd electron && npm run dist:win
+        run: cd electron && npm run dist:win -- --publish never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
