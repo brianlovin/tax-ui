@@ -1,5 +1,6 @@
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ReactNode, Ref } from "react";
+import { isElectron } from "../lib/electron";
 import { XMarkIcon } from "./XMarkIcon";
 
 interface Props {
@@ -46,10 +47,11 @@ export function Dialog({
   skipOpenAnimation = false,
 }: Props) {
   const noAnim = skipOpenAnimation ? " no-animation" : "";
+  const noDrag = isElectron() ? " app-window-no-drag" : "";
   const popupClasses = fullScreenMobile
-    ? `dialog-popup${noAnim} fixed z-50 bg-(--color-bg-elevated) shadow-2xl flex flex-col focus:outline-none inset-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full h-full sm:h-auto sm:max-h-[90vh] sm:ring sm:ring-(--color-ring-elevated) dark:shadow-contrast sm:rounded-2xl ${fullScreenMobileSizeClasses[size]}`
-    : `dialog-popup${noAnim} fixed z-50 bg-(--color-bg-elevated) shadow-2xl flex flex-col focus:outline-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${sizeClasses[size]} ring ring-(--color-ring-elevated) dark:shadow-contrast rounded-2xl`;
-  const backdropClasses = `dialog-backdrop${noAnim} fixed inset-0 bg-(--color-overlay) backdrop-blur-[3px] z-40`;
+    ? `dialog-popup${noAnim}${noDrag} fixed z-50 bg-(--color-bg-elevated) shadow-2xl flex flex-col focus:outline-none inset-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full h-full sm:h-auto sm:max-h-[90vh] sm:ring sm:ring-(--color-ring-elevated) dark:shadow-contrast sm:rounded-2xl ${fullScreenMobileSizeClasses[size]}`
+    : `dialog-popup${noAnim}${noDrag} fixed z-50 bg-(--color-bg-elevated) shadow-2xl flex flex-col focus:outline-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${sizeClasses[size]} ring ring-(--color-ring-elevated) dark:shadow-contrast rounded-2xl`;
+  const backdropClasses = `dialog-backdrop${noAnim} fixed inset-0 bg-(--color-overlay) backdrop-blur-[3px] z-40${isElectron() ? " app-window-drag" : ""}`;
 
   return (
     <BaseDialog.Root

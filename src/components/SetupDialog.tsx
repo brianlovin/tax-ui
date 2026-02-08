@@ -263,8 +263,8 @@ export function SetupDialog({
       }
       size="lg"
       fullScreenMobile
-      showClose={hasStoredKey && !isProcessing}
-      closeDisabled={!hasStoredKey || isProcessing}
+      showClose={!isProcessing}
+      closeDisabled={isProcessing}
       skipOpenAnimation={skipOpenAnimation}
       footer={<FAQSection />}
     >

@@ -52,10 +52,15 @@ export async function startServer(): Promise<number> {
   log.info("Data directory:", dataDir);
   log.info("Port:", port);
 
+  const staticDir = app.isPackaged
+    ? path.join(process.resourcesPath, "dist")
+    : path.join(app.getAppPath(), "..", "dist");
+
   serverProcess = spawn(bunPath, ["run", serverPath, "--port", String(port)], {
     env: {
       ...process.env,
       TAX_UI_DATA_DIR: dataDir,
+      TAX_UI_STATIC_DIR: staticDir,
       NODE_ENV: "production",
     },
     stdio: ["ignore", "pipe", "pipe"],

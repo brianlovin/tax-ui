@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Markdown from "react-markdown";
 import { cn } from "../lib/cn";
+import { isElectron } from "../lib/electron";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
 import { XMarkIcon } from "./XMarkIcon";
@@ -194,7 +195,7 @@ export function Chat({
         className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-(--color-border) z-10 hidden md:block"
       />
       {/* Header */}
-      <header className="h-12 pl-4 pr-2 flex items-center justify-between border-b border-(--color-border)">
+      <header className={cn("h-12 pl-4 pr-2 flex items-center justify-between border-b border-(--color-border)", isElectron() && "app-window-drag")}>
         <span className="text-sm font-semibold">Chat</span>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
