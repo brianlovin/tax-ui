@@ -1,0 +1,62 @@
+appId: com.tax-ui.app
+productName: Tax UI
+copyright: Copyright © 2025
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/**/*
+
+extraResources:
+  - from: ../resources/bun/${platform}-${arch}/
+    to: bun/
+  - from: ../resources/server/
+    to: server/
+
+mac:
+  icon: assets/app-icon.icns
+  category: public.app-category.finance
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: entitlements.mac.plist
+  entitlementsInherit: entitlements.mac.plist
+  notarize: true
+
+dmg:
+  sign: false
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  icon: assets/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+
+publish:
+  provider: github
+  releaseType: draft

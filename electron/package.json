@@ -1,0 +1,32 @@
+{
+  "name": "tax-ui-electron",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:electron\"",
+    "dev:web": "cd .. && bun run dev",
+    "dev:electron": "wait-on http://localhost:3005 && npm run build && ELECTRON_DEV_URL=http://localhost:3005 electron .",
+    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json",
+    "icons": "node scripts/generate-icons.mjs",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "electron-log": "^5.2.4",
+    "electron-store": "^10.0.0",
+    "electron-updater": "^6.3.9",
+    "get-port": "^7.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^3.0.0",
+    "typescript": "^5.8.3",
+    "wait-on": "^8.0.3"
+  }
+}
