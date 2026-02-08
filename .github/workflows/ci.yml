@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Lint
+        run: bun run lint
+
       - name: Type check
         run: bunx tsc --noEmit
 

@@ -43,7 +43,8 @@ Not separate booleans for each modal.
 
 ## Verification
 
-After changes, run type check only:
+After changes, run lint and type check:
+- `bun run lint` (includes Prettier formatting checks)
 - `bunx tsc --noEmit`
 
 Do NOT run `bun run build` — the dev server uses HMR so builds are unnecessary during development.
