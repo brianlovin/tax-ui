@@ -42,3 +42,15 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Editor
 .cursor/
+
+# Electron
+resources/bun/
+resources/server/
+electron/dist/
+electron/release/
+electron/node_modules/
+
+# Test artifacts
+.test-results.json
+.test-data/
+resources/server-test/

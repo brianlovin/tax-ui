@@ -4,9 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --hot src/index.ts",
+    "dev": "bun --hot src/index.ts --port 3005",
     "start": "NODE_ENV=production bun src/index.ts",
-    "build": "bun run build.ts"
+    "build": "bun run build.ts",
+    "build:server": "bun scripts/build-server.ts",
+    "download-bun": "bun scripts/download-bun.ts",
+    "electron:dev": "cd electron && npm run dev",
+    "electron:build": "bun run build:server && cd electron && npm run build",
+    "electron:pack": "bun run build && bun run build:server && cd electron && npm run pack",
+    "electron:dist": "bun run build && bun run build:server && cd electron && npm run dist"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.25",
