@@ -103,6 +103,22 @@ async function main(): Promise<void> {
     }
   }
 
+  // --platform darwin --arch arm64 (for CI cross-builds)
+  const platformIdx = args.indexOf("--platform");
+  const archIdx = args.indexOf("--arch");
+  if (platformIdx !== -1 && archIdx !== -1) {
+    const targetPlatform = args[platformIdx + 1];
+    const targetArch = args[archIdx + 1];
+    platforms = PLATFORMS.filter(
+      (p) => p.platform === targetPlatform && p.arch === targetArch
+    );
+
+    if (platforms.length === 0) {
+      console.error(`No Bun binary available for ${targetPlatform}-${targetArch}`);
+      process.exit(1);
+    }
+  }
+
   console.log(`Downloading Bun v${BUN_VERSION} binaries...`);
   console.log(`Platforms: ${platforms.map((p) => `${p.platform}-${p.arch}`).join(", ")}`);
   if (force) console.log(`Force mode: will re-download even if exists`);
