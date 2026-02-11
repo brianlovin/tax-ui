@@ -117,9 +117,11 @@ function collectRows(returns: Record<number, TaxReturn>): SummaryRow[] {
     }
   }
   for (const label of federalAdditionalTaxLabels) {
-    addRow("Federal", label, (data) =>
-      data.federal.additionalTaxes.find((i) => i.label === label)?.amount,
-      { invertPolarity: true }
+    addRow(
+      "Federal",
+      label,
+      (data) => data.federal.additionalTaxes.find((i) => i.label === label)?.amount,
+      { invertPolarity: true },
     );
   }
 

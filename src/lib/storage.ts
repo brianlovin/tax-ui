@@ -1,6 +1,6 @@
 import path from "path";
 
-import { TaxReturnSchema, type TaxReturn } from "./schema";
+import { type TaxReturn, TaxReturnSchema } from "./schema";
 
 const DATA_DIR = process.env.TAX_UI_DATA_DIR || process.cwd();
 const RETURNS_FILE = path.join(DATA_DIR, ".tax-returns.json");
@@ -33,10 +33,7 @@ function migrate(data: Record<number, unknown>): Record<number, TaxReturn> {
     if (parsed.success) {
       result[Number(year)] = parsed.data;
     } else {
-      console.warn(
-        `Skipping invalid stored return for year ${year}:`,
-        parsed.error.issues,
-      );
+      console.warn(`Skipping invalid stored return for year ${year}:`, parsed.error.issues);
     }
   }
   return result;
@@ -73,10 +70,7 @@ export async function saveApiKey(key: string): Promise<void> {
   if (await file.exists()) {
     content = await file.text();
     if (content.includes("ANTHROPIC_API_KEY=")) {
-      content = content.replace(
-        /ANTHROPIC_API_KEY=.*/g,
-        `ANTHROPIC_API_KEY=${key}`,
-      );
+      content = content.replace(/ANTHROPIC_API_KEY=.*/g, `ANTHROPIC_API_KEY=${key}`);
     } else {
       content = content.trim() + `\nANTHROPIC_API_KEY=${key}\n`;
     }
