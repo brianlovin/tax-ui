@@ -1,5 +1,6 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import type { ComponentProps, ReactNode } from "react";
+
 import { cn } from "../lib/cn";
 
 type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger" | "danger-outline" | "pill";

@@ -292,7 +292,7 @@ export function MainPanel(props: Props) {
             <nav ref={navRef} className="flex min-w-0 flex-1 items-center gap-2">
               <Tabs.List
                 ref={tabListRef}
-                className="flex items-center gap-2 min-w-0 overflow-hidden pr-1"
+                className="flex min-w-0 items-center gap-2 overflow-hidden pr-1"
                 activateOnFocus
                 onMouseLeave={() => tabHighlightStore.setHovered(null)}
               >

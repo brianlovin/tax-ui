@@ -153,7 +153,7 @@ const outputTable = result.outputs.map((output) => ({
 console.table(outputTable);
 
 // Copy static assets that need fixed paths (for OG images, etc.)
-const staticAssets = ["tax-ui-og.png"];
+const staticAssets = ["tax-ui-og.png", "app-icon.png"];
 for (const asset of staticAssets) {
   const src = path.join("src", asset);
   const dest = path.join(outdir, asset);
