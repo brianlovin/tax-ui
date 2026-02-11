@@ -10,14 +10,15 @@ files:
   - dist/**/*
 
 extraResources:
-  - from: ../resources/bun/${platform}-${arch}/
-    to: bun/
   - from: ../resources/server/
     to: server/
   - from: ../dist/
     to: dist/
 
 mac:
+  extraResources:
+    - from: ../resources/bun/darwin-${arch}/
+      to: bun/
   icon: assets/app-icon.icns
   category: public.app-category.finance
   target:
@@ -46,6 +47,9 @@ dmg:
       path: /Applications
 
 win:
+  extraResources:
+    - from: ../resources/bun/win32-${arch}/
+      to: bun/
   icon: assets/icon.ico
   target:
     - target: nsis
