@@ -17,23 +17,25 @@ interface ReleaseInfo {
   assets: ReleaseAsset[];
 }
 
+// Start fetching immediately on module load so data is ready before the dialog opens
+const releasePromise: Promise<ReleaseInfo> = fetch(
+  "https://api.github.com/repos/brianlovin/tax-ui/releases/latest",
+)
+  .then((res) => {
+    if (!res.ok) throw new Error("Failed to fetch");
+    return res.json();
+  })
+  .then((data) => ({
+    version: (data.tag_name as string).replace(/^v/, ""),
+    assets: data.assets as ReleaseAsset[],
+  }));
+
 function useLatestRelease() {
   const [release, setRelease] = useState<ReleaseInfo | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch("https://api.github.com/repos/brianlovin/tax-ui/releases/latest")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch");
-        return res.json();
-      })
-      .then((data) => {
-        setRelease({
-          version: (data.tag_name as string).replace(/^v/, ""),
-          assets: data.assets as ReleaseAsset[],
-        });
-      })
-      .catch(() => setError(true));
+    releasePromise.then(setRelease).catch(() => setError(true));
   }, []);
 
   return { release, error };
@@ -123,8 +125,9 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
 
         {/* Primary download button */}
         <div className="flex flex-col items-center gap-3">
-          {error || (!release && !primaryUrl) ? (
+          {error || (release && !primaryUrl) ? (
             <Button
+              nativeButton={false}
               render={<a href={RELEASES_URL} target="_blank" rel="noopener noreferrer" />}
               className="justify-center bg-(--color-brand) text-center dark:text-white"
             >
@@ -132,6 +135,7 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
             </Button>
           ) : primaryUrl ? (
             <Button
+              nativeButton={false}
               render={<a href={primaryUrl} />}
               className="justify-center bg-(--color-brand) text-center dark:text-white"
             >
