@@ -123,7 +123,7 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
 
         {/* Primary download button */}
         <div className="flex flex-col items-center gap-3">
-          {error || (!release && !primaryUrl) ? (
+          {error || (release && !primaryUrl) ? (
             <Button
               render={<a href={RELEASES_URL} target="_blank" rel="noopener noreferrer" />}
               className="justify-center bg-(--color-brand) text-center dark:text-white"
