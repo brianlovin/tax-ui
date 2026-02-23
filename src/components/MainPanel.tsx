@@ -19,6 +19,7 @@ import type { PendingUpload, TaxReturn } from "../lib/schema";
 import type { NavItem } from "../lib/types";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
+import { CountrySelector } from "./CountrySelector";
 import { FilePlusIcon } from "./FilePlusIcon";
 import { LoadingView } from "./LoadingView";
 import { itemBaseClassName, Menu, MenuItem, popupBaseClassName } from "./Menu";
@@ -45,6 +46,8 @@ interface CommonProps {
   hasStoredKey: boolean;
   returns: Record<number, TaxReturn>;
   selectedYear: "summary" | number;
+  country: string;
+  onCountryChange: (c: string) => void;
 }
 
 interface ReceiptProps extends CommonProps {
@@ -390,6 +393,7 @@ export function MainPanel(props: Props) {
             </nav>
           </Tabs.Root>
         </div>
+        <CountrySelector country={props.country} onChange={props.onCountryChange} />
         {props.showChatButton !== false && !props.isChatOpen && (
           <Button
             variant="ghost"

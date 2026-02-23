@@ -7,7 +7,7 @@ export interface PageSelection {
 }
 
 // Priority tiers for page selection
-const ESSENTIAL: FormType[] = ["1040_main", "state_main"];
+const ESSENTIAL: FormType[] = ["1040_main", "state_main", "t1_main", "provincial_main"];
 const IMPORTANT: FormType[] = [
   "schedule_1",
   "schedule_a",
@@ -16,8 +16,11 @@ const IMPORTANT: FormType[] = [
   "schedule_d",
   "schedule_e",
   "k1_summary",
+  "t2125",
+  "t3",
+  "t4a",
 ];
-const OPTIONAL: FormType[] = ["schedule_2", "schedule_3", "state_schedule"];
+const OPTIONAL: FormType[] = ["schedule_2", "schedule_3", "state_schedule", "provincial_schedule"];
 const SKIP: FormType[] = [
   "k1_detail",
   "worksheet",
@@ -27,6 +30,9 @@ const SKIP: FormType[] = [
   "carryover_summary",
   "efiling_auth",
   "crypto_detail",
+  "t4",
+  "t5",
+  "rrsp_receipt",
   "other",
 ];
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { FileProgress, FileWithId } from "../lib/schema";
 import { Button } from "./Button";
+import { CountrySelector } from "./CountrySelector";
 import { Dialog } from "./Dialog";
 import { FAQSection } from "./FAQSection";
 import { type DisplayFile, FileUploadPreview } from "./FileUploadPreview";
@@ -17,6 +18,8 @@ interface Props {
   hasStoredKey?: boolean;
   existingYears?: number[];
   skipOpenAnimation?: boolean;
+  country: string;
+  onCountryChange: (c: string) => void;
 }
 
 interface FileWithYear {
@@ -36,6 +39,8 @@ export function SetupDialog({
   hasStoredKey,
   existingYears = [],
   skipOpenAnimation,
+  country,
+  onCountryChange,
 }: Props) {
   const [apiKey, setApiKey] = useState("");
   const [files, setFiles] = useState<FileWithYear[]>([]);
@@ -294,6 +299,14 @@ export function SetupDialog({
               </p>
             </>
           )}
+        </div>
+
+        {/* Country Section */}
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-medium">Country</label>
+          <div className="flex items-center">
+            <CountrySelector country={country} onChange={onCountryChange} />
+          </div>
         </div>
 
         {/* Upload Section - always visible, disabled during processing */}

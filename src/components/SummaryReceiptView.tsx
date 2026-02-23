@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { useCountryConfig } from "../context/CountryContext";
 import { cn } from "../lib/cn";
 import { formatPercent } from "../lib/format";
 import type { TaxReturn } from "../lib/schema";
@@ -20,6 +21,8 @@ interface Props {
 export function SummaryReceiptView({ returns }: Props) {
   const [timeUnit, setTimeUnit] = useState<TimeUnit>("daily");
   const data = useMemo(() => aggregateSummary(returns), [returns]);
+  const { avgAgiLabel, stateTotalsHeader, stateTaxTotalLabel, stateRegionLabel } =
+    useCountryConfig();
 
   if (!data) {
     return (
@@ -54,7 +57,7 @@ export function SummaryReceiptView({ returns }: Props) {
 
       <SectionHeader>FEDERAL TOTALS</SectionHeader>
       <Separator />
-      <Row label="Avg. adjusted gross income" amount={Math.round(data.avgAgi)} />
+      <Row label={avgAgiLabel} amount={Math.round(data.avgAgi)} />
       {data.federalDeductions.map((item, i) => (
         <Row key={i} label={`Total ${item.label.toLowerCase()}`} amount={item.amount} isMuted />
       ))}
@@ -64,13 +67,13 @@ export function SummaryReceiptView({ returns }: Props) {
 
       {data.states.length > 0 && (
         <>
-          <SectionHeader>STATE TOTALS</SectionHeader>
+          <SectionHeader>{stateTotalsHeader}</SectionHeader>
           <Separator />
           {data.states.map((state, i) => (
             <Row key={i} label={`${state.name} tax`} amount={state.tax} />
           ))}
           <Separator />
-          <Row label="Total state tax" amount={data.totalStateTax} isTotal />
+          <Row label={stateTaxTotalLabel} amount={data.totalStateTax} isTotal />
         </>
       )}
 
@@ -108,7 +111,7 @@ export function SummaryReceiptView({ returns }: Props) {
           />
           {data.rates.state && (
             <RateRow
-              label="State"
+              label={stateRegionLabel}
               marginal={formatPercent(data.rates.state.marginal)}
               effective={formatPercent(data.rates.state.effective)}
             />

@@ -1,12 +1,20 @@
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+const usdFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
 
-export function formatCurrency(amount: number, showSign = false): string {
-  const formatted = currencyFormatter.format(Math.abs(amount));
+const cadFormatter = new Intl.NumberFormat("en-CA", {
+  style: "currency",
+  currency: "CAD",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+export function formatCurrency(amount: number, showSign = false, currency = "USD"): string {
+  const formatter = currency === "CAD" ? cadFormatter : usdFormatter;
+  const formatted = formatter.format(Math.abs(amount));
   if (showSign) {
     return amount >= 0 ? `+${formatted}` : `-${formatted}`;
   }

@@ -15,6 +15,15 @@ export type FormType =
   | "k1_detail"
   | "state_main"
   | "state_schedule"
+  | "t1_main"
+  | "t4"
+  | "t4a"
+  | "t3"
+  | "t5"
+  | "provincial_main"
+  | "provincial_schedule"
+  | "t2125"
+  | "rrsp_receipt"
   | "worksheet"
   | "supporting_doc"
   | "cover_letter"
@@ -52,6 +61,15 @@ Classification categories:
 - carryover_summary: Tax return carryovers to next year, loss carryforward summaries
 - efiling_auth: E-file authorization forms (Form 8879, TR-579-IT, e-file jurat/disclosure)
 - crypto_detail: Cryptocurrency transaction details, lot-by-lot disposal reports
+- t1_main: T1 General Income Tax and Benefit Return (pages 1–4, the main Canadian federal return with Social Insurance Number, CRA header, income lines 10100–26000, federal tax line 40400)
+- t4: T4 Statement of Remuneration Paid (employer name, Box 14 employment income, Box 22 income tax deducted)
+- t4a: T4A Statement of Pension, Retirement, Annuity, and Other Income
+- t3: T3 Statement of Trust Income Allocations and Designations
+- t5: T5 Statement of Investment Income
+- provincial_main: Provincial tax forms (Form ON428, BC428, AB428, QC TP-1, etc.) — contains province name + "Tax and Credits"
+- provincial_schedule: Provincial supporting schedules (ON-BEN, BC479, etc.)
+- t2125: Statement of Business or Professional Activities (self-employment income)
+- rrsp_receipt: RRSP contribution receipts
 - other: Any other pages not fitting above categories
 
 IMPORTANT: Look for these clues to identify preparer documents vs actual tax forms:
