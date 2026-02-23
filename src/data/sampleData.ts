@@ -1,10 +1,71 @@
 import type { TaxReturn } from "../lib/schema";
 
+// Canadian T1 sample — Ontario 2025
+// Federal: 15% on first $57,375 + 20.5% on remainder; credits: BPA + CPP + EI
+// Provincial: Ontario 5.05%/9.15%; Ontario Health Premium $750 at $91k income
+export const caReturns: Record<number, TaxReturn> = {
+  2025: {
+    year: 2025,
+    name: "Alex Chen",
+    country: "CA",
+    filingStatus: "single",
+    dependents: [],
+    income: {
+      items: [
+        { label: "Employment income (T4)", amount: 105000 },
+        { label: "Interest income (T5)", amount: 1200 },
+        { label: "− RRSP deduction", amount: -15000 },
+      ],
+      total: 91200,
+    },
+    federal: {
+      agi: 91200,
+      deductions: [],
+      taxableIncome: 91200,
+      tax: 15540,
+      additionalTaxes: [],
+      credits: [
+        { label: "− Basic personal amount", amount: -2419 },
+        { label: "− CPP contributions (Schedule 8)", amount: -585 },
+        { label: "− EI premiums (Schedule 6)", amount: -165 },
+      ],
+      payments: [{ label: "− Income tax withheld (T4)", amount: -13500 }],
+      refundOrOwed: 1129,
+    },
+    states: [
+      {
+        name: "Ontario",
+        agi: 91200,
+        deductions: [],
+        taxableIncome: 91200,
+        tax: 6235,
+        adjustments: [
+          { label: "− Non-refundable credits", amount: -852 },
+          { label: "Ontario Health Premium", amount: 750 },
+        ],
+        payments: [{ label: "− Provincial tax withheld (T4)", amount: -5800 }],
+        refundOrOwed: -333,
+      },
+    ],
+    summary: {
+      federalAmount: 1129,
+      stateAmounts: [{ state: "Ontario", amount: -333 }],
+      netPosition: 796,
+    },
+    rates: {
+      federal: { marginal: 20.5, effective: 13.6 },
+      state: { marginal: 9.15, effective: 6.7 },
+      combined: { marginal: 29.65, effective: 20.3 },
+    },
+  },
+};
+
 // Sample data spanning 4 years for testing multi-year views
 export const sampleReturns: Record<number, TaxReturn> = {
   2021: {
     year: 2021,
     name: "Jane Smith",
+    country: "US",
     filingStatus: "single",
     dependents: [],
     income: {
@@ -52,6 +113,7 @@ export const sampleReturns: Record<number, TaxReturn> = {
   2022: {
     year: 2022,
     name: "Jane Smith",
+    country: "US",
     filingStatus: "single",
     dependents: [],
     income: {
@@ -100,6 +162,7 @@ export const sampleReturns: Record<number, TaxReturn> = {
   2023: {
     year: 2023,
     name: "Jane Smith",
+    country: "US",
     filingStatus: "single",
     dependents: [],
     income: {
@@ -148,6 +211,7 @@ export const sampleReturns: Record<number, TaxReturn> = {
   2024: {
     year: 2024,
     name: "Jane Smith",
+    country: "US",
     filingStatus: "single",
     dependents: [],
     income: {

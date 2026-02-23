@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useCountryConfig } from "../context/CountryContext";
 import { formatCurrency, formatPercent } from "../lib/format";
 import type { TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
@@ -29,12 +30,13 @@ function DataRow({
   isMuted?: boolean;
   showSign?: boolean;
 }) {
+  const { currency } = useCountryConfig();
   return (
     <tr className={isMuted ? "text-(--color-text-muted)" : ""}>
       <td className="py-1.5 text-sm">{label}</td>
       <td className="py-1.5 text-right text-sm slashed-zero tabular-nums">
         {showSign && amount >= 0 ? "+" : ""}
-        {formatCurrency(amount)}
+        {formatCurrency(amount, false, currency)}
       </td>
     </tr>
   );
@@ -49,6 +51,7 @@ function TotalRow({
   amount: number;
   showSign?: boolean;
 }) {
+  const { currency } = useCountryConfig();
   return (
     <>
       <tr>
@@ -58,7 +61,7 @@ function TotalRow({
         <td className="py-2 pt-4 text-sm">{label}</td>
         <td className="py-2 pt-4 text-right text-sm slashed-zero tabular-nums">
           {showSign && amount >= 0 ? "+" : ""}
-          {formatCurrency(amount)}
+          {formatCurrency(amount, false, currency)}
         </td>
       </tr>
     </>
@@ -111,6 +114,7 @@ function RatesSection({ rates, stateName }: { rates: TaxReturn["rates"]; stateNa
 }
 
 export function ReceiptView({ data }: Props) {
+  const { agiLabel } = useCountryConfig();
   const totalTax = getTotalTax(data);
   const netIncome = data.income.total - totalTax;
   const grossMonthly = Math.round(data.income.total / 12);
@@ -134,7 +138,7 @@ export function ReceiptView({ data }: Props) {
               <TotalRow label="Total income" amount={data.income.total} />
 
               <CategoryHeader>Federal</CategoryHeader>
-              <DataRow label="Adjusted gross income" amount={data.federal.agi} />
+              <DataRow label={agiLabel} amount={data.federal.agi} />
               {data.federal.deductions.map((item, i) => (
                 <DataRow key={i} label={item.label} amount={item.amount} isMuted />
               ))}
@@ -158,7 +162,7 @@ export function ReceiptView({ data }: Props) {
               {data.states.map((state, i) => (
                 <React.Fragment key={i}>
                   <CategoryHeader>{state.name}</CategoryHeader>
-                  <DataRow label="Adjusted gross income" amount={state.agi} />
+                  <DataRow label={agiLabel} amount={state.agi} />
                   {state.deductions.map((item, j) => (
                     <DataRow key={j} label={item.label} amount={item.amount} isMuted />
                   ))}

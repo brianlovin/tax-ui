@@ -11,7 +11,8 @@ import { ResetDialog } from "./components/ResetDialog";
 import { SettingsModal } from "./components/SettingsModal";
 import { SetupDialog } from "./components/SetupDialog";
 import { UploadModal } from "./components/UploadModal";
-import { sampleReturns } from "./data/sampleData";
+import { CountryConfigProvider } from "./context/CountryContext";
+import { caReturns } from "./data/sampleData";
 import { isElectron } from "./lib/electron";
 import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
 import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
@@ -171,7 +172,7 @@ function parseSelectedId(id: string): SelectedView {
 
 export function App() {
   const [state, setState] = useState<AppState>({
-    returns: sampleReturns,
+    returns: caReturns,
     hasStoredKey: false,
     selectedYear: "summary",
     isLoading: true,
@@ -211,6 +212,14 @@ export function App() {
   const hasShownOnboardingRef = useRef(false);
   const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
   const updater = useElectronUpdater(devUpdateOverride);
+  const [country, setCountry] = useState<string>(
+    () => localStorage.getItem("tax-ui:country") ?? "US",
+  );
+
+  function handleCountryChange(c: string) {
+    setCountry(c);
+    localStorage.setItem("tax-ui:country", c);
+  }
 
   // Compute effective demo mode early (dev override takes precedence)
   const effectiveIsDemo = resolveDemoMode(devDemoOverride, state.isDemo);
@@ -219,14 +228,14 @@ export function App() {
   const shouldShowChat = !effectiveIsDemo || !isMobile;
 
   // When demo mode is toggled on, show sample data instead of user data
-  const effectiveReturns = effectiveIsDemo ? sampleReturns : state.returns;
+  const effectiveReturns = effectiveIsDemo ? caReturns : state.returns;
   const navItems = buildNavItems(effectiveReturns);
 
   useEffect(() => {
     fetchInitialState()
       .then(({ returns, hasStoredKey, hasUserData, isDemo, isDev }) => {
         // Use user data if available, otherwise show sample data
-        const effectiveReturns = hasUserData ? returns : sampleReturns;
+        const effectiveReturns = hasUserData ? returns : caReturns;
         setState({
           returns: effectiveReturns,
           hasStoredKey,
@@ -460,7 +469,7 @@ export function App() {
     }
     // Reset to initial state with sample data
     setState((s) => ({
-      returns: sampleReturns,
+      returns: caReturns,
       hasStoredKey: false,
       selectedYear: "summary",
       isLoading: false,
@@ -588,7 +597,7 @@ export function App() {
         // Last year deleted - reset to sample data state
         return {
           ...s,
-          returns: sampleReturns,
+          returns: caReturns,
           selectedYear: "summary",
           hasUserData: false,
         };
@@ -654,26 +663,42 @@ export function App() {
       hasStoredKey: state.hasStoredKey,
       returns: effectiveReturns,
       selectedYear: statsSelectedYear,
+      country,
+      onCountryChange: handleCountryChange,
     };
 
     if (selectedPendingUpload) {
-      return <MainPanel view="loading" pendingUpload={selectedPendingUpload} {...commonProps} />;
+      return (
+        <CountryConfigProvider country={country}>
+          <MainPanel view="loading" pendingUpload={selectedPendingUpload} {...commonProps} />
+        </CountryConfigProvider>
+      );
     }
     if (state.selectedYear === "summary") {
-      return <MainPanel view="summary" {...commonProps} />;
+      return (
+        <CountryConfigProvider country={country}>
+          <MainPanel view="summary" {...commonProps} />
+        </CountryConfigProvider>
+      );
     }
     const receiptData = getReceiptData();
     if (receiptData) {
       return (
-        <MainPanel
-          view="receipt"
-          data={receiptData}
-          title={String(state.selectedYear)}
-          {...commonProps}
-        />
+        <CountryConfigProvider country={country}>
+          <MainPanel
+            view="receipt"
+            data={receiptData}
+            title={String(state.selectedYear)}
+            {...commonProps}
+          />
+        </CountryConfigProvider>
       );
     }
-    return <MainPanel view="summary" {...commonProps} />;
+    return (
+      <CountryConfigProvider country={country}>
+        <MainPanel view="summary" {...commonProps} />
+      </CountryConfigProvider>
+    );
   }
 
   // Find pending upload if selected
@@ -819,6 +844,8 @@ export function App() {
           hasStoredKey={state.hasStoredKey}
           existingYears={state.hasUserData ? Object.keys(state.returns).map(Number) : []}
           skipOpenAnimation={skipOnboardingAnimation}
+          country={country}
+          onCountryChange={handleCountryChange}
         />
       )}
 

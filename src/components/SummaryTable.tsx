@@ -1,6 +1,8 @@
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 
+import { useCountryConfig } from "../context/CountryContext";
+import type { CountryConfig } from "../lib/countryConfig";
 import { formatCurrency, formatPercent } from "../lib/format";
 import type { TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
@@ -21,10 +23,11 @@ interface SummaryRow {
   showChange?: boolean;
 }
 
-function collectRows(returns: Record<number, TaxReturn>): SummaryRow[] {
+function collectRows(returns: Record<number, TaxReturn>, config: CountryConfig): SummaryRow[] {
   const rows: SummaryRow[] = [];
   const allReturns = Object.values(returns);
   const years = Object.keys(returns).map(Number);
+  const { agiLabel, stateMarginalRateLabel, stateEffectiveRateLabel } = config;
 
   const addRow = (
     category: string,
@@ -90,7 +93,7 @@ function collectRows(returns: Record<number, TaxReturn>): SummaryRow[] {
 
   // Federal
   addHeader("Federal");
-  addRow("Federal", "Adjusted gross income", (data) => data.federal.agi, { showChange: true });
+  addRow("Federal", agiLabel, (data) => data.federal.agi, { showChange: true });
 
   const federalDeductionLabels = new Set<string>();
   for (const r of allReturns) {
@@ -163,7 +166,7 @@ function collectRows(returns: Record<number, TaxReturn>): SummaryRow[] {
     const getState = (data: TaxReturn) => data.states.find((s) => s.name === stateName);
 
     addHeader(stateName);
-    addRow(stateName, "Adjusted gross income", (data) => getState(data)?.agi, { showChange: true });
+    addRow(stateName, agiLabel, (data) => getState(data)?.agi, { showChange: true });
 
     const stateDeductionLabels = new Set<string>();
     for (const r of allReturns) {
@@ -248,10 +251,10 @@ function collectRows(returns: Record<number, TaxReturn>): SummaryRow[] {
   addRow("Rates", "Federal effective", (data) => data.rates?.federal.effective, {
     invertPolarity: true,
   });
-  addRow("Rates", "State marginal", (data) => data.rates?.state?.marginal, {
+  addRow("Rates", stateMarginalRateLabel, (data) => data.rates?.state?.marginal, {
     invertPolarity: true,
   });
-  addRow("Rates", "State effective", (data) => data.rates?.state?.effective, {
+  addRow("Rates", stateEffectiveRateLabel, (data) => data.rates?.state?.effective, {
     invertPolarity: true,
   });
   addRow("Rates", "Combined marginal", (data) => data.rates?.combined?.marginal, {
@@ -264,10 +267,10 @@ function collectRows(returns: Record<number, TaxReturn>): SummaryRow[] {
   return rows;
 }
 
-function formatValue(value: number | undefined, isRate: boolean): string {
+function formatValue(value: number | undefined, isRate: boolean, currency: string): string {
   if (value === undefined) return "—";
   if (isRate) return formatPercent(value);
-  return formatCurrency(value);
+  return formatCurrency(value, false, currency);
 }
 
 const columnHelper = createColumnHelper<SummaryRow>();
@@ -277,7 +280,10 @@ export function SummaryTable({ returns }: Props) {
     .map(Number)
     .sort((a, b) => a - b); // Oldest first
 
-  const rows = useMemo(() => collectRows(returns), [returns]);
+  const config = useCountryConfig();
+  const { currency } = config;
+
+  const rows = useMemo(() => collectRows(returns, config), [returns, config]);
 
   const columns = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -353,7 +359,7 @@ export function SummaryTable({ returns }: Props) {
                         : "text-(--color-text)"
                   }
                 >
-                  {formatValue(value, isRate)}
+                  {formatValue(value, isRate, currency)}
                 </span>
               </div>
             );
@@ -368,7 +374,7 @@ export function SummaryTable({ returns }: Props) {
     });
 
     return cols;
-  }, [years]);
+  }, [years, currency]);
 
   const getRowClassName = (row: SummaryRow) => {
     if (row.isHeader && row.category !== "Monthly Breakdown") {

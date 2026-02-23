@@ -6,6 +6,7 @@ import { getEffectiveRate, getNetIncome, getTotalTax } from "./tax-calculations"
 const baseTaxReturn: TaxReturn = {
   year: 2024,
   name: "Test User",
+  country: "US",
   filingStatus: "single",
   dependents: [],
   income: {

@@ -1,3 +1,4 @@
+import { useCountryConfig } from "../context/CountryContext";
 import { cn } from "../lib/cn";
 import { formatCurrency } from "../lib/format";
 
@@ -10,6 +11,7 @@ interface RowProps {
 }
 
 export function Row({ label, amount, showSign, isTotal, isMuted }: RowProps) {
+  const { currency } = useCountryConfig();
   return (
     <div
       className={cn(
@@ -19,7 +21,9 @@ export function Row({ label, amount, showSign, isTotal, isMuted }: RowProps) {
       )}
     >
       <span>{label}</span>
-      <span className="slashed-zero tabular-nums">{formatCurrency(amount, showSign)}</span>
+      <span className="slashed-zero tabular-nums">
+        {formatCurrency(amount, showSign, currency)}
+      </span>
     </div>
   );
 }

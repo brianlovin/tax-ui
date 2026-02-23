@@ -11,6 +11,7 @@ const makeReturn = (
 ): TaxReturn => ({
   year,
   name: "Test User",
+  country: "US",
   filingStatus: "single",
   dependents: [],
   income: {

@@ -30,13 +30,8 @@ const TaxRates = z.object({
 export const TaxReturnSchema = z.object({
   year: z.number(),
   name: z.string(),
-  filingStatus: z.enum([
-    "single",
-    "married_filing_jointly",
-    "married_filing_separately",
-    "head_of_household",
-    "qualifying_surviving_spouse",
-  ]),
+  country: z.enum(["US", "CA"]).default("US"),
+  filingStatus: z.string(),
   dependents: z.array(Dependent),
   income: z.object({
     items: z.array(LabeledAmount),

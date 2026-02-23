@@ -14,6 +14,7 @@ function migrate(data: Record<number, unknown>): Record<number, TaxReturn> {
     const fed = (ret.federal ?? {}) as Record<string, unknown>;
     const patched = {
       ...ret,
+      country: ret.country ?? "US",
       dependents: ret.dependents ?? [],
       federal: {
         ...fed,
