@@ -156,7 +156,7 @@ function AnimatedTab({ id, label, isSelected, wrapper }: AnimatedTabProps) {
 }
 
 export function MainPanel(props: Props) {
-  const [summaryViewMode, setSummaryViewMode] = useState<SummaryViewMode>("table");
+  const summaryViewMode: SummaryViewMode = "table";
   const [visibleCount, setVisibleCount] = useState(props.navItems.length);
   const navRef = useRef<HTMLElement>(null);
 
@@ -190,6 +190,7 @@ export function MainPanel(props: Props) {
 
   // Global arrow key handler for tab navigation
   const tabListRef = useRef<HTMLDivElement>(null);
+  const { navItems, selectedId, onSelect } = props;
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
@@ -209,25 +210,25 @@ export function MainPanel(props: Props) {
 
       e.preventDefault();
 
-      const currentIndex = props.navItems.findIndex((item) => item.id === props.selectedId);
+      const currentIndex = navItems.findIndex((item) => item.id === selectedId);
       const direction = e.key === "ArrowLeft" ? -1 : 1;
-      const nextIndex = Math.max(0, Math.min(props.navItems.length - 1, currentIndex + direction));
-      const nextItem = props.navItems[nextIndex];
+      const nextIndex = Math.max(0, Math.min(navItems.length - 1, currentIndex + direction));
+      const nextItem = navItems[nextIndex];
 
-      if (nextItem && nextItem.id !== props.selectedId) {
-        props.onSelect(nextItem.id);
+      if (nextItem && nextItem.id !== selectedId) {
+        onSelect(nextItem.id);
       }
 
       // Focus the tab list so subsequent arrow keys work natively
       const tabToFocus = tabListRef.current?.querySelector(
-        `[data-value="${nextItem?.id ?? props.selectedId}"]`,
+        `[data-value="${nextItem?.id ?? selectedId}"]`,
       ) as HTMLElement | null;
       tabToFocus?.focus();
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [props.navItems, props.selectedId, props.onSelect]);
+  }, [navItems, selectedId, onSelect]);
 
   const visibleItems = props.navItems.slice(0, visibleCount);
   const overflowItems = props.navItems.slice(visibleCount);
