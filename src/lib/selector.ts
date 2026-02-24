@@ -21,7 +21,7 @@ const IMPORTANT: FormType[] = [
   "t4a",
 ];
 const OPTIONAL: FormType[] = ["schedule_2", "schedule_3", "state_schedule", "provincial_schedule"];
-const SKIP: FormType[] = [
+const _SKIP: FormType[] = [
   "k1_detail",
   "worksheet",
   "supporting_doc",
