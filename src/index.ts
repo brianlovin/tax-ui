@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { argv, serve } from "bun";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,22 +5,34 @@ import { fileURLToPath } from "url";
 import index from "./index.html";
 import { extractYearFromPdf, parseTaxReturn } from "./lib/parser";
 import {
+  createProvider,
+  detectProvider,
+  type LLMProvider,
+  type ProviderConfig,
+} from "./lib/providers";
+import {
   clearAllData,
   deleteReturn,
-  getApiKey,
+  getProviderConfig,
   getReturns,
-  removeApiKey,
-  saveApiKey,
+  removeProviderConfig,
+  saveProviderConfig,
   saveReturn,
 } from "./lib/storage";
 
-// Model used for lightweight operations (validation, suggestions)
-const FAST_MODEL = "claude-haiku-4-5-20251001";
-
 function isAuthError(message: string): boolean {
   return (
-    message.includes("authentication") || message.includes("401") || message.includes("API key")
+    message.includes("authentication") ||
+    message.includes("401") ||
+    message.includes("API key") ||
+    message.includes("Incorrect API key")
   );
+}
+
+function getProvider(overrideConfig?: ProviderConfig | null): LLMProvider | null {
+  const config = overrideConfig ?? getProviderConfig();
+  if (!config) return null;
+  return createProvider(config);
 }
 
 // Parse --port from command line args (supports --port=XXXX or --port XXXX)
@@ -63,37 +74,72 @@ Answer questions about the user's income, taxes, deductions, credits, and tax ra
 const routes: Record<string, any> = {
   "/api/config": {
     GET: () => {
-      const hasKey = Boolean(getApiKey());
+      const config = getProviderConfig();
+      const hasKey = Boolean(config);
+      const providerType = config?.type ?? null;
       const isDemo = process.env.DEMO_MODE === "true";
       const isDev = process.env.NODE_ENV !== "production";
-      return Response.json({ hasKey, isDemo, isDev });
+      return Response.json({ hasKey, providerType, isDemo, isDev });
     },
   },
   "/api/config/key": {
     POST: async (req: Request) => {
-      const { apiKey } = await req.json();
+      const body = await req.json();
+      const { apiKey, providerType, baseUrl, model } = body;
+
+      // For local provider, no API key needed
+      if (providerType === "local") {
+        if (!baseUrl) {
+          return Response.json({ error: "Base URL is required for local model" }, { status: 400 });
+        }
+        if (!model) {
+          return Response.json({ error: "Model is required for local model" }, { status: 400 });
+        }
+
+        const config: ProviderConfig = { type: "local", apiKey: "", baseUrl, model };
+        const provider = createProvider(config);
+        const valid = await provider.validate();
+        if (!valid) {
+          return Response.json(
+            { error: "Could not connect to local model. Check URL and model name." },
+            { status: 400 },
+          );
+        }
+
+        await saveProviderConfig(config);
+        return Response.json({ success: true, providerType: "local" });
+      }
+
+      // Cloud providers need an API key
       if (!apiKey || typeof apiKey !== "string") {
         return Response.json({ error: "Invalid API key" }, { status: 400 });
       }
 
-      // Validate the key with a minimal API call
-      try {
-        const client = new Anthropic({ apiKey: apiKey.trim() });
-        await client.messages.create({
-          model: FAST_MODEL,
-          max_tokens: 1,
-          messages: [{ role: "user", content: "hi" }],
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "";
-        if (isAuthError(message)) {
-          return Response.json({ error: "Invalid API key" }, { status: 401 });
-        }
-        // Other errors (rate limit, etc.) - key is probably valid
+      const trimmedKey = apiKey.trim();
+
+      // Auto-detect provider type if not specified
+      const detectedType = providerType ?? detectProvider(trimmedKey);
+      if (!detectedType) {
+        return Response.json(
+          {
+            error:
+              "Could not detect provider from API key. Key should start with sk-ant- (Anthropic) or sk- (OpenAI).",
+          },
+          { status: 400 },
+        );
       }
 
-      await saveApiKey(apiKey.trim());
-      return Response.json({ success: true });
+      const config: ProviderConfig = { type: detectedType, apiKey: trimmedKey };
+
+      // Validate the key
+      const provider = createProvider(config);
+      const valid = await provider.validate();
+      if (!valid) {
+        return Response.json({ error: "Invalid API key" }, { status: 401 });
+      }
+
+      await saveProviderConfig(config);
+      return Response.json({ success: true, providerType: detectedType });
     },
   },
   "/api/clear-data": {
@@ -126,25 +172,49 @@ const routes: Record<string, any> = {
         return Response.json({ error: "No PDF file provided" }, { status: 400 });
       }
 
+      // Support form-submitted provider config for one-off use during onboarding
       const formApiKey = formData.get("apiKey") as string | null;
-      const apiKey = formApiKey || getApiKey();
-      if (!apiKey) {
+      const formProviderType = formData.get("providerType") as string | null;
+      const formBaseUrl = formData.get("baseUrl") as string | null;
+      const formModel = formData.get("model") as string | null;
+      let provider: LLMProvider | null = null;
+
+      if (formProviderType === "local" && formBaseUrl && formModel) {
+        provider = createProvider({
+          type: "local",
+          apiKey: "",
+          baseUrl: formBaseUrl,
+          model: formModel,
+        });
+      } else if (formApiKey?.trim()) {
+        const detected = detectProvider(formApiKey.trim());
+        if (detected) {
+          provider = createProvider({ type: detected, apiKey: formApiKey.trim() });
+        }
+      }
+      if (!provider) {
+        provider = getProvider();
+      }
+      if (!provider) {
         return Response.json({ error: "No API key configured" }, { status: 400 });
       }
 
       try {
         const buffer = await file.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
-        const year = await extractYearFromPdf(base64, apiKey);
+        const year = await extractYearFromPdf(base64, provider);
         return Response.json({ year });
       } catch (error) {
         console.error("Year extraction error:", error);
         const message = error instanceof Error ? error.message : "";
         if (isAuthError(message)) {
-          await removeApiKey();
+          await removeProviderConfig();
           return Response.json({ error: "Invalid API key" }, { status: 401 });
         }
-        return Response.json({ year: null });
+        return Response.json({
+          year: null,
+          error: error instanceof Error ? error.message : "Year extraction failed",
+        });
       }
     },
   },
@@ -156,19 +226,18 @@ const routes: Record<string, any> = {
         return Response.json({ error: "No prompt provided" }, { status: 400 });
       }
 
-      const apiKey = getApiKey();
-      if (!apiKey) {
+      const provider = getProvider();
+      if (!provider) {
         return Response.json({ error: "No API key configured" }, { status: 400 });
       }
 
       // Use client-provided returns (for dev sample data) or fall back to stored returns
       const returns =
         clientReturns && Object.keys(clientReturns).length > 0 ? clientReturns : await getReturns();
-      const client = new Anthropic({ apiKey });
 
       try {
         // Build messages from history
-        const messages: Anthropic.MessageParam[] = [];
+        const messages: { role: "user" | "assistant"; content: string }[] = [];
         for (const msg of history || []) {
           messages.push({
             role: msg.role as "user" | "assistant",
@@ -177,22 +246,14 @@ const routes: Record<string, any> = {
         }
         messages.push({ role: "user", content: prompt });
 
-        const response = await client.messages.create({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 2048,
-          system: buildChatSystemPrompt(returns),
-          messages,
-        });
-
-        const textBlock = response.content.find((block) => block.type === "text");
-        const responseText = textBlock?.type === "text" ? textBlock.text : "No response";
+        const responseText = await provider.chat(buildChatSystemPrompt(returns), messages);
 
         return Response.json({ response: responseText });
       } catch (error) {
         console.error("Chat error:", error);
         const message = error instanceof Error ? error.message : "Unknown error";
         if (isAuthError(message)) {
-          await removeApiKey();
+          await removeProviderConfig();
           return Response.json({ error: "Invalid API key" }, { status: 401 });
         }
         return Response.json({ error: message }, { status: 500 });
@@ -201,46 +262,27 @@ const routes: Record<string, any> = {
   },
   "/api/suggestions": {
     POST: async (req: Request) => {
-      const { history, returns: clientReturns } = await req.json();
+      const { history } = await req.json();
 
-      const apiKey = getApiKey();
-      if (!apiKey) {
+      const provider = getProvider();
+      if (!provider) {
         return Response.json({ suggestions: [] });
       }
 
-      const returns =
-        clientReturns && Object.keys(clientReturns).length > 0 ? clientReturns : await getReturns();
-
-      const client = new Anthropic({ apiKey });
-
       try {
-        const messages: Anthropic.MessageParam[] = history.map(
+        const messages: { role: "user" | "assistant"; content: string }[] = history.map(
           (msg: { role: string; content: string }) => ({
             role: msg.role as "user" | "assistant",
             content: msg.content,
           }),
         );
-        // Structured outputs don't allow assistant messages in final position
+        // Add the suggestion request as a user message
         messages.push({ role: "user", content: "Suggest 3 follow-up questions I might ask." });
 
-        const response = await client.messages.create({
-          model: FAST_MODEL,
-          max_tokens: 256,
-          system: `You are helping a user explore their own tax return data. Generate 3 short follow-up questions the user might want to ask about their finances. Phrase questions in FIRST PERSON (e.g., "Why did my income drop?" not "Why did your income drop?").`,
+        const suggestions = await provider.suggestions(
+          `You are helping a user explore their own tax return data. Generate 3 short follow-up questions the user might want to ask about their finances. Phrase questions in FIRST PERSON (e.g., "Why did my income drop?" not "Why did your income drop?").`,
           messages,
-          output_config: {
-            format: {
-              type: "json_schema",
-              schema: {
-                type: "array",
-                items: { type: "string" },
-              },
-            },
-          },
-        });
-
-        const textBlock = response.content.find((block) => block.type === "text");
-        const suggestions = JSON.parse(textBlock?.type === "text" ? textBlock.text : "[]");
+        );
 
         return Response.json({ suggestions: suggestions.slice(0, 3) });
       } catch (error) {
@@ -259,19 +301,34 @@ const routes: Record<string, any> = {
         return Response.json({ error: "No PDF file provided" }, { status: 400 });
       }
 
-      const apiKey = apiKeyFromForm?.trim() || getApiKey();
-      if (!apiKey) {
+      // Build provider from form key or stored config
+      let provider: LLMProvider | null = null;
+      let configToSave: ProviderConfig | null = null;
+
+      if (apiKeyFromForm?.trim()) {
+        const trimmedKey = apiKeyFromForm.trim();
+        const detected = detectProvider(trimmedKey);
+        if (detected) {
+          const config: ProviderConfig = { type: detected, apiKey: trimmedKey };
+          provider = createProvider(config);
+          configToSave = config;
+        }
+      }
+      if (!provider) {
+        provider = getProvider();
+      }
+      if (!provider) {
         return Response.json({ error: "No API key provided" }, { status: 400 });
       }
 
       try {
         const buffer = await file.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
-        const taxReturn = await parseTaxReturn(base64, apiKey);
+        const taxReturn = await parseTaxReturn(base64, provider);
 
         // Save key only after successful parse
-        if (apiKeyFromForm?.trim()) {
-          await saveApiKey(apiKeyFromForm.trim());
+        if (configToSave) {
+          await saveProviderConfig(configToSave);
         }
 
         await saveReturn(taxReturn);
@@ -281,7 +338,7 @@ const routes: Record<string, any> = {
         const message = error instanceof Error ? error.message : "Unknown error";
 
         if (isAuthError(message)) {
-          await removeApiKey();
+          await removeProviderConfig();
           return Response.json({ error: "Invalid API key" }, { status: 401 });
         }
         if (message.includes("prompt is too long") || message.includes("too many tokens")) {
@@ -294,6 +351,23 @@ const routes: Record<string, any> = {
           return Response.json({ error: "Failed to parse tax return data" }, { status: 422 });
         }
         return Response.json({ error: message }, { status: 500 });
+      }
+    },
+  },
+  "/api/models": {
+    GET: async (req: Request) => {
+      const url = new URL(req.url);
+      const baseUrl = url.searchParams.get("baseUrl") || "http://localhost:11434/v1";
+
+      try {
+        const response = await fetch(`${baseUrl}/models`);
+        if (!response.ok) {
+          return Response.json({ error: "Could not reach model server" }, { status: 502 });
+        }
+        const data = await response.json();
+        return Response.json(data);
+      } catch {
+        return Response.json({ error: "Could not connect to local model server" }, { status: 502 });
       }
     },
   },

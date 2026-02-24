@@ -1,5 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { PDFDocument } from "pdf-lib";
+
+import type { LLMProvider } from "./providers/types";
 
 export type FormType =
   | "1040_main"
@@ -94,7 +95,7 @@ Classify ALL pages in the document.`;
 
 export async function classifyPages(
   pdfBase64: string,
-  client: Anthropic,
+  provider: LLMProvider,
 ): Promise<PageClassification[]> {
   const pdfBytes = Buffer.from(pdfBase64, "base64");
   const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -108,48 +109,5 @@ export async function classifyPages(
     }));
   }
 
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "document",
-            source: {
-              type: "base64",
-              media_type: "application/pdf",
-              data: pdfBase64,
-            },
-          },
-          {
-            type: "text",
-            text: CLASSIFICATION_PROMPT,
-          },
-        ],
-      },
-    ],
-  });
-
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No classification response from Claude");
-  }
-
-  // Parse the JSON response
-  const jsonMatch = textBlock.text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    throw new Error("Could not parse classification response");
-  }
-
-  const parsed = JSON.parse(jsonMatch[0]) as Array<{
-    page: number;
-    type: string;
-  }>;
-
-  return parsed.map((item) => ({
-    pageNumber: item.page,
-    formType: item.type as FormType,
-  }));
+  return provider.classifyPages(pdfBase64, CLASSIFICATION_PROMPT);
 }
