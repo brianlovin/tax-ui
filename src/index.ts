@@ -71,7 +71,7 @@ ${JSON.stringify(returns, null, 2)}
 Answer questions about the user's income, taxes, deductions, credits, and tax rates based on this data.`;
 }
 
-const routes: Record<string, any> = {
+const routes: Record<string, object> = {
   "/api/config": {
     GET: () => {
       const config = getProviderConfig();
@@ -332,7 +332,8 @@ const routes: Record<string, any> = {
         }
 
         await saveReturn(taxReturn);
-        return Response.json(taxReturn);
+        const allReturns = await getReturns();
+        return Response.json({ taxReturn, returns: allReturns });
       } catch (error) {
         console.error("Parse error:", error);
         const message = error instanceof Error ? error.message : "Unknown error";

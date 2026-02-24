@@ -1,8 +1,8 @@
 import "./index.css";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 
-import { Chat, type ChatMessage } from "./components/Chat";
+import type { ChatMessage } from "./components/Chat";
 import { DemoDialog } from "./components/DemoDialog";
 import { DevTools } from "./components/DevTools";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -12,13 +12,15 @@ import { SettingsModal } from "./components/SettingsModal";
 import { SetupDialog } from "./components/SetupDialog";
 import { UploadModal } from "./components/UploadModal";
 import { CountryConfigProvider } from "./context/CountryContext";
-import { caReturns } from "./data/sampleData";
+import { caReturns, sampleReturns } from "./data/sampleData";
 import { isElectron } from "./lib/electron";
 import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
 import type { ProviderType } from "./lib/providers/types";
 import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
 import type { NavItem } from "./lib/types";
 import { useIsMobile } from "./lib/useIsMobile";
+
+const Chat = lazy(() => import("./components/Chat").then((m) => ({ default: m.Chat })));
 
 export type UpdateStatus = "available" | "downloading" | "ready";
 
@@ -174,9 +176,18 @@ function parseSelectedId(id: string): SelectedView {
   return Number(id);
 }
 
+const SAMPLE_RETURNS_BY_COUNTRY: Record<string, Record<number, TaxReturn>> = {
+  US: sampleReturns,
+  CA: caReturns,
+};
+
+function getSampleReturnsForCountry(country: string): Record<number, TaxReturn> {
+  return SAMPLE_RETURNS_BY_COUNTRY[country] ?? sampleReturns;
+}
+
 export function App() {
   const [state, setState] = useState<AppState>({
-    returns: caReturns,
+    returns: getSampleReturnsForCountry(localStorage.getItem("tax-ui:country") ?? "US"),
     hasStoredKey: false,
     providerType: null,
     selectedYear: "summary",
@@ -231,8 +242,9 @@ export function App() {
   // Hide chat on mobile in demo mode
   const shouldShowChat = !effectiveIsDemo || !isMobile;
 
-  // When demo mode is toggled on, show sample data instead of user data
-  const effectiveReturns = effectiveIsDemo ? caReturns : state.returns;
+  // When demo or no user data, show country-specific sample data; otherwise user's returns
+  const effectiveReturns =
+    effectiveIsDemo || !state.hasUserData ? getSampleReturnsForCountry(country) : state.returns;
   const navItems = buildNavItems(effectiveReturns);
 
   // Refs for values used inside submitChatMessage to avoid recreating the callback
@@ -244,8 +256,8 @@ export function App() {
   useEffect(() => {
     fetchInitialState()
       .then(({ returns, hasStoredKey, providerType, hasUserData, isDemo, isDev }) => {
-        // Use user data if available, otherwise show sample data
-        const effectiveReturns = hasUserData ? returns : caReturns;
+        // Use user data if available, otherwise show sample data for selected country
+        const effectiveReturns = hasUserData ? returns : getSampleReturnsForCountry(country);
         setState({
           returns: effectiveReturns,
           hasStoredKey,
@@ -261,6 +273,7 @@ export function App() {
         console.error("Failed to load:", err);
         setState((s) => ({ ...s, isLoading: false }));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- country intentionally excluded: sample selection happens via effectiveReturns on render
   }, []);
 
   useEffect(() => {
@@ -422,9 +435,8 @@ export function App() {
       throw new Error(error || `HTTP ${res.status}`);
     }
 
-    const taxReturn: TaxReturn = await res.json();
-    const returnsRes = await fetch("/api/returns");
-    const returns = await returnsRes.json();
+    const { taxReturn, returns }: { taxReturn: TaxReturn; returns: Record<number, TaxReturn> } =
+      await res.json();
 
     setState((s) => ({
       ...s,
@@ -490,9 +502,9 @@ export function App() {
       const { error } = await res.json();
       throw new Error(error || `HTTP ${res.status}`);
     }
-    // Reset to initial state with sample data
+    // Reset to initial state with sample data for selected country
     setState((s) => ({
-      returns: caReturns,
+      returns: getSampleReturnsForCountry(country),
       hasStoredKey: false,
       providerType: null,
       selectedYear: "summary",
@@ -537,10 +549,10 @@ export function App() {
       delete newReturns[year];
 
       if (isLastYear) {
-        // Last year deleted - reset to sample data state
+        // Last year deleted - reset to sample data state for selected country
         return {
           ...s,
-          returns: caReturns,
+          returns: getSampleReturnsForCountry(country),
           selectedYear: "summary",
           hasUserData: false,
         };
@@ -755,18 +767,20 @@ export function App() {
 
       {shouldShowChat && isChatOpen && (
         <ErrorBoundary name="Chat">
-          <Chat
-            messages={chatMessages}
-            isLoading={isChatLoading}
-            hasApiKey={state.hasStoredKey}
-            isDemo={effectiveIsDemo}
-            onSubmit={submitChatMessage}
-            onNewChat={handleNewChat}
-            onClose={() => setIsChatOpen(false)}
-            onConfigureKey={() => setOpenModal("onboarding")}
-            followUpSuggestions={followUpSuggestions}
-            isLoadingSuggestions={isLoadingSuggestions}
-          />
+          <Suspense fallback={null}>
+            <Chat
+              messages={chatMessages}
+              isLoading={isChatLoading}
+              hasApiKey={state.hasStoredKey}
+              isDemo={effectiveIsDemo}
+              onSubmit={submitChatMessage}
+              onNewChat={handleNewChat}
+              onClose={() => setIsChatOpen(false)}
+              onConfigureKey={() => setOpenModal("onboarding")}
+              followUpSuggestions={followUpSuggestions}
+              isLoadingSuggestions={isLoadingSuggestions}
+            />
+          </Suspense>
         </ErrorBoundary>
       )}
 
