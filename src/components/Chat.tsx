@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 
 import { cn } from "../lib/cn";
 import { isElectron } from "../lib/electron";
+import { useIsMobile } from "../lib/useIsMobile";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
 import { XMarkIcon } from "./XMarkIcon";
@@ -25,6 +26,49 @@ interface Props {
   followUpSuggestions?: string[];
   isLoadingSuggestions?: boolean;
 }
+
+const markdownComponents = {
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline hover:text-(--color-text-muted)"
+    >
+      {children}
+    </a>
+  ),
+  code: ({ children }: { children?: React.ReactNode }) => (
+    <code className="prose-code rounded bg-(--color-bg-muted) px-1 py-0.5 font-mono text-xs">
+      {children}
+    </code>
+  ),
+  pre: ({ children }: { children?: React.ReactNode }) => (
+    <pre className="my-2 overflow-x-auto rounded bg-(--color-bg-muted) p-2 font-mono text-xs">
+      {children}
+    </pre>
+  ),
+  table: ({ children }: { children?: React.ReactNode }) => (
+    <div className="my-2 overflow-x-auto">
+      <table className="border-collapse text-xs">{children}</table>
+    </div>
+  ),
+  thead: ({ children }: { children?: React.ReactNode }) => (
+    <thead className="border-b border-(--color-border)">{children}</thead>
+  ),
+  th: ({ children }: { children?: React.ReactNode }) => (
+    <th className="py-1 pr-4 text-left font-medium text-(--color-text-muted)">{children}</th>
+  ),
+  td: ({ children }: { children?: React.ReactNode }) => (
+    <td className="py-1 pr-4 slashed-zero tabular-nums">{children}</td>
+  ),
+};
+
+const INITIAL_SUGGESTIONS = [
+  "Help me understand my tax returns",
+  "How can I optimize next year?",
+  "Look for mistakes in my tax return history",
+];
 
 const WIDTH_STORAGE_KEY = "tax-chat-width";
 const MIN_WIDTH = 320;
@@ -65,19 +109,12 @@ export function Chat({
   const [input, setInput] = useState("");
   const [width, setWidth] = useState(() => loadWidth());
   const [isResizing, setIsResizing] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [hasTopOverflow, setHasTopOverflow] = useState(false);
   const [hasBottomOverflow, setHasBottomOverflow] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   useEffect(() => {
     if (!isResizing) {
@@ -129,7 +166,7 @@ export function Chat({
     };
 
     checkOverflow();
-    container.addEventListener("scroll", checkOverflow);
+    container.addEventListener("scroll", checkOverflow, { passive: true });
     const observer = new ResizeObserver(checkOverflow);
     observer.observe(container);
 
@@ -254,48 +291,7 @@ export function Chat({
                     {message.role === "user" ? "You" : "Claude"}
                   </div>
                   <div className="prose-chat text-sm">
-                    <Markdown
-                      components={{
-                        a: ({ href, children }) => (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline hover:text-(--color-text-muted)"
-                          >
-                            {children}
-                          </a>
-                        ),
-                        code: ({ children }) => (
-                          <code className="prose-code rounded bg-(--color-bg-muted) px-1 py-0.5 font-mono text-xs">
-                            {children}
-                          </code>
-                        ),
-                        pre: ({ children }) => (
-                          <pre className="my-2 overflow-x-auto rounded bg-(--color-bg-muted) p-2 font-mono text-xs">
-                            {children}
-                          </pre>
-                        ),
-                        table: ({ children }) => (
-                          <div className="my-2 overflow-x-auto">
-                            <table className="border-collapse text-xs">{children}</table>
-                          </div>
-                        ),
-                        thead: ({ children }) => (
-                          <thead className="border-b border-(--color-border)">{children}</thead>
-                        ),
-                        th: ({ children }) => (
-                          <th className="py-1 pr-4 text-left font-medium text-(--color-text-muted)">
-                            {children}
-                          </th>
-                        ),
-                        td: ({ children }) => (
-                          <td className="py-1 pr-4 slashed-zero tabular-nums">{children}</td>
-                        ),
-                      }}
-                    >
-                      {message.content}
-                    </Markdown>
+                    <Markdown components={markdownComponents}>{message.content}</Markdown>
                   </div>
                 </div>
               ))}
@@ -358,11 +354,7 @@ export function Chat({
             pointerEvents: input ? "none" : "auto",
           }}
         >
-          {[
-            "Help me understand my tax returns",
-            "How can I optimize next year?",
-            "Look for mistakes in my tax return history",
-          ].map((suggestion) => (
+          {INITIAL_SUGGESTIONS.map((suggestion) => (
             <Button
               key={suggestion}
               variant="secondary"

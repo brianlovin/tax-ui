@@ -1,9 +1,174 @@
 import type { TaxReturn } from "../lib/schema";
 
-// Canadian T1 sample — Ontario 2025
-// Federal: 15% on first $57,375 + 20.5% on remainder; credits: BPA + CPP + EI
-// Provincial: Ontario 5.05%/9.15%; Ontario Health Premium $750 at $91k income
+// Canadian T1 sample — Ontario, 4 years
+// Federal: 15% on first bracket + 20.5% on remainder; credits: BPA + CPP + EI
+// Provincial: Ontario 5.05%/9.15%; Ontario Health Premium tiered by income
 export const caReturns: Record<number, TaxReturn> = {
+  2022: {
+    year: 2022,
+    name: "Alex Chen",
+    country: "CA",
+    filingStatus: "single",
+    dependents: [],
+    income: {
+      items: [
+        { label: "Employment income (T4)", amount: 72000 },
+        { label: "Interest income (T5)", amount: 450 },
+        { label: "− RRSP deduction", amount: -6000 },
+      ],
+      total: 66450,
+    },
+    federal: {
+      agi: 66450,
+      deductions: [],
+      taxableIncome: 66450,
+      tax: 10350,
+      additionalTaxes: [],
+      credits: [
+        { label: "− Basic personal amount", amount: -2219 },
+        { label: "− CPP contributions (Schedule 8)", amount: -456 },
+        { label: "− EI premiums (Schedule 6)", amount: -132 },
+      ],
+      payments: [{ label: "− Income tax withheld (T4)", amount: -9800 }],
+      refundOrOwed: -157,
+    },
+    states: [
+      {
+        name: "Ontario",
+        agi: 66450,
+        deductions: [],
+        taxableIncome: 66450,
+        tax: 4120,
+        adjustments: [
+          { label: "− Non-refundable credits", amount: -620 },
+          { label: "Ontario Health Premium", amount: 300 },
+        ],
+        payments: [{ label: "− Provincial tax withheld (T4)", amount: -3900 }],
+        refundOrOwed: -100,
+      },
+    ],
+    summary: {
+      federalAmount: -157,
+      stateAmounts: [{ state: "Ontario", amount: -100 }],
+      netPosition: -257,
+    },
+    rates: {
+      federal: { marginal: 20.5, effective: 12.1 },
+      state: { marginal: 9.15, effective: 5.9 },
+      combined: { marginal: 29.65, effective: 18.0 },
+    },
+  },
+
+  2023: {
+    year: 2023,
+    name: "Alex Chen",
+    country: "CA",
+    filingStatus: "single",
+    dependents: [],
+    income: {
+      items: [
+        { label: "Employment income (T4)", amount: 85000 },
+        { label: "Interest income (T5)", amount: 680 },
+        { label: "− RRSP deduction", amount: -10000 },
+      ],
+      total: 75680,
+    },
+    federal: {
+      agi: 75680,
+      deductions: [],
+      taxableIncome: 75680,
+      tax: 12580,
+      additionalTaxes: [],
+      credits: [
+        { label: "− Basic personal amount", amount: -2305 },
+        { label: "− CPP contributions (Schedule 8)", amount: -498 },
+        { label: "− EI premiums (Schedule 6)", amount: -148 },
+      ],
+      payments: [{ label: "− Income tax withheld (T4)", amount: -11500 }],
+      refundOrOwed: 129,
+    },
+    states: [
+      {
+        name: "Ontario",
+        agi: 75680,
+        deductions: [],
+        taxableIncome: 75680,
+        tax: 4980,
+        adjustments: [
+          { label: "− Non-refundable credits", amount: -732 },
+          { label: "Ontario Health Premium", amount: 450 },
+        ],
+        payments: [{ label: "− Provincial tax withheld (T4)", amount: -4700 }],
+        refundOrOwed: -50,
+      },
+    ],
+    summary: {
+      federalAmount: 129,
+      stateAmounts: [{ state: "Ontario", amount: -50 }],
+      netPosition: 79,
+    },
+    rates: {
+      federal: { marginal: 20.5, effective: 13.0 },
+      state: { marginal: 9.15, effective: 6.4 },
+      combined: { marginal: 29.65, effective: 19.4 },
+    },
+  },
+
+  2024: {
+    year: 2024,
+    name: "Alex Chen",
+    country: "CA",
+    filingStatus: "single",
+    dependents: [],
+    income: {
+      items: [
+        { label: "Employment income (T4)", amount: 95000 },
+        { label: "Interest income (T5)", amount: 980 },
+        { label: "− RRSP deduction", amount: -12500 },
+      ],
+      total: 83480,
+    },
+    federal: {
+      agi: 83480,
+      deductions: [],
+      taxableIncome: 83480,
+      tax: 14020,
+      additionalTaxes: [],
+      credits: [
+        { label: "− Basic personal amount", amount: -2362 },
+        { label: "− CPP contributions (Schedule 8)", amount: -542 },
+        { label: "− EI premiums (Schedule 6)", amount: -156 },
+      ],
+      payments: [{ label: "− Income tax withheld (T4)", amount: -12500 }],
+      refundOrOwed: 640,
+    },
+    states: [
+      {
+        name: "Ontario",
+        agi: 83480,
+        deductions: [],
+        taxableIncome: 83480,
+        tax: 5650,
+        adjustments: [
+          { label: "− Non-refundable credits", amount: -798 },
+          { label: "Ontario Health Premium", amount: 600 },
+        ],
+        payments: [{ label: "− Provincial tax withheld (T4)", amount: -5200 }],
+        refundOrOwed: -150,
+      },
+    ],
+    summary: {
+      federalAmount: 640,
+      stateAmounts: [{ state: "Ontario", amount: -150 }],
+      netPosition: 490,
+    },
+    rates: {
+      federal: { marginal: 20.5, effective: 13.2 },
+      state: { marginal: 9.15, effective: 6.5 },
+      combined: { marginal: 29.65, effective: 19.7 },
+    },
+  },
+
   2025: {
     year: 2025,
     name: "Alex Chen",

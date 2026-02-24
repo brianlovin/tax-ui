@@ -1,8 +1,8 @@
 import "./index.css";
 
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 
-import { Chat, type ChatMessage } from "./components/Chat";
+import type { ChatMessage } from "./components/Chat";
 import { DemoDialog } from "./components/DemoDialog";
 import { DevTools } from "./components/DevTools";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -12,13 +12,15 @@ import { SettingsModal } from "./components/SettingsModal";
 import { SetupDialog } from "./components/SetupDialog";
 import { UploadModal } from "./components/UploadModal";
 import { CountryConfigProvider } from "./context/CountryContext";
-import { caReturns } from "./data/sampleData";
+import { caReturns, sampleReturns } from "./data/sampleData";
 import { isElectron } from "./lib/electron";
 import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
 import type { ProviderType } from "./lib/providers/types";
 import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
 import type { NavItem } from "./lib/types";
-import { extractYearFromFilename } from "./lib/year-extractor";
+import { useIsMobile } from "./lib/useIsMobile";
+
+const Chat = lazy(() => import("./components/Chat").then((m) => ({ default: m.Chat })));
 
 export type UpdateStatus = "available" | "downloading" | "ready";
 
@@ -174,9 +176,18 @@ function parseSelectedId(id: string): SelectedView {
   return Number(id);
 }
 
+const SAMPLE_RETURNS_BY_COUNTRY: Record<string, Record<number, TaxReturn>> = {
+  US: sampleReturns,
+  CA: caReturns,
+};
+
+function getSampleReturnsForCountry(country: string): Record<number, TaxReturn> {
+  return SAMPLE_RETURNS_BY_COUNTRY[country] ?? sampleReturns;
+}
+
 export function App() {
   const [state, setState] = useState<AppState>({
-    returns: caReturns,
+    returns: getSampleReturnsForCountry(localStorage.getItem("tax-ui:country") ?? "US"),
     hasStoredKey: false,
     providerType: null,
     selectedYear: "summary",
@@ -188,7 +199,6 @@ export function App() {
   const [devDemoOverride, setDevDemoOverride] = useState<boolean | null>(getDevDemoOverride);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const [configureKeyOnly, setConfigureKeyOnly] = useState(false);
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(() => {
@@ -212,7 +222,7 @@ export function App() {
   const [pendingAutoMessage, setPendingAutoMessage] = useState<string | null>(null);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
   const updater = useElectronUpdater(devUpdateOverride);
   const [country, setCountry] = useState<string>(
@@ -224,21 +234,30 @@ export function App() {
     localStorage.setItem("tax-ui:country", c);
   }
 
+  const toggleChat = useCallback(() => setIsChatOpen((prev) => !prev), []);
+
   // Compute effective demo mode early (dev override takes precedence)
   const effectiveIsDemo = resolveDemoMode(devDemoOverride, state.isDemo);
 
   // Hide chat on mobile in demo mode
   const shouldShowChat = !effectiveIsDemo || !isMobile;
 
-  // When demo mode is toggled on, show sample data instead of user data
-  const effectiveReturns = effectiveIsDemo ? caReturns : state.returns;
+  // When demo or no user data, show country-specific sample data; otherwise user's returns
+  const effectiveReturns =
+    effectiveIsDemo || !state.hasUserData ? getSampleReturnsForCountry(country) : state.returns;
   const navItems = buildNavItems(effectiveReturns);
+
+  // Refs for values used inside submitChatMessage to avoid recreating the callback
+  const chatMessagesRef = useRef(chatMessages);
+  chatMessagesRef.current = chatMessages;
+  const effectiveReturnsRef = useRef(effectiveReturns);
+  effectiveReturnsRef.current = effectiveReturns;
 
   useEffect(() => {
     fetchInitialState()
       .then(({ returns, hasStoredKey, providerType, hasUserData, isDemo, isDev }) => {
-        // Use user data if available, otherwise show sample data
-        const effectiveReturns = hasUserData ? returns : caReturns;
+        // Use user data if available, otherwise show sample data for selected country
+        const effectiveReturns = hasUserData ? returns : getSampleReturnsForCountry(country);
         setState({
           returns: effectiveReturns,
           hasStoredKey,
@@ -254,6 +273,7 @@ export function App() {
         console.error("Failed to load:", err);
         setState((s) => ({ ...s, isLoading: false }));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- country intentionally excluded: sample selection happens via effectiveReturns on render
   }, []);
 
   useEffect(() => {
@@ -269,13 +289,6 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem(CHAT_OPEN_KEY, String(isChatOpen));
   }, [isChatOpen]);
 
@@ -283,13 +296,97 @@ export function App() {
     saveChatMessages(chatMessages);
   }, [chatMessages]);
 
+  const submitChatMessage = useCallback(
+    async (prompt: string) => {
+      if (!prompt) return;
+
+      // Clear follow-up suggestions when sending a new message
+      setFollowUpSuggestions([]);
+
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: prompt,
+      };
+
+      setChatMessages((prev) => [...prev, userMessage]);
+      setIsChatLoading(true);
+
+      // In demo mode, return a hardcoded response
+      if (effectiveIsDemo) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const assistantMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: DEMO_RESPONSE,
+        };
+        setChatMessages((prev) => [...prev, assistantMessage]);
+        setIsChatLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt,
+            history: chatMessagesRef.current,
+            returns: effectiveReturnsRef.current,
+          }),
+        });
+
+        if (!res.ok) {
+          const { error } = await res.json();
+          throw new Error(error || `HTTP ${res.status}`);
+        }
+
+        const { response } = await res.json();
+
+        const assistantMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: response,
+        };
+
+        setChatMessages((prev) => [...prev, assistantMessage]);
+
+        // Fetch follow-up suggestions (non-blocking)
+        setIsLoadingSuggestions(true);
+        fetch("/api/suggestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            history: [...chatMessagesRef.current, userMessage, assistantMessage],
+            returns: effectiveReturnsRef.current,
+          }),
+        })
+          .then((res) => res.json())
+          .then(({ suggestions }) => setFollowUpSuggestions(suggestions || []))
+          .catch(() => setFollowUpSuggestions([]))
+          .finally(() => setIsLoadingSuggestions(false));
+      } catch (err) {
+        console.error("Chat error:", err);
+        const errorMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Error: ${err instanceof Error ? err.message : "Failed to get response"}`,
+        };
+        setChatMessages((prev) => [...prev, errorMessage]);
+      } finally {
+        setIsChatLoading(false);
+      }
+    },
+    [effectiveIsDemo],
+  );
+
   // Auto-submit pending message when chat is ready
   useEffect(() => {
     if (pendingAutoMessage && isChatOpen && !isChatLoading) {
       submitChatMessage(pendingAutoMessage);
       setPendingAutoMessage(null);
     }
-  }, [pendingAutoMessage, isChatOpen, isChatLoading]);
+  }, [pendingAutoMessage, isChatOpen, isChatLoading, submitChatMessage]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -338,9 +435,8 @@ export function App() {
       throw new Error(error || `HTTP ${res.status}`);
     }
 
-    const taxReturn: TaxReturn = await res.json();
-    const returnsRes = await fetch("/api/returns");
-    const returns = await returnsRes.json();
+    const { taxReturn, returns }: { taxReturn: TaxReturn; returns: Record<number, TaxReturn> } =
+      await res.json();
 
     setState((s) => ({
       ...s,
@@ -352,97 +448,6 @@ export function App() {
     }));
 
     return taxReturn;
-  }
-
-  async function handleUploadFromSidebar(files: File[]) {
-    if (files.length === 0) return;
-
-    // If no API key, open modal with all files
-    if (!state.hasStoredKey) {
-      setPendingFiles(files);
-      setIsModalOpen(true);
-      return;
-    }
-
-    // Create pending uploads immediately (optimistic) for all files
-    const newPendingUploads: PendingUpload[] = files.map((file) => {
-      const filenameYear = extractYearFromFilename(file.name);
-      return {
-        id: crypto.randomUUID(),
-        filename: file.name,
-        year: filenameYear,
-        status: filenameYear ? "parsing" : "extracting-year",
-        file,
-      };
-    });
-
-    setPendingUploads((prev) => [...prev, ...newPendingUploads]);
-
-    // Select the first pending upload
-    const firstPending = newPendingUploads[0];
-    if (firstPending) {
-      setState((s) => ({ ...s, selectedYear: `pending:${firstPending.id}` }));
-    }
-
-    // Extract years in parallel for files that don't have one from filename
-    await Promise.all(
-      newPendingUploads
-        .filter((p) => !p.year)
-        .map(async (pending) => {
-          try {
-            const formData = new FormData();
-            formData.append("pdf", pending.file);
-            const yearRes = await fetch("/api/extract-year", {
-              method: "POST",
-              body: formData,
-            });
-            const { year: extractedYear } = await yearRes.json();
-            setPendingUploads((prev) =>
-              prev.map((p) =>
-                p.id === pending.id ? { ...p, year: extractedYear, status: "parsing" } : p,
-              ),
-            );
-          } catch (err) {
-            console.error("Year extraction failed:", err);
-            setPendingUploads((prev) =>
-              prev.map((p) => (p.id === pending.id ? { ...p, status: "parsing" } : p)),
-            );
-          }
-        }),
-    );
-
-    // Process files sequentially (full parsing)
-    setIsUploading(true);
-    let successfulUploads = 0;
-    for (const pending of newPendingUploads) {
-      try {
-        await processUpload(pending.file, "");
-        successfulUploads++;
-        // Remove from pending uploads after success
-        setPendingUploads((prev) => prev.filter((p) => p.id !== pending.id));
-      } catch (err) {
-        console.error("Upload failed:", err);
-        // Remove from pending uploads on error, but continue processing others
-        setPendingUploads((prev) => prev.filter((p) => p.id !== pending.id));
-      }
-    }
-    setIsUploading(false);
-
-    // Navigate to appropriate view after all uploads complete
-    setState((s) => ({
-      ...s,
-      selectedYear: getDefaultSelection(s.returns),
-    }));
-
-    // Auto-trigger chat after successful upload
-    if (successfulUploads > 0) {
-      const autoMessage =
-        files.length === 1
-          ? "Help me understand my year"
-          : "Help me understand my history of income and taxes";
-      setPendingAutoMessage(autoMessage);
-      setIsChatOpen(true);
-    }
   }
 
   async function handleUploadFromModal(files: File[], apiKey: string) {
@@ -497,9 +502,9 @@ export function App() {
       const { error } = await res.json();
       throw new Error(error || `HTTP ${res.status}`);
     }
-    // Reset to initial state with sample data
+    // Reset to initial state with sample data for selected country
     setState((s) => ({
-      returns: caReturns,
+      returns: getSampleReturnsForCountry(country),
       hasStoredKey: false,
       providerType: null,
       selectedYear: "summary",
@@ -515,87 +520,6 @@ export function App() {
     setChatMessages([]);
     // Reset chat to open (default for new users)
     setIsChatOpen(true);
-  }
-
-  async function submitChatMessage(prompt: string) {
-    if (!prompt || isChatLoading) return;
-
-    // Clear follow-up suggestions when sending a new message
-    setFollowUpSuggestions([]);
-
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: prompt,
-    };
-
-    setChatMessages((prev) => [...prev, userMessage]);
-    setIsChatLoading(true);
-
-    // In demo mode, return a hardcoded response
-    if (effectiveIsDemo) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: DEMO_RESPONSE,
-      };
-      setChatMessages((prev) => [...prev, assistantMessage]);
-      setIsChatLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          history: chatMessages,
-          returns: effectiveReturns,
-        }),
-      });
-
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error || `HTTP ${res.status}`);
-      }
-
-      const { response } = await res.json();
-
-      const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: response,
-      };
-
-      setChatMessages((prev) => [...prev, assistantMessage]);
-
-      // Fetch follow-up suggestions (non-blocking)
-      setIsLoadingSuggestions(true);
-      fetch("/api/suggestions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          history: [...chatMessages, userMessage, assistantMessage],
-          returns: effectiveReturns,
-        }),
-      })
-        .then((res) => res.json())
-        .then(({ suggestions }) => setFollowUpSuggestions(suggestions || []))
-        .catch(() => setFollowUpSuggestions([]))
-        .finally(() => setIsLoadingSuggestions(false));
-    } catch (err) {
-      console.error("Chat error:", err);
-      const errorMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `Error: ${err instanceof Error ? err.message : "Failed to get response"}`,
-      };
-      setChatMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsChatLoading(false);
-    }
   }
 
   function handleNewChat() {
@@ -625,10 +549,10 @@ export function App() {
       delete newReturns[year];
 
       if (isLastYear) {
-        // Last year deleted - reset to sample data state
+        // Last year deleted - reset to sample data state for selected country
         return {
           ...s,
-          returns: caReturns,
+          returns: getSampleReturnsForCountry(country),
           selectedYear: "summary",
           hasUserData: false,
         };
@@ -681,7 +605,7 @@ export function App() {
     const commonProps = {
       isChatOpen,
       isChatLoading,
-      onToggleChat: () => setIsChatOpen(!isChatOpen),
+      onToggleChat: toggleChat,
       showChatButton: shouldShowChat,
       navItems,
       selectedId,
@@ -843,18 +767,20 @@ export function App() {
 
       {shouldShowChat && isChatOpen && (
         <ErrorBoundary name="Chat">
-          <Chat
-            messages={chatMessages}
-            isLoading={isChatLoading}
-            hasApiKey={state.hasStoredKey}
-            isDemo={effectiveIsDemo}
-            onSubmit={submitChatMessage}
-            onNewChat={handleNewChat}
-            onClose={() => setIsChatOpen(false)}
-            onConfigureKey={() => setOpenModal("onboarding")}
-            followUpSuggestions={followUpSuggestions}
-            isLoadingSuggestions={isLoadingSuggestions}
-          />
+          <Suspense fallback={null}>
+            <Chat
+              messages={chatMessages}
+              isLoading={isChatLoading}
+              hasApiKey={state.hasStoredKey}
+              isDemo={effectiveIsDemo}
+              onSubmit={submitChatMessage}
+              onNewChat={handleNewChat}
+              onClose={() => setIsChatOpen(false)}
+              onConfigureKey={() => setOpenModal("onboarding")}
+              followUpSuggestions={followUpSuggestions}
+              isLoadingSuggestions={isLoadingSuggestions}
+            />
+          </Suspense>
         </ErrorBoundary>
       )}
 
