@@ -5,11 +5,22 @@ import { z } from "zod";
  * Tries: direct parse, strip markdown fences, regex extract, then Zod validation.
  */
 export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
+  let lastZodError: z.ZodError | undefined;
+  let jsonParsed = false;
+
+  function tryValidate(raw: unknown): T | undefined {
+    jsonParsed = true;
+    const result = schema.safeParse(raw);
+    if (result.success) return result.data;
+    lastZodError = result.error;
+    return undefined;
+  }
+
   // 1. Try direct parse
   const direct = tryParse(text);
   if (direct !== undefined) {
-    const result = schema.safeParse(direct);
-    if (result.success) return result.data;
+    const result = tryValidate(direct);
+    if (result !== undefined) return result;
   }
 
   // 2. Strip markdown code fences
@@ -17,8 +28,8 @@ export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
   if (stripped !== text) {
     const fenced = tryParse(stripped);
     if (fenced !== undefined) {
-      const result = schema.safeParse(fenced);
-      if (result.success) return result.data;
+      const result = tryValidate(fenced);
+      if (result !== undefined) return result;
     }
   }
 
@@ -27,8 +38,8 @@ export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
   if (objectMatch) {
     const extracted = tryParse(objectMatch[0]);
     if (extracted !== undefined) {
-      const result = schema.safeParse(extracted);
-      if (result.success) return result.data;
+      const result = tryValidate(extracted);
+      if (result !== undefined) return result;
     }
   }
 
@@ -36,9 +47,14 @@ export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
   if (arrayMatch) {
     const extracted = tryParse(arrayMatch[0]);
     if (extracted !== undefined) {
-      const result = schema.safeParse(extracted);
-      if (result.success) return result.data;
+      const result = tryValidate(extracted);
+      if (result !== undefined) return result;
     }
+  }
+
+  if (jsonParsed && lastZodError) {
+    const issues = lastZodError.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");
+    throw new Error(`JSON parsed but failed schema validation:\n${issues}`);
   }
 
   throw new Error(`Failed to extract valid JSON from response: ${text.slice(0, 200)}`);
