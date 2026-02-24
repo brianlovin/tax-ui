@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 
 import { cn } from "../lib/cn";
 import { isElectron } from "../lib/electron";
+import { useIsMobile } from "../lib/useIsMobile";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
 import { XMarkIcon } from "./XMarkIcon";
@@ -108,19 +109,12 @@ export function Chat({
   const [input, setInput] = useState("");
   const [width, setWidth] = useState(() => loadWidth());
   const [isResizing, setIsResizing] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [hasTopOverflow, setHasTopOverflow] = useState(false);
   const [hasBottomOverflow, setHasBottomOverflow] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   useEffect(() => {
     if (!isResizing) {

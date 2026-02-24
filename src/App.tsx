@@ -1,6 +1,6 @@
 import "./index.css";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Chat, type ChatMessage } from "./components/Chat";
 import { DemoDialog } from "./components/DemoDialog";
@@ -18,6 +18,7 @@ import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/
 import type { ProviderType } from "./lib/providers/types";
 import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
 import type { NavItem } from "./lib/types";
+import { useIsMobile } from "./lib/useIsMobile";
 
 export type UpdateStatus = "available" | "downloading" | "ready";
 
@@ -210,7 +211,7 @@ export function App() {
   const [pendingAutoMessage, setPendingAutoMessage] = useState<string | null>(null);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
   const updater = useElectronUpdater(devUpdateOverride);
   const [country, setCountry] = useState<string>(
@@ -233,6 +234,12 @@ export function App() {
   // When demo mode is toggled on, show sample data instead of user data
   const effectiveReturns = effectiveIsDemo ? caReturns : state.returns;
   const navItems = buildNavItems(effectiveReturns);
+
+  // Refs for values used inside submitChatMessage to avoid recreating the callback
+  const chatMessagesRef = useRef(chatMessages);
+  chatMessagesRef.current = chatMessages;
+  const effectiveReturnsRef = useRef(effectiveReturns);
+  effectiveReturnsRef.current = effectiveReturns;
 
   useEffect(() => {
     fetchInitialState()
@@ -269,13 +276,6 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem(CHAT_OPEN_KEY, String(isChatOpen));
   }, [isChatOpen]);
 
@@ -285,7 +285,7 @@ export function App() {
 
   const submitChatMessage = useCallback(
     async (prompt: string) => {
-      if (!prompt || isChatLoading) return;
+      if (!prompt) return;
 
       // Clear follow-up suggestions when sending a new message
       setFollowUpSuggestions([]);
@@ -318,8 +318,8 @@ export function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             prompt,
-            history: chatMessages,
-            returns: effectiveReturns,
+            history: chatMessagesRef.current,
+            returns: effectiveReturnsRef.current,
           }),
         });
 
@@ -344,8 +344,8 @@ export function App() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            history: [...chatMessages, userMessage, assistantMessage],
-            returns: effectiveReturns,
+            history: [...chatMessagesRef.current, userMessage, assistantMessage],
+            returns: effectiveReturnsRef.current,
           }),
         })
           .then((res) => res.json())
@@ -364,7 +364,7 @@ export function App() {
         setIsChatLoading(false);
       }
     },
-    [isChatLoading, effectiveIsDemo, chatMessages, effectiveReturns],
+    [effectiveIsDemo],
   );
 
   // Auto-submit pending message when chat is ready
