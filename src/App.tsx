@@ -1,6 +1,6 @@
 import "./index.css";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Chat, type ChatMessage } from "./components/Chat";
 import { DemoDialog } from "./components/DemoDialog";
@@ -15,6 +15,7 @@ import { CountryConfigProvider } from "./context/CountryContext";
 import { caReturns } from "./data/sampleData";
 import { isElectron } from "./lib/electron";
 import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
+import type { ProviderType } from "./lib/providers/types";
 import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
 import type { NavItem } from "./lib/types";
 import { extractYearFromFilename } from "./lib/year-extractor";
@@ -111,6 +112,7 @@ type SelectedView = "summary" | number | `pending:${string}`;
 interface AppState {
   returns: Record<number, TaxReturn>;
   hasStoredKey: boolean;
+  providerType: ProviderType | null;
   selectedYear: SelectedView;
   isLoading: boolean;
   hasUserData: boolean;
@@ -119,12 +121,13 @@ interface AppState {
 }
 
 async function fetchInitialState(): Promise<
-  Pick<AppState, "returns" | "hasStoredKey" | "hasUserData" | "isDemo" | "isDev">
+  Pick<AppState, "returns" | "hasStoredKey" | "providerType" | "hasUserData" | "isDemo" | "isDev">
 > {
   // In production (static hosting), skip API calls and use sample data
   if (isHostedEnvironment()) {
     return {
       hasStoredKey: false,
+      providerType: null,
       returns: {},
       hasUserData: false,
       isDemo: true,
@@ -133,11 +136,12 @@ async function fetchInitialState(): Promise<
   }
 
   const [configRes, returnsRes] = await Promise.all([fetch("/api/config"), fetch("/api/returns")]);
-  const { hasKey, isDemo, isDev } = await configRes.json();
+  const { hasKey, providerType, isDemo, isDev } = await configRes.json();
   const returns = await returnsRes.json();
   const hasUserData = Object.keys(returns).length > 0;
   return {
     hasStoredKey: hasKey,
+    providerType: providerType ?? null,
     returns,
     hasUserData,
     isDemo: isDemo ?? false,
@@ -174,6 +178,7 @@ export function App() {
   const [state, setState] = useState<AppState>({
     returns: caReturns,
     hasStoredKey: false,
+    providerType: null,
     selectedYear: "summary",
     isLoading: true,
     hasUserData: false,
@@ -195,7 +200,6 @@ export function App() {
     return typeof window !== "undefined" && window.innerWidth >= 768;
   });
   const [openModal, setOpenModal] = useState<"settings" | "reset" | "onboarding" | null>(null);
-  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [isOnboardingProcessing, setIsOnboardingProcessing] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState<FileProgress[]>([]);
   const [isDark, setIsDark] = useState(
@@ -209,7 +213,6 @@ export function App() {
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const hasShownOnboardingRef = useRef(false);
   const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
   const updater = useElectronUpdater(devUpdateOverride);
   const [country, setCountry] = useState<string>(
@@ -233,12 +236,13 @@ export function App() {
 
   useEffect(() => {
     fetchInitialState()
-      .then(({ returns, hasStoredKey, hasUserData, isDemo, isDev }) => {
+      .then(({ returns, hasStoredKey, providerType, hasUserData, isDemo, isDev }) => {
         // Use user data if available, otherwise show sample data
         const effectiveReturns = hasUserData ? returns : caReturns;
         setState({
           returns: effectiveReturns,
           hasStoredKey,
+          providerType,
           selectedYear: getDefaultSelection(effectiveReturns),
           isLoading: false,
           hasUserData,
@@ -454,11 +458,37 @@ export function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ apiKey }),
     });
+    const data = await res.json();
     if (!res.ok) {
-      const { error } = await res.json();
-      throw new Error(error || `HTTP ${res.status}`);
+      throw new Error(data.error || `HTTP ${res.status}`);
     }
-    setState((s) => ({ ...s, hasStoredKey: true }));
+    setState((s) => ({
+      ...s,
+      hasStoredKey: true,
+      providerType: data.providerType ?? s.providerType,
+    }));
+  }
+
+  async function handleSaveProviderConfig(config: {
+    apiKey?: string;
+    providerType?: string;
+    baseUrl?: string;
+    model?: string;
+  }) {
+    const res = await fetch("/api/config/key", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    setState((s) => ({
+      ...s,
+      hasStoredKey: true,
+      providerType: data.providerType ?? s.providerType,
+    }));
   }
 
   async function handleClearData() {
@@ -471,6 +501,7 @@ export function App() {
     setState((s) => ({
       returns: caReturns,
       hasStoredKey: false,
+      providerType: null,
       selectedYear: "summary",
       isLoading: false,
       hasUserData: false,
@@ -656,6 +687,7 @@ export function App() {
       selectedId,
       onSelect: handleSelect,
       onOpenStart: () => setOpenModal("onboarding"),
+      onOpenSettings: () => setOpenModal("settings"),
       onOpenReset: () => setOpenModal("reset"),
       onDeleteYear: handleDelete,
       isDemo: effectiveIsDemo,
@@ -707,20 +739,8 @@ export function App() {
       ? pendingUploads.find((p) => `pending:${p.id}` === state.selectedYear)
       : null;
 
-  // Show onboarding dialog for new users (unless dismissed) or when manually opened
-  // Processing takes precedence - keep dialog open while processing
-  // In demo mode, don't auto-show - let users browse sample data first
-  const showOnboarding =
-    isOnboardingProcessing ||
-    openModal === "onboarding" ||
-    (!effectiveIsDemo && !onboardingDismissed && !state.hasStoredKey && !state.hasUserData);
-
-  // Skip open animation only on first automatic show (not manual reopen)
-  const skipOnboardingAnimation =
-    showOnboarding && !hasShownOnboardingRef.current && openModal !== "onboarding";
-  if (showOnboarding && !hasShownOnboardingRef.current) {
-    hasShownOnboardingRef.current = true;
-  }
+  // Show onboarding dialog only when explicitly opened or while processing
+  const showOnboarding = isOnboardingProcessing || openModal === "onboarding";
 
   function getPostUploadNavigation(
     existingYears: number[],
@@ -744,63 +764,72 @@ export function App() {
     }));
     setOnboardingProgress(progress);
 
-    // Save API key if needed
-    if (!state.hasStoredKey && apiKey) {
-      await handleSaveApiKey(apiKey);
-    }
+    try {
+      // Save API key if needed
+      if (!state.hasStoredKey && apiKey) {
+        await handleSaveApiKey(apiKey);
+      }
 
-    // Process files with progress updates
-    const uploadedYears: number[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const fileWithId = files[i]!;
-      const file = fileWithId.file;
-      const id = fileWithId.id;
+      // Process files with progress updates
+      const uploadedYears: number[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const fileWithId = files[i]!;
+        const file = fileWithId.file;
+        const id = fileWithId.id;
 
-      setOnboardingProgress((p) => p.map((f) => (f.id === id ? { ...f, status: "parsing" } : f)));
+        setOnboardingProgress((p) => p.map((f) => (f.id === id ? { ...f, status: "parsing" } : f)));
 
-      try {
-        const taxReturn = await processUpload(file, apiKey);
-        uploadedYears.push(taxReturn.year);
-        setOnboardingProgress((p) =>
-          p.map((f) => (f.id === id ? { ...f, status: "complete", year: taxReturn.year } : f)),
-        );
-      } catch (err) {
-        setOnboardingProgress((p) =>
-          p.map((f) =>
-            f.id === id
-              ? {
-                  ...f,
-                  status: "error",
-                  error: err instanceof Error ? err.message : "Failed",
-                }
-              : f,
-          ),
+        try {
+          const taxReturn = await processUpload(file, apiKey);
+          uploadedYears.push(taxReturn.year);
+          setOnboardingProgress((p) =>
+            p.map((f) => (f.id === id ? { ...f, status: "complete", year: taxReturn.year } : f)),
+          );
+        } catch (err) {
+          setOnboardingProgress((p) =>
+            p.map((f) =>
+              f.id === id
+                ? {
+                    ...f,
+                    status: "error",
+                    error: err instanceof Error ? err.message : "Failed",
+                  }
+                : f,
+            ),
+          );
+        }
+      }
+
+      // Smart routing
+      const nav = getPostUploadNavigation(existingYears, uploadedYears, files.length);
+      setState((s) => ({ ...s, selectedYear: nav }));
+
+      // Auto-trigger chat after successful upload
+      if (uploadedYears.length > 0) {
+        const autoMessage =
+          files.length === 1
+            ? "Help me understand my year"
+            : "Help me understand my history of income and taxes";
+        setPendingAutoMessage(autoMessage);
+        setIsChatOpen(true);
+      }
+
+      // If any files failed, throw so the dialog stays open with an error
+      const failedCount = files.length - uploadedYears.length;
+      if (failedCount > 0) {
+        throw new Error(
+          failedCount === files.length
+            ? "Failed to process files. Check your API key and try again."
+            : `${failedCount} of ${files.length} files failed to process`,
         );
       }
+
+      // All succeeded - close dialog
+      setOpenModal(null);
+    } finally {
+      setIsOnboardingProcessing(false);
+      setOnboardingProgress([]);
     }
-
-    // Smart routing
-    const nav = getPostUploadNavigation(existingYears, uploadedYears, files.length);
-    setState((s) => ({ ...s, selectedYear: nav }));
-
-    setIsOnboardingProcessing(false);
-    setOpenModal(null);
-    setOnboardingProgress([]);
-
-    // Auto-trigger chat after successful upload
-    if (uploadedYears.length > 0) {
-      const autoMessage =
-        files.length === 1
-          ? "Help me understand my year"
-          : "Help me understand my history of income and taxes";
-      setPendingAutoMessage(autoMessage);
-      setIsChatOpen(true);
-    }
-  }
-
-  function handleOnboardingClose() {
-    setOpenModal(null);
-    setOnboardingDismissed(true);
   }
 
   // Dev helper: throws during render to test ErrorBoundary
@@ -822,6 +851,7 @@ export function App() {
             onSubmit={submitChatMessage}
             onNewChat={handleNewChat}
             onClose={() => setIsChatOpen(false)}
+            onConfigureKey={() => setOpenModal("onboarding")}
             followUpSuggestions={followUpSuggestions}
             isLoadingSuggestions={isLoadingSuggestions}
           />
@@ -829,21 +859,18 @@ export function App() {
       )}
 
       {effectiveIsDemo ? (
-        <DemoDialog
-          isOpen={showOnboarding}
-          onClose={handleOnboardingClose}
-          skipOpenAnimation={skipOnboardingAnimation}
-        />
+        <DemoDialog isOpen={showOnboarding} onClose={() => setOpenModal(null)} />
       ) : (
         <SetupDialog
           isOpen={showOnboarding}
           onUpload={handleOnboardingUpload}
-          onClose={handleOnboardingClose}
+          onSaveProvider={handleSaveProviderConfig}
+          onClose={() => setOpenModal(null)}
           isProcessing={isOnboardingProcessing}
           fileProgress={onboardingProgress}
           hasStoredKey={state.hasStoredKey}
+          providerType={state.providerType}
           existingYears={state.hasUserData ? Object.keys(state.returns).map(Number) : []}
-          skipOpenAnimation={skipOnboardingAnimation}
           country={country}
           onCountryChange={handleCountryChange}
         />
@@ -859,6 +886,7 @@ export function App() {
         onUpload={handleUploadFromModal}
         onSaveApiKey={handleSaveApiKey}
         hasStoredKey={state.hasStoredKey}
+        providerType={state.providerType}
         pendingFiles={pendingFiles}
         configureKeyOnly={configureKeyOnly}
       />
@@ -867,7 +895,9 @@ export function App() {
         isOpen={openModal === "settings"}
         onClose={() => setOpenModal(null)}
         hasApiKey={state.hasStoredKey}
+        providerType={state.providerType}
         onSaveApiKey={handleSaveApiKey}
+        onSaveProviderConfig={handleSaveProviderConfig}
         onClearData={handleClearData}
       />
 

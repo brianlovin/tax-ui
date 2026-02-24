@@ -1,6 +1,7 @@
 import { Input } from "@base-ui/react/input";
 import { useEffect, useRef, useState } from "react";
 
+import type { ProviderType } from "../lib/providers/types";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
@@ -10,8 +11,26 @@ interface Props {
   onUpload: (files: File[], apiKey: string) => Promise<void>;
   onSaveApiKey?: (apiKey: string) => Promise<void>;
   hasStoredKey: boolean;
+  providerType?: ProviderType | null;
   pendingFiles: File[];
   configureKeyOnly?: boolean;
+}
+
+function detectProviderFromKey(key: string): ProviderType | null {
+  if (key.startsWith("sk-ant-")) return "anthropic";
+  if (key.startsWith("sk-")) return "openai";
+  return null;
+}
+
+function privacyNote(type: ProviderType | null | undefined): string {
+  switch (type) {
+    case "openai":
+      return "Your tax return is sent directly to OpenAI's API. Data stored locally.";
+    case "local":
+      return "Your tax return is processed locally on your machine. Data stored locally.";
+    default:
+      return "Your tax return is sent directly to Anthropic's API. Data stored locally.";
+  }
 }
 
 export function UploadModal({
@@ -20,6 +39,7 @@ export function UploadModal({
   onUpload,
   onSaveApiKey,
   hasStoredKey,
+  providerType,
   pendingFiles,
   configureKeyOnly,
 }: Props) {
@@ -33,6 +53,9 @@ export function UploadModal({
   const activeFiles = pendingFiles.length > 0 ? pendingFiles : files;
   const needsApiKey = !hasStoredKey && !apiKey.trim();
   const showFileUpload = pendingFiles.length === 0 && !configureKeyOnly;
+
+  const detectedProvider = detectProviderFromKey(apiKey.trim());
+  const effectiveProvider = hasStoredKey ? providerType : detectedProvider;
 
   useEffect(() => {
     if (!isOpen) {
@@ -160,20 +183,26 @@ export function UploadModal({
       {/* API Key input */}
       {(!hasStoredKey || configureKeyOnly) && (
         <div className="mb-4">
-          <label className="mb-1.5 block text-xs text-(--color-text-muted)">
-            Anthropic API Key
-          </label>
+          <label className="mb-1.5 block text-xs text-(--color-text-muted)">API Key</label>
           <Input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder="sk-ant-..."
+            placeholder="sk-ant-... or sk-..."
             disabled={isLoading}
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"
             className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2 text-sm placeholder:text-(--color-text-muted) focus:border-(--color-text-muted) focus:outline-none disabled:opacity-50"
           />
+          {detectedProvider && (
+            <p className="mt-1 text-xs text-(--color-text-muted)">
+              Detected:{" "}
+              <span className="font-medium">
+                {detectedProvider === "anthropic" ? "Anthropic" : "OpenAI"}
+              </span>
+            </p>
+          )}
           <p className="mt-1.5 text-xs text-(--color-text-muted)">Saved locally to .env file</p>
         </div>
       )}
@@ -228,7 +257,7 @@ export function UploadModal({
       {/* Privacy note */}
       {!configureKeyOnly && (
         <div className="mt-4 text-xs text-(--color-text-muted)">
-          Your tax return is sent directly to Anthropic's API. Data stored locally.
+          {privacyNote(effectiveProvider)}
         </div>
       )}
 

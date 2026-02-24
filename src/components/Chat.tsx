@@ -21,6 +21,7 @@ interface Props {
   onSubmit: (prompt: string) => void;
   onNewChat: () => void;
   onClose: () => void;
+  onConfigureKey?: () => void;
   followUpSuggestions?: string[];
   isLoadingSuggestions?: boolean;
 }
@@ -57,6 +58,7 @@ export function Chat({
   onSubmit,
   onNewChat,
   onClose,
+  onConfigureKey,
   followUpSuggestions,
   isLoadingSuggestions,
 }: Props) {
@@ -224,7 +226,18 @@ export function Chat({
         />
         <div ref={messagesContainerRef} className="h-full overflow-y-auto p-4">
           {messages.length === 0 ? (
-            <div className="h-full" />
+            !hasApiKey && !isDemo && onConfigureKey ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
+                <p className="text-sm text-(--color-text-muted)">
+                  Configure an API key to chat about your tax returns
+                </p>
+                <Button variant="secondary" size="sm" onClick={onConfigureKey}>
+                  Configure API key
+                </Button>
+              </div>
+            ) : (
+              <div className="h-full" />
+            )
           ) : (
             <div className="space-y-4">
               {messages.map((message) => (
