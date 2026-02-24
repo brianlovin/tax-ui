@@ -12,6 +12,7 @@ export interface DisplayFile {
   status: FileStatus;
   isDuplicate: boolean;
   error?: string;
+  extractionError?: string;
 }
 
 interface Props {
@@ -48,6 +49,39 @@ export function FileUploadPreview({ files, onRemove, disabled }: Props) {
 
               <div className="flex items-center">
                 <FileStatusIndicator file={file} />
+
+                <AnimatePresence>
+                  {file.year !== null && (
+                    <motion.span
+                      key="year"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.15 }}
+                      className={[
+                        "rounded px-1.5 py-0.5 text-xs",
+                        file.isDuplicate
+                          ? "bg-(--color-negative)/20 text-(--color-negative)"
+                          : "bg-(--color-bg) text-(--color-text-muted)",
+                      ].join(" ")}
+                    >
+                      {file.isDuplicate ? "Reprocess" : file.year}
+                    </motion.span>
+                  )}
+                  {file.year === null && file.extractionError && (
+                    <motion.span
+                      key="extraction-error"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.15 }}
+                      className="max-w-48 truncate rounded bg-(--color-negative)/10 px-1.5 py-0.5 text-xs text-(--color-negative)"
+                      title={file.extractionError}
+                    >
+                      {file.extractionError}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
 
                 {onRemove && file.status !== "extracting" && (
                   <Button
@@ -144,23 +178,6 @@ function FileStatusIndicator({ file }: { file: DisplayFile }) {
           className="text-xs text-(--color-negative)"
         >
           Failed
-        </motion.span>
-      )}
-      {file.status === "ready" && file.year !== null && (
-        <motion.span
-          key="year"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          transition={{ duration: 0.15 }}
-          className={[
-            "rounded px-1.5 py-0.5 text-xs",
-            file.isDuplicate
-              ? "bg-(--color-negative)/20 text-(--color-negative)"
-              : "bg-(--color-bg-muted)",
-          ].join(" ")}
-        >
-          {file.isDuplicate ? "Reprocess" : file.year}
         </motion.span>
       )}
     </AnimatePresence>

@@ -1,6 +1,7 @@
 import { Input } from "@base-ui/react/input";
 import { useState } from "react";
 
+import type { ProviderType } from "../lib/providers/types";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
@@ -8,11 +9,38 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   hasApiKey: boolean;
+  providerType?: ProviderType | null;
   onSaveApiKey: (key: string) => Promise<void>;
+  onSaveProviderConfig?: (config: {
+    apiKey?: string;
+    providerType?: string;
+    baseUrl?: string;
+    model?: string;
+  }) => Promise<void>;
   onClearData: () => Promise<void>;
 }
 
-export function SettingsModal({ isOpen, onClose, hasApiKey, onSaveApiKey, onClearData }: Props) {
+function providerStatusLabel(type: ProviderType | null | undefined): string {
+  switch (type) {
+    case "anthropic":
+      return "Anthropic API key configured";
+    case "openai":
+      return "OpenAI API key configured";
+    case "local":
+      return "Local model configured";
+    default:
+      return "API key configured";
+  }
+}
+
+export function SettingsModal({
+  isOpen,
+  onClose,
+  hasApiKey,
+  providerType,
+  onSaveApiKey,
+  onClearData,
+}: Props) {
   const [apiKey, setApiKey] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -57,12 +85,12 @@ export function SettingsModal({ isOpen, onClose, hasApiKey, onSaveApiKey, onClea
       <div className="space-y-6">
         {/* API Key Section */}
         <div>
-          <label className="mb-2 block text-sm font-medium">Anthropic API Key</label>
+          <label className="mb-2 block text-sm font-medium">API Key</label>
           {hasApiKey ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-(--color-text-muted)">
                 <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
-                API key configured
+                {providerStatusLabel(providerType)}
               </div>
               <Input
                 type="password"
@@ -80,7 +108,7 @@ export function SettingsModal({ isOpen, onClose, hasApiKey, onSaveApiKey, onClea
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-ant-..."
+              placeholder="sk-ant-... or sk-..."
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"

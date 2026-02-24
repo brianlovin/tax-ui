@@ -39,6 +39,7 @@ interface CommonProps {
   selectedId: string;
   onSelect: (id: string) => void;
   onOpenStart: () => void;
+  onOpenSettings: () => void;
   onOpenReset: () => void;
   onDeleteYear?: (year: string) => void;
   isDemo: boolean;
@@ -394,6 +395,23 @@ export function MainPanel(props: Props) {
           </Tabs.Root>
         </div>
         <CountrySelector country={props.country} onChange={props.onCountryChange} />
+        {props.hasStoredKey ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={props.onOpenSettings}
+            className="flex shrink-0 items-center gap-1.5"
+          >
+            <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+            <span className="hidden sm:inline">Provider</span>
+          </Button>
+        ) : (
+          !props.isDemo && (
+            <Button variant="ghost" size="sm" onClick={props.onOpenStart} className="shrink-0">
+              Setup
+            </Button>
+          )
+        )}
         {props.showChatButton !== false && !props.isChatOpen && (
           <Button
             variant="ghost"
