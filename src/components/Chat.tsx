@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 
 import { cn } from "../lib/cn";
 import { isElectron } from "../lib/electron";
+import type { ProviderType } from "../lib/providers/types";
 import { useIsMobile } from "../lib/useIsMobile";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
@@ -19,6 +20,7 @@ interface Props {
   isLoading: boolean;
   hasApiKey: boolean;
   isDemo: boolean;
+  providerType?: ProviderType | null;
   onSubmit: (prompt: string) => void;
   onNewChat: () => void;
   onClose: () => void;
@@ -94,11 +96,23 @@ function saveWidth(width: number) {
   }
 }
 
+function assistantLabel(providerType: ProviderType | null | undefined): string {
+  switch (providerType) {
+    case "openai":
+      return "GPT";
+    case "local":
+      return "AI";
+    default:
+      return "Claude";
+  }
+}
+
 export function Chat({
   messages,
   isLoading,
   hasApiKey,
   isDemo,
+  providerType,
   onSubmit,
   onNewChat,
   onClose,
@@ -288,7 +302,7 @@ export function Chat({
                           : "var(--color-text-muted)",
                     }}
                   >
-                    {message.role === "user" ? "You" : "Claude"}
+                    {message.role === "user" ? "You" : assistantLabel(providerType)}
                   </div>
                   <div className="prose-chat text-sm">
                     <Markdown components={markdownComponents}>{message.content}</Markdown>
@@ -298,7 +312,7 @@ export function Chat({
               {isLoading && (
                 <div>
                   <div className="mb-1 text-xs" style={{ color: "rgb(217, 119, 87)" }}>
-                    Claude
+                    {assistantLabel(providerType)}
                   </div>
                   <BrailleSpinner className="text-sm" />
                 </div>

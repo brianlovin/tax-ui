@@ -773,6 +773,7 @@ export function App() {
               isLoading={isChatLoading}
               hasApiKey={state.hasStoredKey}
               isDemo={effectiveIsDemo}
+              providerType={state.providerType}
               onSubmit={submitChatMessage}
               onNewChat={handleNewChat}
               onClose={() => setIsChatOpen(false)}
