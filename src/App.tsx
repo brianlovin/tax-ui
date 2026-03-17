@@ -15,10 +15,9 @@ import { UploadModal } from "./components/UploadModal";
 import { sampleReturns } from "./data/sampleData";
 import { isElectron } from "./lib/electron";
 import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
-import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
+import type { DocumentType, FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
 import type { NavItem } from "./lib/types";
 import { extractYearFromFilename } from "./lib/year-extractor";
-
 export type UpdateStatus = "available" | "downloading" | "ready";
 
 function useElectronUpdater(devOverride: UpdateStatus | null) {
@@ -444,11 +443,47 @@ export function App() {
     }
   }
 
-  async function handleUploadFromModal(files: File[], apiKey: string) {
+  async function handleUploadFromModal(files: File[], apiKey: string, documentType: DocumentType) {
     for (const file of files) {
-      await processUpload(file, apiKey);
+      if (documentType === "tax-return") {
+        await processUpload(file, apiKey);
+      } else if (documentType === "payslip") {
+        await processPayslipUpload(file, apiKey);
+      } else if (documentType === "bank-statement") {
+        await processBankStatementUpload(file, apiKey);
+      }
     }
     setPendingFiles([]);
+  }
+
+  async function processPayslipUpload(file: File, apiKey: string) {
+    const formData = new FormData();
+    formData.append("pdf", file);
+    if (apiKey) formData.append("apiKey", apiKey);
+
+    const res = await fetch("/api/payslips/upload", { method: "POST", body: formData });
+    if (!res.ok) {
+      const { error } = await res.json();
+      throw new Error(error || `HTTP ${res.status}`);
+    }
+
+    // Refresh state - for now just show success
+    // TODO: Add payslip state management
+  }
+
+  async function processBankStatementUpload(file: File, apiKey: string) {
+    const formData = new FormData();
+    formData.append("pdf", file);
+    if (apiKey) formData.append("apiKey", apiKey);
+
+    const res = await fetch("/api/bank-statements/upload", { method: "POST", body: formData });
+    if (!res.ok) {
+      const { error } = await res.json();
+      throw new Error(error || `HTTP ${res.status}`);
+    }
+
+    // Refresh state - for now just show success
+    // TODO: Add bank statement state management
   }
 
   async function handleSaveApiKey(apiKey: string) {

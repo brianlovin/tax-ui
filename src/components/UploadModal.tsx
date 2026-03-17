@@ -1,18 +1,38 @@
 import { Input } from "@base-ui/react/input";
 import { useEffect, useRef, useState } from "react";
 
+import type { DocumentType } from "../lib/schema";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (files: File[], apiKey: string) => Promise<void>;
+  onUpload: (files: File[], apiKey: string, documentType: DocumentType) => Promise<void>;
   onSaveApiKey?: (apiKey: string) => Promise<void>;
   hasStoredKey: boolean;
   pendingFiles: File[];
   configureKeyOnly?: boolean;
+  defaultDocumentType?: DocumentType;
 }
+
+const DOCUMENT_TYPES: { value: DocumentType; label: string; description: string }[] = [
+  {
+    value: "tax-return",
+    label: "Tax Return",
+    description: "Australian tax return (Notice of Assessment)",
+  },
+  {
+    value: "payslip",
+    label: "Payslip",
+    description: "Employee pay statement with income and tax details",
+  },
+  {
+    value: "bank-statement",
+    label: "Bank Statement",
+    description: "Bank account statement with transactions",
+  },
+];
 
 export function UploadModal({
   isOpen,
@@ -22,9 +42,11 @@ export function UploadModal({
   hasStoredKey,
   pendingFiles,
   configureKeyOnly,
+  defaultDocumentType = "tax-return",
 }: Props) {
   const [apiKey, setApiKey] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [documentType, setDocumentType] = useState<DocumentType>(defaultDocumentType);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +61,9 @@ export function UploadModal({
       setFiles([]);
       setApiKey("");
       setError(null);
+      setDocumentType(defaultDocumentType);
     }
-  }, [isOpen]);
+  }, [isOpen, defaultDocumentType]);
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -112,7 +135,7 @@ export function UploadModal({
     setError(null);
 
     try {
-      await onUpload(activeFiles, apiKey.trim());
+      await onUpload(activeFiles, apiKey.trim(), documentType);
       setFiles([]);
       setApiKey("");
       onClose();
@@ -136,7 +159,9 @@ export function UploadModal({
     ? "API Key"
     : pendingFiles.length > 0
       ? "Enter API Key"
-      : "Upload Tax Return";
+      : "Upload Document";
+
+  const selectedDocType = DOCUMENT_TYPES.find((d) => d.value === documentType);
 
   return (
     <Dialog open={isOpen} onClose={handleClose} title={title} closeDisabled={isLoading}>
@@ -175,6 +200,37 @@ export function UploadModal({
             className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2 text-sm placeholder:text-(--color-text-muted) focus:border-(--color-text-muted) focus:outline-none disabled:opacity-50"
           />
           <p className="mt-1.5 text-xs text-(--color-text-muted)">Saved locally to .env file</p>
+        </div>
+      )}
+
+      {/* Document type selector */}
+      {showFileUpload && (
+        <div className="mb-4">
+          <label className="mb-1.5 block text-xs text-(--color-text-muted)">Document Type</label>
+          <div className="flex gap-2">
+            {DOCUMENT_TYPES.map((doc) => (
+              <button
+                key={doc.value}
+                type="button"
+                onClick={() => setDocumentType(doc.value)}
+                disabled={isLoading}
+                className={[
+                  "flex-1 rounded-lg border px-3 py-2 text-sm transition-colors",
+                  documentType === doc.value
+                    ? "border-(--color-brand) bg-(--color-brand)/10 text-(--color-brand)"
+                    : "border-(--color-border) text-(--color-text-muted) hover:border-(--color-text-muted) hover:text-(--color-text)",
+                  isLoading ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+                ].join(" ")}
+              >
+                {doc.label}
+              </button>
+            ))}
+          </div>
+          {selectedDocType && (
+            <p className="mt-1.5 text-xs text-(--color-text-muted)">
+              {selectedDocType.description}
+            </p>
+          )}
         </div>
       )}
 
@@ -228,7 +284,12 @@ export function UploadModal({
       {/* Privacy note */}
       {!configureKeyOnly && (
         <div className="mt-4 text-xs text-(--color-text-muted)">
-          Your tax return is sent directly to Anthropic's API. Data stored locally.
+          {documentType === "tax-return" &&
+            "Your tax return is sent directly to Anthropic's API. Data stored locally."}
+          {documentType === "payslip" &&
+            "Your payslip is sent directly to Anthropic's API. Data stored locally."}
+          {documentType === "bank-statement" &&
+            "Your bank statement is sent directly to Anthropic's API. Data stored locally."}
         </div>
       )}
 
@@ -246,7 +307,7 @@ export function UploadModal({
             : "Processing..."
           : configureKeyOnly
             ? "Save API key"
-            : `Parse ${activeFiles.length > 1 ? `${activeFiles.length} returns` : "tax return"}`}
+            : `Parse ${activeFiles.length > 1 ? `${activeFiles.length} documents` : selectedDocType?.label || "document"}`}
       </Button>
     </Dialog>
   );

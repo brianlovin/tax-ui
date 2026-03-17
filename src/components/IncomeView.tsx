@@ -1,14 +1,15 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { formatCurrency } from "../lib/format";
-import type { TaxReturn } from "../lib/schema";
+import type { Payslip, TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
 import { type ColumnMeta, Table } from "./Table";
 
 interface Props {
   data?: TaxReturn;
   returns?: Record<number, TaxReturn>;
+  payslips?: Payslip[];
 }
 
 type TimeGranularity = "month" | "week";
