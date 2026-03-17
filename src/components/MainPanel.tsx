@@ -1,17 +1,6 @@
-import { ContextMenu } from "@base-ui/react/context-menu";
 import { Tabs } from "@base-ui/react/tabs";
-import { LayoutGroup, motion } from "motion/react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "../lib/cn";
 import { isElectron } from "../lib/electron";
@@ -19,15 +8,19 @@ import type { PendingUpload, TaxReturn } from "../lib/schema";
 import type { NavItem } from "../lib/types";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
+import { ExpensesView } from "./ExpensesView";
 import { FilePlusIcon } from "./FilePlusIcon";
+import { IncomeView } from "./IncomeView";
 import { LoadingView } from "./LoadingView";
-import { itemBaseClassName, Menu, MenuItem, popupBaseClassName } from "./Menu";
-import { PlusIcon } from "./PlusIcon";
-import { ReceiptView } from "./ReceiptView";
+import { Menu, MenuItem } from "./Menu";
 import { StatsHeader } from "./StatsHeader";
 import { SummaryReceiptView } from "./SummaryReceiptView";
 import { SummaryTable } from "./SummaryTable";
+import { TaxesView } from "./TaxesView";
 import { TrashIcon } from "./TrashIcon";
+import { YearSelector } from "./YearSelector";
+
+export type ContentTab = "income" | "taxes" | "expenses";
 
 interface CommonProps {
   isChatOpen: boolean;
@@ -45,6 +38,8 @@ interface CommonProps {
   hasStoredKey: boolean;
   returns: Record<number, TaxReturn>;
   selectedYear: "summary" | number;
+  activeTab: ContentTab;
+  onTabChange: (tab: ContentTab) => void;
 }
 
 interface ReceiptProps extends CommonProps {
@@ -64,128 +59,12 @@ interface LoadingProps extends CommonProps {
 
 type Props = ReceiptProps | SummaryProps | LoadingProps;
 
-type SummaryViewMode = "table" | "receipt";
-
-const ITEM_WIDTH = 78; // 70px + 8px gap
-const OVERFLOW_BUTTON_WIDTH = 48; // 40px + gap
-const ADD_BUTTON_WIDTH = 48; // 40px + gap
-
-// Animated tab highlight context and helpers (same pattern as Menu)
-interface TabHighlightContextValue {
-  layoutId: string;
-  subscribe: (callback: () => void) => () => void;
-  getHoveredId: () => string | null;
-  setHovered: (id: string | null) => void;
-}
-
-const TabHighlightContext = createContext<TabHighlightContextValue | null>(null);
-
-function useTabHighlightStore() {
-  const hoveredRef = useRef<string | null>(null);
-  const listenersRef = useRef<Set<() => void>>(new Set());
-
-  const subscribe = useCallback((callback: () => void) => {
-    listenersRef.current.add(callback);
-    return () => listenersRef.current.delete(callback);
-  }, []);
-
-  const getHoveredId = useCallback(() => {
-    return hoveredRef.current;
-  }, []);
-
-  const setHovered = useCallback((id: string | null) => {
-    if (hoveredRef.current !== id) {
-      hoveredRef.current = id;
-      listenersRef.current.forEach((cb) => cb());
-    }
-  }, []);
-
-  return { subscribe, getHoveredId, setHovered };
-}
-
-interface AnimatedTabProps {
-  id: string;
-  label: string;
-  isSelected: boolean;
-  wrapper?: (tab: React.ReactElement) => React.ReactNode;
-}
-
-function AnimatedTab({ id, label, isSelected, wrapper }: AnimatedTabProps) {
-  const ctx = useContext(TabHighlightContext);
-
-  const hoveredId = useSyncExternalStore(
-    ctx?.subscribe ?? (() => () => {}),
-    ctx?.getHoveredId ?? (() => null),
-  );
-
-  const hasAnyHover = hoveredId !== null;
-  // Show highlight if hovered, or if selected and nothing is hovered
-  const showHighlight = hoveredId === id || (isSelected && !hasAnyHover);
-
-  const tab = (
-    <Tabs.Tab
-      value={id}
-      className={cn(
-        "relative shrink-0 rounded-lg px-2.5 py-1 text-sm font-medium outline-none",
-        isSelected ? "text-(--color-text)" : "text-(--color-text-muted) hover:text-(--color-text)",
-      )}
-      onMouseEnter={() => ctx?.setHovered(id)}
-    >
-      {/* Animated highlight - follows hover or selection */}
-      {showHighlight && ctx && (
-        <motion.div
-          layoutId={ctx.layoutId}
-          className="dark:shadow-contrast absolute inset-0 rounded-lg bg-(--color-bg-muted)"
-          initial={false}
-          transition={{
-            type: "spring",
-            stiffness: 500,
-            damping: 35,
-          }}
-        />
-      )}
-      <span className="relative z-10">{label}</span>
-    </Tabs.Tab>
-  );
-
-  return wrapper ? wrapper(tab) : tab;
-}
-
 export function MainPanel(props: Props) {
-  const [summaryViewMode, setSummaryViewMode] = useState<SummaryViewMode>("table");
-  const [visibleCount, setVisibleCount] = useState(props.navItems.length);
-  const navRef = useRef<HTMLElement>(null);
-
-  // Animated tab highlight setup
-  const tabLayoutId = useId();
-  const tabHighlightStore = useTabHighlightStore();
-  const tabHighlightContextValue = useMemo(
-    () => ({
-      layoutId: tabLayoutId,
-      ...tabHighlightStore,
-    }),
-    [tabLayoutId, tabHighlightStore],
-  );
-
-  const calculateVisibleItems = useCallback(() => {
-    if (!navRef.current) return;
-    const availableWidth = navRef.current.offsetWidth;
-    const reservedWidth = OVERFLOW_BUTTON_WIDTH + ADD_BUTTON_WIDTH;
-    const maxItems = Math.floor((availableWidth - reservedWidth) / ITEM_WIDTH);
-    setVisibleCount(Math.max(1, Math.min(props.navItems.length, maxItems)));
-  }, [props.navItems.length]);
-
-  useEffect(() => {
-    calculateVisibleItems();
-    const observer = new ResizeObserver(calculateVisibleItems);
-    if (navRef.current) {
-      observer.observe(navRef.current);
-    }
-    return () => observer.disconnect();
-  }, [calculateVisibleItems]);
+  const [summaryViewMode, setSummaryViewMode] = useState<"table" | "receipt">("table");
+  const tabLayoutId = useRef<string>(`tab-highlight-${Date.now()}`);
+  const tabListRef = useRef<HTMLDivElement>(null);
 
   // Global arrow key handler for tab navigation
-  const tabListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
@@ -205,33 +84,102 @@ export function MainPanel(props: Props) {
 
       e.preventDefault();
 
-      const currentIndex = props.navItems.findIndex((item) => item.id === props.selectedId);
+      const tabs: ContentTab[] = ["income", "taxes", "expenses"];
+      const currentIndex = tabs.indexOf(props.activeTab);
       const direction = e.key === "ArrowLeft" ? -1 : 1;
-      const nextIndex = Math.max(0, Math.min(props.navItems.length - 1, currentIndex + direction));
-      const nextItem = props.navItems[nextIndex];
-
-      if (nextItem && nextItem.id !== props.selectedId) {
-        props.onSelect(nextItem.id);
-      }
-
-      // Focus the tab list so subsequent arrow keys work natively
-      const tabToFocus = tabListRef.current?.querySelector(
-        `[data-value="${nextItem?.id ?? props.selectedId}"]`,
-      ) as HTMLElement | null;
-      tabToFocus?.focus();
+      const nextIndex = Math.max(0, Math.min(tabs.length - 1, currentIndex + direction));
+      props.onTabChange(tabs[nextIndex]!);
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [props.navItems, props.selectedId, props.onSelect]);
+  }, [props]);
 
-  const visibleItems = props.navItems.slice(0, visibleCount);
-  const overflowItems = props.navItems.slice(visibleCount);
-  const hasOverflow = overflowItems.length > 0;
+  const renderContent = () => {
+    // Loading view takes precedence
+    if (props.view === "loading") {
+      return (
+        <LoadingView
+          filename={props.pendingUpload.filename}
+          year={props.pendingUpload.year}
+          status={props.pendingUpload.status}
+        />
+      );
+    }
+
+    // Get the data for the selected view
+    if (props.view === "receipt" && props.data) {
+      // Single year view - show the selected tab content
+      if (props.activeTab === "income") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
+            <IncomeView data={props.data} />
+          </div>
+        );
+      } else if (props.activeTab === "taxes") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
+            <TaxesView data={props.data} />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
+            <ExpensesView year={props.data.year} />
+          </div>
+        );
+      }
+    }
+
+    // Summary view (all years)
+    if (props.view === "summary") {
+      if (props.activeTab === "income") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear="summary" />
+            <IncomeView returns={props.returns} />
+          </div>
+        );
+      } else if (props.activeTab === "taxes") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear="summary" />
+            <TaxesView returns={props.returns} />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear="summary" />
+            <ExpensesView />
+          </div>
+        );
+      }
+    }
+
+    // Legacy fallback (shouldn't reach here)
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <StatsHeader returns={props.returns} selectedYear="summary" />
+        {summaryViewMode === "table" ? (
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <SummaryTable returns={props.returns} />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            <SummaryReceiptView returns={props.returns} />
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-screen flex-1 flex-col overflow-hidden bg-(--color-bg)">
-      {/* Header */}
+      {/* Header with content tabs */}
       <header
         className={cn(
           "flex h-12 shrink-0 items-center justify-between border-b border-(--color-border) pr-3 pl-[calc(0.75rem+var(--electron-traffic-left))] sm:pr-3 sm:pl-[calc(1.5rem+var(--electron-traffic-left))]",
@@ -270,7 +218,6 @@ export function MainPanel(props: Props) {
                 Reset data
               </MenuItem>
             )}
-
             <MenuItem
               onClick={() => window.open("https://github.com/oscardobsonbrown/pennywise", "_blank")}
             >
@@ -286,112 +233,75 @@ export function MainPanel(props: Props) {
               Contribute
             </MenuItem>
           </Menu>
+
+          {/* Content Tabs */}
           <Tabs.Root
-            value={props.selectedId}
-            onValueChange={(val: string | number | null) => val && props.onSelect(String(val))}
+            value={props.activeTab}
+            onValueChange={(val) => val && props.onTabChange(val as ContentTab)}
             className="min-w-0 flex-1"
           >
-            <nav ref={navRef} className="flex min-w-0 flex-1 items-center gap-2">
-              <Tabs.List
-                ref={tabListRef}
-                className="flex min-w-0 items-center gap-2 overflow-hidden pr-1"
-                activateOnFocus
-                onMouseLeave={() => tabHighlightStore.setHovered(null)}
+            <Tabs.List ref={tabListRef} className="flex min-w-0 items-center gap-1" activateOnFocus>
+              <Tabs.Tab
+                value="income"
+                className={cn(
+                  "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
+                  props.activeTab === "income"
+                    ? "text-(--color-text)"
+                    : "text-(--color-text-muted) hover:text-(--color-text)",
+                )}
               >
-                <LayoutGroup>
-                  <TabHighlightContext.Provider value={tabHighlightContextValue}>
-                    {visibleItems.map((item) => {
-                      const isYear = item.id !== "summary";
-                      const canDelete = isYear && !props.isDemo && props.onDeleteYear;
-
-                      return (
-                        <AnimatedTab
-                          key={item.id}
-                          id={item.id}
-                          label={item.label}
-                          isSelected={props.selectedId === item.id}
-                          wrapper={
-                            canDelete
-                              ? (tab) => (
-                                  <ContextMenu.Root>
-                                    <ContextMenu.Trigger render={tab} />
-                                    <ContextMenu.Portal>
-                                      <ContextMenu.Positioner className="z-50" sideOffset={4}>
-                                        <ContextMenu.Popup
-                                          className={cn(popupBaseClassName, "z-50")}
-                                        >
-                                          <ContextMenu.Item
-                                            className={cn(
-                                              itemBaseClassName,
-                                              "data-[highlighted]:bg-(--color-bg-muted)",
-                                            )}
-                                            onClick={() => props.onDeleteYear?.(item.id)}
-                                          >
-                                            <TrashIcon />
-                                            Remove {item.label} data
-                                          </ContextMenu.Item>
-                                        </ContextMenu.Popup>
-                                      </ContextMenu.Positioner>
-                                    </ContextMenu.Portal>
-                                  </ContextMenu.Root>
-                                )
-                              : undefined
-                          }
-                        />
-                      );
-                    })}
-                  </TabHighlightContext.Provider>
-                </LayoutGroup>
-              </Tabs.List>
-
-              {/* Overflow items */}
-              {hasOverflow && (
-                <Menu
-                  triggerClassName="px-2.5 py-1 text-sm font-medium"
-                  popupClassName="min-w-25"
-                  side="bottom"
-                  align="start"
-                  sideOffset={4}
-                  trigger="···"
-                >
-                  {overflowItems.map((item) => (
-                    <MenuItem
-                      key={item.id}
-                      onClick={() => props.onSelect(item.id)}
-                      selected={props.selectedId === item.id}
-                    >
-                      {item.label}
-                    </MenuItem>
-                  ))}
-                </Menu>
-              )}
-
-              {/* Add button */}
-              {props.isDemo ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={props.onOpenStart}
-                  className="flex shrink-0 items-center gap-1 px-2.5 py-1"
-                >
-                  <PlusIcon size={14} strokeWidth={2.5} />
-                  Upload
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconOnly
-                  onClick={props.onOpenStart}
-                  title="Add tax returns"
-                  className="shrink-0"
-                >
-                  <PlusIcon />
-                </Button>
-              )}
-            </nav>
+                {props.activeTab === "income" && (
+                  <motion.div
+                    layoutId={tabLayoutId.current}
+                    className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">Income</span>
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="taxes"
+                className={cn(
+                  "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
+                  props.activeTab === "taxes"
+                    ? "text-(--color-text)"
+                    : "text-(--color-text-muted) hover:text-(--color-text)",
+                )}
+              >
+                {props.activeTab === "taxes" && (
+                  <motion.div
+                    layoutId={tabLayoutId.current}
+                    className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">Taxes</span>
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="expenses"
+                className={cn(
+                  "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
+                  props.activeTab === "expenses"
+                    ? "text-(--color-text)"
+                    : "text-(--color-text-muted) hover:text-(--color-text)",
+                )}
+              >
+                {props.activeTab === "expenses" && (
+                  <motion.div
+                    layoutId={tabLayoutId.current}
+                    className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">Expenses</span>
+              </Tabs.Tab>
+            </Tabs.List>
           </Tabs.Root>
         </div>
+
         {props.showChatButton !== false && !props.isChatOpen && (
           <Button
             variant="ghost"
@@ -405,34 +315,15 @@ export function MainPanel(props: Props) {
         )}
       </header>
 
-      {/* Content */}
-      {props.view === "loading" ? (
-        <LoadingView
-          filename={props.pendingUpload.filename}
-          year={props.pendingUpload.year}
-          status={props.pendingUpload.status}
-        />
-      ) : props.view === "summary" ? (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <StatsHeader returns={props.returns} selectedYear="summary" />
-          {summaryViewMode === "table" ? (
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <SummaryTable returns={props.returns} />
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto">
-              <SummaryReceiptView returns={props.returns} />
-            </div>
-          )}
-        </div>
-      ) : props.view === "receipt" ? (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
-          <div className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-950">
-            <ReceiptView data={props.data} />
-          </div>
-        </div>
-      ) : null}
+      {/* Main content */}
+      {renderContent()}
+
+      {/* Year selector at bottom */}
+      <YearSelector
+        navItems={props.navItems}
+        selectedId={props.selectedId}
+        onSelect={props.onSelect}
+      />
     </div>
   );
 }

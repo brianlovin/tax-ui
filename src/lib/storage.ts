@@ -1,9 +1,10 @@
 import path from "path";
 
-import { type TaxReturn, TaxReturnSchema } from "./schema";
+import { type ExpenseEntry, type TaxReturn, TaxReturnSchema, type YearExpenses } from "./schema";
 
 const DATA_DIR = process.env.TAX_UI_DATA_DIR || process.cwd();
 const RETURNS_FILE = path.join(DATA_DIR, ".tax-returns.json");
+const EXPENSES_FILE = path.join(DATA_DIR, ".expenses.json");
 const ENV_FILE = path.join(DATA_DIR, ".env");
 
 // Backfill missing array fields for old stored data, then validate with Zod
@@ -59,6 +60,58 @@ export async function deleteReturn(year: number): Promise<void> {
   await Bun.write(RETURNS_FILE, JSON.stringify(returns, null, 2));
 }
 
+// ============================================
+// EXPENSES
+// ============================================
+
+export async function getExpenses(): Promise<Record<number, YearExpenses>> {
+  const file = Bun.file(EXPENSES_FILE);
+  if (await file.exists()) {
+    return await file.json();
+  }
+  return {};
+}
+
+export async function saveExpenseEntry(entry: ExpenseEntry): Promise<void> {
+  const expenses = await getExpenses();
+
+  if (!expenses[entry.year]) {
+    expenses[entry.year] = {
+      year: entry.year,
+      entries: [],
+    };
+  }
+
+  const yearExpenses = expenses[entry.year]!;
+  const existingIndex = yearExpenses.entries.findIndex((e) => e.id === entry.id);
+  if (existingIndex >= 0) {
+    yearExpenses.entries[existingIndex] = entry;
+  } else {
+    yearExpenses.entries.push(entry);
+  }
+
+  await Bun.write(EXPENSES_FILE, JSON.stringify(expenses, null, 2));
+}
+
+export async function deleteExpenseEntry(year: number, entryId: string): Promise<void> {
+  const expenses = await getExpenses();
+  if (expenses[year]) {
+    expenses[year].entries = expenses[year].entries.filter((e) => e.id !== entryId);
+    await Bun.write(EXPENSES_FILE, JSON.stringify(expenses, null, 2));
+  }
+}
+
+export async function clearExpenses(): Promise<void> {
+  const file = Bun.file(EXPENSES_FILE);
+  if (await file.exists()) {
+    await Bun.write(EXPENSES_FILE, "{}");
+  }
+}
+
+// ============================================
+// API KEY
+// ============================================
+
 export function getApiKey(): string | undefined {
   return process.env.ANTHROPIC_API_KEY;
 }
@@ -102,6 +155,12 @@ export async function clearAllData(): Promise<void> {
   const returnsFile = Bun.file(RETURNS_FILE);
   if (await returnsFile.exists()) {
     await Bun.write(RETURNS_FILE, "{}");
+  }
+
+  // Clear expenses
+  const expensesFile = Bun.file(EXPENSES_FILE);
+  if (await expensesFile.exists()) {
+    await Bun.write(EXPENSES_FILE, "{}");
   }
 
   // Clear API key from .env

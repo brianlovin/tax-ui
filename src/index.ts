@@ -7,11 +7,14 @@ import index from "./index.html";
 import { extractYearFromPdf, parseTaxReturn } from "./lib/parser";
 import {
   clearAllData,
+  deleteExpenseEntry,
   deleteReturn,
   getApiKey,
+  getExpenses,
   getReturns,
   removeApiKey,
   saveApiKey,
+  saveExpenseEntry,
   saveReturn,
 } from "./lib/storage";
 
@@ -295,6 +298,57 @@ const routes: Record<string, any> = {
         }
         return Response.json({ error: message }, { status: 500 });
       }
+    },
+  },
+
+  // ============================================
+  // EXPENSES API
+  // ============================================
+
+  "/api/expenses": {
+    GET: async () => {
+      return Response.json(await getExpenses());
+    },
+  },
+
+  "/api/expenses/:year": {
+    GET: async (req: Request & { params: { year: string } }) => {
+      const year = Number(req.params.year);
+      if (isNaN(year)) {
+        return Response.json({ error: "Invalid year" }, { status: 400 });
+      }
+      const expenses = await getExpenses();
+      return Response.json(expenses[year] || { year, entries: [] });
+    },
+  },
+
+  "/api/expenses/entry": {
+    POST: async (req: Request) => {
+      const entry = await req.json();
+      if (!entry.year || !entry.category || !entry.amount) {
+        return Response.json({ error: "Missing required fields" }, { status: 400 });
+      }
+      // Generate ID and timestamps if not provided
+      const now = new Date().toISOString();
+      const newEntry = {
+        ...entry,
+        id: entry.id || crypto.randomUUID(),
+        createdAt: entry.createdAt || now,
+        updatedAt: now,
+      };
+      await saveExpenseEntry(newEntry);
+      return Response.json(newEntry);
+    },
+  },
+
+  "/api/expenses/entry/:year/:id": {
+    DELETE: async (req: Request & { params: { year: string; id: string } }) => {
+      const year = Number(req.params.year);
+      if (isNaN(year)) {
+        return Response.json({ error: "Invalid year" }, { status: 400 });
+      }
+      await deleteExpenseEntry(year, req.params.id);
+      return Response.json({ success: true });
     },
   },
 };

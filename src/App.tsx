@@ -1,14 +1,13 @@
 import "./index.css";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-
 import { Agentation } from "agentation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Chat, type ChatMessage } from "./components/Chat";
 import { DemoDialog } from "./components/DemoDialog";
 import { DevTools } from "./components/DevTools";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { MainPanel } from "./components/MainPanel";
+import { type ContentTab, MainPanel } from "./components/MainPanel";
 import { ResetDialog } from "./components/ResetDialog";
 import { SettingsModal } from "./components/SettingsModal";
 import { SetupDialog } from "./components/SetupDialog";
@@ -156,9 +155,19 @@ function getDefaultSelection(returns: Record<number, TaxReturn>): SelectedView {
 }
 
 function buildNavItems(returns: Record<number, TaxReturn>): NavItem[] {
-  const years = Object.keys(returns)
-    .map(Number)
-    .sort((a, b) => b - a);
+  const dataYears = Object.keys(returns).map(Number);
+  
+  // Get the range from earliest data year to current year
+  const currentYear = new Date().getFullYear();
+  const minYear = dataYears.length > 0 ? Math.min(...dataYears) : currentYear;
+  const maxYear = Math.max(...dataYears, currentYear);
+  
+  // Fill in all years in the range (no gaps)
+  const years: number[] = [];
+  for (let y = maxYear; y >= minYear; y--) {
+    years.push(y);
+  }
+  
   const items: NavItem[] = [];
   if (years.length > 1) items.push({ id: "summary", label: "All time" });
   items.push(...years.map((y) => ({ id: String(y), label: String(y) })));
@@ -212,6 +221,7 @@ export function App() {
   const [isMobile, setIsMobile] = useState(false);
   const hasShownOnboardingRef = useRef(false);
   const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
+  const [activeTab, setActiveTab] = useState<ContentTab>("income");
   const updater = useElectronUpdater(devUpdateOverride);
 
   // Compute effective demo mode early (dev override takes precedence)
@@ -656,6 +666,8 @@ export function App() {
       hasStoredKey: state.hasStoredKey,
       returns: effectiveReturns,
       selectedYear: statsSelectedYear,
+      activeTab,
+      onTabChange: setActiveTab,
     };
 
     if (selectedPendingUpload) {

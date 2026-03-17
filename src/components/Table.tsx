@@ -11,6 +11,7 @@ import { cn } from "../lib/cn";
 
 export interface ColumnMeta {
   align?: "left" | "right";
+  headerAlign?: "left" | "right";
   borderLeft?: boolean;
   sticky?: boolean;
 }
@@ -166,7 +167,7 @@ export function Table<TData>({
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 const meta = header.column.columnDef.meta as ColumnMeta | undefined;
-                const alignClass = meta?.align === "right" ? "text-right" : "text-left";
+                const headerAlignClass = (meta?.headerAlign ?? meta?.align) === "right" ? "text-right" : "text-left";
 
                 const shadows = ["inset 0 -1px 0 var(--color-border-opaque)"];
                 if (meta?.sticky && (isScrolled || isMobile)) {
@@ -182,7 +183,7 @@ export function Table<TData>({
                     key={header.id}
                     colSpan={header.colSpan}
                     className={cn(
-                      alignClass,
+                      headerAlignClass,
                       "bg-(--color-bg) px-4 py-2 text-xs font-normal text-(--color-text-muted)",
                       meta?.sticky ? "sticky top-0 left-0 z-30" : "relative",
                     )}

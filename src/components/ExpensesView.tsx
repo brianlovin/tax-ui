@@ -1,0 +1,435 @@
+import { type ColumnDef } from "@tanstack/react-table";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { cn } from "../lib/cn";
+import { formatCurrency } from "../lib/format";
+import {
+  EXPENSE_CATEGORIES,
+  type ExpenseCategoryId,
+  type ExpenseEntry,
+  getCategoryName,
+  getCategoryParent,
+} from "../lib/schema";
+import { Button } from "./Button";
+import { Menu, MenuItem } from "./Menu";
+import { type ColumnMeta, Table } from "./Table";
+
+interface Props {
+  year?: number;
+}
+
+type TimeGranularity = "month" | "week";
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function getWeekLabels(): string[] {
+  return Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+}
+
+interface ExpenseRow {
+  id: string;
+  label: string;
+  category: ExpenseCategoryId | "total";
+  parent: string;
+  isHeader?: boolean;
+  values: number[];
+}
+
+interface ExpenseData {
+  [year: number]: {
+    [category: string]: {
+      [month: number]: number;
+    };
+  };
+}
+
+function collectExpenseRows(
+  expenses: ExpenseData,
+  granularity: TimeGranularity,
+  selectedYear?: number,
+): ExpenseRow[] {
+  const rows: ExpenseRow[] = [];
+  const periods = granularity === "month" ? 12 : 52;
+
+  // Get all categories with expenses
+  const categoriesWithExpenses = new Set<ExpenseCategoryId>();
+  const years = selectedYear ? [selectedYear] : Object.keys(expenses).map(Number);
+
+  for (const year of years) {
+    const yearData = expenses[year];
+    if (!yearData) continue;
+    for (const cat of Object.keys(yearData)) {
+      categoriesWithExpenses.add(cat as ExpenseCategoryId);
+    }
+  }
+
+  // Group by parent category
+  const groupedByParent: Record<string, ExpenseCategoryId[]> = {};
+  for (const cat of categoriesWithExpenses) {
+    const parent = getCategoryParent(cat);
+    if (!groupedByParent[parent]) {
+      groupedByParent[parent] = [];
+    }
+    groupedByParent[parent].push(cat);
+  }
+
+  // Build rows
+  for (const [parentKey, categories] of Object.entries(groupedByParent)) {
+    const parent = EXPENSE_CATEGORIES[parentKey as keyof typeof EXPENSE_CATEGORIES];
+    if (!parent) continue;
+
+    rows.push({
+      id: `header-${parentKey}`,
+      label: parent.name,
+      category: "total",
+      parent: parentKey,
+      isHeader: true,
+      values: Array(periods).fill(0),
+    });
+
+    for (const cat of categories) {
+      const periodValues: number[] = [];
+
+      if (selectedYear !== undefined) {
+        // Single year view
+        const yearData = expenses[selectedYear];
+        if (yearData && yearData[cat]) {
+          if (granularity === "month") {
+            for (let m = 1; m <= 12; m++) {
+              periodValues.push(yearData[cat][m] || 0);
+            }
+          } else {
+            // For weeks, aggregate from monthly data (simplified)
+            const monthlyData = yearData[cat];
+            for (let w = 1; w <= 52; w++) {
+              const month = Math.ceil(w / 4.33);
+              periodValues.push((monthlyData[month] || 0) / 4.33);
+            }
+          }
+        } else {
+          periodValues.push(...Array(periods).fill(0));
+        }
+      } else {
+        // Summary - total across all years
+        let total = 0;
+        for (const year of years) {
+          const yearData = expenses[year];
+          if (yearData && yearData[cat]) {
+            for (const monthVal of Object.values(yearData[cat])) {
+              total += monthVal;
+            }
+          }
+        }
+        periodValues.push(total);
+      }
+
+      rows.push({
+        id: cat,
+        label: getCategoryName(cat),
+        category: cat,
+        parent: parentKey,
+        values: periodValues,
+      });
+    }
+  }
+
+  // Add total row
+  const totalValues: number[] = [];
+  for (let i = 0; i < periods; i++) {
+    let sum = 0;
+    for (const row of rows) {
+      if (!row.isHeader && row.category !== "total") {
+        sum += row.values[i] || 0;
+      }
+    }
+    totalValues.push(sum);
+  }
+
+  rows.push({
+    id: "total",
+    label: "Total Expenses",
+    category: "total",
+    parent: "",
+    values: totalValues,
+  });
+
+  return rows;
+}
+
+export function ExpensesView({ year }: Props) {
+  const [granularity, setGranularity] = useState<TimeGranularity>("month");
+  const [expenses, setExpenses] = useState<ExpenseData>({});
+  const [selectedCategory, setSelectedCategory] = useState<ExpenseCategoryId | null>(null);
+  const [amount, setAmount] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+
+  // Fetch expenses on mount
+  useEffect(() => {
+    fetch("/api/expenses")
+      .then((res) => res.json())
+      .then((data) => {
+        // Transform flat entries into the nested structure
+        const transformed: ExpenseData = {};
+        for (const [yearKey, yearData] of Object.entries(data)) {
+          const year = Number(yearKey);
+          transformed[year] = {};
+          const entries = (yearData as { entries: ExpenseEntry[] }).entries;
+          for (const entry of entries) {
+            const yearEntry = transformed[year];
+            if (!yearEntry) continue;
+            const catData = yearEntry[entry.category]!;
+            catData[entry.month] = (catData[entry.month] || 0) + entry.amount;
+          }
+        }
+        setExpenses(transformed);
+      })
+      .catch(console.error);
+  }, []);
+
+  const rows = useMemo(
+    () => collectExpenseRows(expenses, granularity, year),
+    [expenses, granularity, year],
+  );
+
+  const periodLabels = granularity === "month" ? MONTHS : getWeekLabels();
+
+  const handleAddExpense = useCallback(async () => {
+    if (!selectedCategory || !amount || !year) return;
+
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return;
+
+    const entry: ExpenseEntry = {
+      id: crypto.randomUUID(),
+      year,
+      month: selectedMonth,
+      category: selectedCategory,
+      amount: numAmount,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await fetch("/api/expenses/entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entry),
+      });
+
+      // Refresh expenses
+      const res = await fetch("/api/expenses");
+      const data = await res.json();
+      const transformed: ExpenseData = {};
+      for (const [yearKey, yearData] of Object.entries(data)) {
+        const y = Number(yearKey);
+        transformed[y] = {};
+        const entries = (yearData as { entries: ExpenseEntry[] }).entries;
+        for (const entry of entries) {
+          const yearEntry = transformed[y];
+          if (!yearEntry) continue;
+          if (!yearEntry[entry.category]) {
+            yearEntry[entry.category] = {};
+          }
+          const catData = yearEntry[entry.category]!;
+          catData[entry.month] = (catData[entry.month] || 0) + entry.amount;
+        }
+      }
+      setExpenses(transformed);
+      setAmount("");
+    } catch (err) {
+      console.error("Failed to add expense:", err);
+    }
+  }, [selectedCategory, amount, year, selectedMonth]);
+
+  const columns = useMemo<ColumnDef<ExpenseRow>[]>(() => {
+    const cols: ColumnDef<ExpenseRow>[] = [
+      {
+        accessorKey: "label",
+        header: granularity === "month" ? "Expenses" : "Week",
+        cell: (info) => {
+          const row = info.row.original;
+          if (row.isHeader) {
+            return (
+              <div className="pt-2">
+                <span className="text-xs font-medium text-(--color-text-muted)">{row.label}</span>
+              </div>
+            );
+          }
+          const isTotal = row.id === "total";
+          return (
+            <span className={cn("truncate", isTotal && "font-medium")}>
+              {String(info.getValue())}
+            </span>
+          );
+        },
+        meta: {
+          sticky: true,
+        } satisfies ColumnMeta,
+        size: 160,
+      },
+    ];
+
+    if (year !== undefined) {
+      for (let i = 0; i < (granularity === "month" ? 12 : 52); i++) {
+        cols.push({
+          id: `period-${i}`,
+          header: periodLabels[i],
+          cell: (info) => {
+            const row = info.row.original;
+            if (row.isHeader) return null;
+            const value = row.values[i] || 0;
+            const isTotal = row.id === "total";
+            return (
+              <span className={cn("slashed-zero tabular-nums", isTotal && "font-medium")}>
+                {value === 0 ? "—" : formatCurrency(value)}
+              </span>
+            );
+          },
+          meta: {
+            align: "right" as const,
+            headerAlign: "left" as const,
+          } satisfies ColumnMeta,
+          size: 100,
+        });
+      }
+    } else {
+      cols.push({
+        id: "total",
+        header: "Total",
+        cell: (info) => {
+          const row = info.row.original;
+          if (row.isHeader) return null;
+          const total = row.values[0] || 0;
+          const isTotal = row.id === "total";
+          return (
+            <span className={cn("slashed-zero tabular-nums", isTotal && "font-medium")}>
+              {total === 0 ? "—" : formatCurrency(total)}
+            </span>
+          );
+        },
+        meta: {
+          align: "right" as const,
+        } satisfies ColumnMeta,
+        size: 120,
+      });
+    }
+
+    return cols;
+  }, [granularity, year, periodLabels]);
+
+  const getRowClassName = (row: ExpenseRow) => {
+    if (row.isHeader) {
+      return "border-t border-(--color-border)";
+    }
+    return "";
+  };
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Add expense UI for single year view */}
+      {year !== undefined && (
+        <div className="flex items-center gap-2 border-b border-(--color-border) px-4 py-2">
+          <Menu
+            triggerClassName="text-xs"
+            popupClassName="min-w-[180px]"
+            side="bottom"
+            trigger={selectedCategory ? getCategoryName(selectedCategory) : "Select category"}
+          >
+            {Object.entries(EXPENSE_CATEGORIES).map(([parentKey, parent]) => (
+              <div key={parentKey}>
+                <div className="px-2 py-1 text-xs font-medium text-(--color-text-muted)">
+                  {parent.name}
+                </div>
+                {parent.children.map((child) => (
+                  <MenuItem
+                    key={child.id}
+                    onClick={() => setSelectedCategory(child.id)}
+                    selected={selectedCategory === child.id}
+                  >
+                    {child.name}
+                  </MenuItem>
+                ))}
+              </div>
+            ))}
+          </Menu>
+
+          <input
+            type="number"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-24 rounded border border-(--color-border) px-2 py-1 text-xs"
+          />
+
+          <Menu
+            triggerClassName="text-xs"
+            popupClassName="min-w-[80px]"
+            side="bottom"
+            trigger={MONTHS[selectedMonth - 1]}
+          >
+            {MONTHS.map((month, i) => (
+              <MenuItem
+                key={month}
+                onClick={() => setSelectedMonth(i + 1)}
+                selected={selectedMonth === i + 1}
+              >
+                {month}
+              </MenuItem>
+            ))}
+          </Menu>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleAddExpense}
+            disabled={!selectedCategory || !amount}
+          >
+            Add
+          </Button>
+
+          <div className="flex-1" />
+
+          <span className="text-xs text-(--color-text-muted)">View by:</span>
+          <button
+            onClick={() => setGranularity("month")}
+            className={cn(
+              "rounded px-2 py-1 text-xs font-medium",
+              granularity === "month"
+                ? "bg-(--color-brand) text-white"
+                : "text-(--color-text-muted) hover:text-(--color-text)",
+            )}
+          >
+            Month
+          </button>
+          <button
+            onClick={() => setGranularity("week")}
+            className={cn(
+              "rounded px-2 py-1 text-xs font-medium",
+              granularity === "week"
+                ? "bg-(--color-brand) text-white"
+                : "text-(--color-text-muted) hover:text-(--color-text)",
+            )}
+          >
+            Week
+          </button>
+        </div>
+      )}
+
+      {rows.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center text-(--color-text-muted)">
+          No expenses recorded yet
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <Table
+            data={rows}
+            columns={columns}
+            storageKey={`expenses-table-${year ?? "summary"}`}
+            isRowHoverDisabled={(row) => row.isHeader === true}
+            getRowClassName={getRowClassName}
+          />
+        </div>
+      )}
+    </div>
+  );
+}

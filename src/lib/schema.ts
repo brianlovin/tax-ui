@@ -173,3 +173,134 @@ export interface FileWithId {
   id: string;
   file: File;
 }
+
+// ============================================
+// UP BANK EXPENSE CATEGORIES
+// ============================================
+
+export const EXPENSE_CATEGORIES = {
+  home: {
+    id: "home",
+    name: "Home",
+    children: [
+      { id: "groceries", name: "Groceries" },
+      { id: "homeware-appliances", name: "Homeware & Appliances" },
+      { id: "internet", name: "Internet" },
+      { id: "maintenance-improvements", name: "Maintenance & Improvements" },
+      { id: "pets", name: "Pets" },
+      { id: "rates-insurance", name: "Rates & Insurance" },
+      { id: "rent-mortgage", name: "Rent & Mortgage" },
+      { id: "utilities", name: "Utilities" },
+    ],
+  },
+  transport: {
+    id: "transport",
+    name: "Transport",
+    children: [
+      { id: "car-insurance-rego", name: "Car Insurance, Rego & Maintenance" },
+      { id: "cycling", name: "Cycling" },
+      { id: "fuel", name: "Fuel" },
+      { id: "parking", name: "Parking" },
+      { id: "public-transport", name: "Public Transport" },
+      { id: "repayments", name: "Repayments" },
+      { id: "taxis-share-cars", name: "Taxis & Share Cars" },
+      { id: "tolls", name: "Tolls" },
+    ],
+  },
+  goodlife: {
+    id: "goodlife",
+    name: "Good Life",
+    children: [
+      { id: "apps-games-software", name: "Apps, Games & Software" },
+      { id: "booze", name: "Booze" },
+      { id: "events-gigs", name: "Events & Gigs" },
+      { id: "hobbies", name: "Hobbies" },
+      { id: "holidays-travel", name: "Holidays & Travel" },
+      { id: "lottery-gambling", name: "Lottery & Gambling" },
+      { id: "pubs-bars", name: "Pubs & Bars" },
+      { id: "restaurants-cafes", name: "Restaurants & Cafes" },
+      { id: "takeaway", name: "Takeaway" },
+      { id: "tobacco-vaping", name: "Tobacco & Vaping" },
+      { id: "tv-music-streaming", name: "TV, Music & Streaming" },
+      { id: "adult", name: "Adult" },
+    ],
+  },
+  personal: {
+    id: "personal",
+    name: "Personal",
+    children: [
+      { id: "children-family", name: "Children & Family" },
+      { id: "clothing-accessories", name: "Clothing & Accessories" },
+      { id: "education-student-loans", name: "Education & Student Loans" },
+      { id: "fitness-wellbeing", name: "Fitness & Wellbeing" },
+      { id: "gifts-charity", name: "Gifts & Charity" },
+      { id: "hair-beauty", name: "Hair & Beauty" },
+      { id: "health-medical", name: "Health & Medical" },
+      { id: "investments", name: "Investments" },
+      { id: "life-admin", name: "Life Admin" },
+      { id: "mobile-phone", name: "Mobile Phone" },
+      { id: "news-magazines-books", name: "News, Magazines & Books" },
+      { id: "technology", name: "Technology" },
+    ],
+  },
+} as const;
+
+export type ExpenseCategoryId =
+  | (typeof EXPENSE_CATEGORIES.home.children)[number]["id"]
+  | (typeof EXPENSE_CATEGORIES.transport.children)[number]["id"]
+  | (typeof EXPENSE_CATEGORIES.goodlife.children)[number]["id"]
+  | (typeof EXPENSE_CATEGORIES.personal.children)[number]["id"];
+
+export type ExpenseCategoryParent = "home" | "transport" | "goodlife" | "personal";
+
+// Helper to get parent category for a category id
+export function getCategoryParent(categoryId: ExpenseCategoryId): ExpenseCategoryParent {
+  for (const [parentKey, parent] of Object.entries(EXPENSE_CATEGORIES)) {
+    if (parent.children.some((c) => c.id === categoryId)) {
+      return parentKey as ExpenseCategoryParent;
+    }
+  }
+  return "personal"; // default
+}
+
+// Helper to get category name by id
+export function getCategoryName(categoryId: ExpenseCategoryId): string {
+  for (const parent of Object.values(EXPENSE_CATEGORIES)) {
+    const found = parent.children.find((c) => c.id === categoryId);
+    if (found) return found.name;
+  }
+  return categoryId;
+}
+
+// ============================================
+// EXPENSE ENTRIES
+// ============================================
+
+export const ExpenseEntrySchema = z.object({
+  id: z.string(),
+  // Year the expense occurred
+  year: z.number(),
+  // Month 1-12
+  month: z.number().min(1).max(12),
+  // Week 1-5 (for weekly breakdown)
+  week: z.number().min(1).max(5).optional(),
+  // Up Bank category ID
+  category: z.string(),
+  // Amount in dollars (positive for expense)
+  amount: z.number(),
+  // Optional description/notes
+  description: z.string().optional(),
+  // Created/updated timestamps
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type ExpenseEntry = z.infer<typeof ExpenseEntrySchema>;
+
+// Year-based expense data structure
+export const YearExpensesSchema = z.object({
+  year: z.number(),
+  entries: z.array(ExpenseEntrySchema),
+});
+
+export type YearExpenses = z.infer<typeof YearExpensesSchema>;
