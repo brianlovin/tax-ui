@@ -304,3 +304,126 @@ export const YearExpensesSchema = z.object({
 });
 
 export type YearExpenses = z.infer<typeof YearExpensesSchema>;
+
+// ============================================
+// PAYSLIP
+// ============================================
+
+export const PayslipSchema = z.object({
+  id: z.string(),
+  // Period the payslip covers
+  period: z.object({
+    startDate: z.string(), // ISO date
+    endDate: z.string(), // ISO date
+    payDate: z.string(), // ISO date - when paid
+  }),
+  // Employer information
+  employer: z.object({
+    name: z.string(),
+    abn: z.string().optional(), // Australian Business Number
+  }),
+  // Employee information
+  employee: z.object({
+    name: z.string(),
+    employeeId: z.string().optional(),
+  }),
+  // Earnings breakdown
+  earnings: z.array(
+    z.object({
+      description: z.string(), // e.g., "Base Salary", "Overtime", "Bonus"
+      hours: z.number().optional(),
+      rate: z.number().optional(),
+      amount: z.number(),
+    }),
+  ),
+  grossEarnings: z.number(), // Total before deductions
+  // Deductions
+  deductions: z.array(
+    z.object({
+      description: z.string(), // e.g., "PAYG Tax", "Superannuation"
+      amount: z.number(),
+    }),
+  ),
+  totalDeductions: z.number(),
+  // Net pay
+  netPay: z.number(),
+  // Superannuation (if separate)
+  superannuation: z
+    .object({
+      fund: z.string().optional(),
+      memberNumber: z.string().optional(),
+      employerContribution: z.number(),
+      employeeContribution: z.number().optional(),
+    })
+    .optional(),
+  // Year to date summary
+  ytd: z
+    .object({
+      gross: z.number(),
+      tax: z.number(),
+      super: z.number().optional(),
+      net: z.number(),
+    })
+    .optional(),
+  // Source file
+  sourceFile: z.string(), // Original filename
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type Payslip = z.infer<typeof PayslipSchema>;
+
+// ============================================
+// BANK STATEMENT
+// ============================================
+
+export const BankTransactionSchema = z.object({
+  id: z.string(),
+  date: z.string(), // ISO date or bank date format
+  description: z.string(),
+  amount: z.number(), // Negative for debits, positive for credits
+  balance: z.number().optional(), // Running balance
+  // Auto-categorized expense category (from Up Bank categories)
+  category: z.string().optional(),
+  // Detected transaction type
+  type: z.enum(["debit", "credit"]),
+});
+
+export type BankTransaction = z.infer<typeof BankTransactionSchema>;
+
+export const BankStatementSchema = z.object({
+  id: z.string(),
+  // Bank/Account information
+  bank: z.object({
+    name: z.string(), // e.g., "ANZ", "Commonwealth", "Up Bank"
+    accountName: z.string().optional(),
+    accountNumber: z.string().optional(), // Last 4 digits for privacy
+  }),
+  // Statement period
+  period: z.object({
+    startDate: z.string(),
+    endDate: z.string(),
+  }),
+  // Opening and closing balances
+  openingBalance: z.number(),
+  closingBalance: z.number(),
+  // Transactions
+  transactions: z.array(BankTransactionSchema),
+  // Summary stats
+  totalCredits: z.number(),
+  totalDebits: z.number(),
+  // Source file
+  sourceFile: z.string(), // Original filename
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type BankStatement = z.infer<typeof BankStatementSchema>;
+
+// ============================================
+// DOCUMENT TYPE
+// ============================================
+
+export const DocumentTypeSchema = z.enum(["tax-return", "payslip", "bank-statement"]);
+
+export type DocumentType = z.infer<typeof DocumentTypeSchema>;

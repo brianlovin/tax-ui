@@ -5,16 +5,24 @@ import { fileURLToPath } from "url";
 
 import index from "./index.html";
 import { extractYearFromPdf, parseTaxReturn } from "./lib/parser";
+import { detectDocumentType, parseDocument } from "./lib/parsers";
+import type { BankStatement, Payslip } from "./lib/schema";
 import {
   clearAllData,
+  deleteBankStatement,
   deleteExpenseEntry,
+  deletePayslip,
   deleteReturn,
   getApiKey,
+  getBankStatements,
   getExpenses,
+  getPayslips,
   getReturns,
   removeApiKey,
   saveApiKey,
+  saveBankStatement,
   saveExpenseEntry,
+  savePayslip,
   saveReturn,
 } from "./lib/storage";
 
@@ -349,6 +357,126 @@ const routes: Record<string, any> = {
       }
       await deleteExpenseEntry(year, req.params.id);
       return Response.json({ success: true });
+    },
+  },
+
+  // ============================================
+  // PAYSLIPS API
+  // ============================================
+
+  "/api/payslips": {
+    GET: async () => {
+      return Response.json(await getPayslips());
+    },
+  },
+
+  "/api/payslips/:id": {
+    DELETE: async (req: Request & { params: { id: string } }) => {
+      await deletePayslip(req.params.id);
+      return Response.json({ success: true });
+    },
+  },
+
+  "/api/payslips/upload": {
+    POST: async (req: Request) => {
+      const formData = await req.formData();
+      const file = formData.get("pdf") as File | null;
+      const apiKeyFromForm = formData.get("apiKey") as string | null;
+
+      if (!file) {
+        return Response.json({ error: "No PDF file provided" }, { status: 400 });
+      }
+
+      const apiKey = apiKeyFromForm?.trim() || getApiKey();
+      if (!apiKey) {
+        return Response.json({ error: "No API key configured" }, { status: 400 });
+      }
+
+      try {
+        const buffer = await file.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString("base64");
+        const result = await parseDocument(base64, apiKey, "payslip");
+
+        if (result.type !== "payslip") {
+          return Response.json({ error: "Document is not a payslip" }, { status: 400 });
+        }
+
+        const payslip = {
+          ...result.data,
+          id: crypto.randomUUID(),
+          sourceFile: file.name,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as Payslip;
+      } catch (error) {
+        console.error("Payslip parse error:", error);
+        const message = error instanceof Error ? error.message : "Unknown error";
+        if (isAuthError(message)) {
+          await removeApiKey();
+          return Response.json({ error: "Invalid API key" }, { status: 401 });
+        }
+        return Response.json({ error: message }, { status: 500 });
+      }
+    },
+  },
+
+  // ============================================
+  // BANK STATEMENTS API
+  // ============================================
+
+  "/api/bank-statements": {
+    GET: async () => {
+      return Response.json(await getBankStatements());
+    },
+  },
+
+  "/api/bank-statements/:id": {
+    DELETE: async (req: Request & { params: { id: string } }) => {
+      await deleteBankStatement(req.params.id);
+      return Response.json({ success: true });
+    },
+  },
+
+  "/api/bank-statements/upload": {
+    POST: async (req: Request) => {
+      const formData = await req.formData();
+      const file = formData.get("pdf") as File | null;
+      const apiKeyFromForm = formData.get("apiKey") as string | null;
+
+      if (!file) {
+        return Response.json({ error: "No PDF file provided" }, { status: 400 });
+      }
+
+      const apiKey = apiKeyFromForm?.trim() || getApiKey();
+      if (!apiKey) {
+        return Response.json({ error: "No API key configured" }, { status: 400 });
+      }
+
+      try {
+        const buffer = await file.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString("base64");
+        const result = await parseDocument(base64, apiKey, "bank-statement");
+
+        if (result.type !== "bank-statement") {
+          return Response.json({ error: "Document is not a bank statement" }, { status: 400 });
+        }
+
+        const statement = {
+          ...result.data,
+          id: crypto.randomUUID(),
+          sourceFile: file.name,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as BankStatement;
+      } catch (error) {
+        console.error("Bank statement parse error:", error);
+        const message = error instanceof Error ? error.message : "Unknown error";
+        if (isAuthError(message)) {
+          await removeApiKey();
+          return Response.json({ error: "Invalid API key" }, { status: 401 });
+        }
+        return Response.json({ error: message }, { status: 500 });
+      }
     },
   },
 };

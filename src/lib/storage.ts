@@ -1,10 +1,19 @@
 import path from "path";
 
-import { type ExpenseEntry, type TaxReturn, TaxReturnSchema, type YearExpenses } from "./schema";
+import {
+  type BankStatement,
+  type ExpenseEntry,
+  type Payslip,
+  type TaxReturn,
+  TaxReturnSchema,
+  type YearExpenses,
+} from "./schema";
 
 const DATA_DIR = process.env.TAX_UI_DATA_DIR || process.cwd();
 const RETURNS_FILE = path.join(DATA_DIR, ".tax-returns.json");
 const EXPENSES_FILE = path.join(DATA_DIR, ".expenses.json");
+const PAYSLIPS_FILE = path.join(DATA_DIR, ".payslips.json");
+const BANK_STATEMENTS_FILE = path.join(DATA_DIR, ".bank-statements.json");
 const ENV_FILE = path.join(DATA_DIR, ".env");
 
 // Backfill missing array fields for old stored data, then validate with Zod
@@ -101,11 +110,62 @@ export async function deleteExpenseEntry(year: number, entryId: string): Promise
   }
 }
 
-export async function clearExpenses(): Promise<void> {
-  const file = Bun.file(EXPENSES_FILE);
+// ============================================
+// PAYSLIPS
+// ============================================
+
+export async function getPayslips(): Promise<Payslip[]> {
+  const file = Bun.file(PAYSLIPS_FILE);
   if (await file.exists()) {
-    await Bun.write(EXPENSES_FILE, "{}");
+    return await file.json();
   }
+  return [];
+}
+
+export async function savePayslip(payslip: Payslip): Promise<void> {
+  const payslips = await getPayslips();
+  const existingIndex = payslips.findIndex((p) => p.id === payslip.id);
+  if (existingIndex >= 0) {
+    payslips[existingIndex] = payslip;
+  } else {
+    payslips.push(payslip);
+  }
+  await Bun.write(PAYSLIPS_FILE, JSON.stringify(payslips, null, 2));
+}
+
+export async function deletePayslip(id: string): Promise<void> {
+  const payslips = await getPayslips();
+  const filtered = payslips.filter((p) => p.id !== id);
+  await Bun.write(PAYSLIPS_FILE, JSON.stringify(filtered, null, 2));
+}
+
+// ============================================
+// BANK STATEMENTS
+// ============================================
+
+export async function getBankStatements(): Promise<BankStatement[]> {
+  const file = Bun.file(BANK_STATEMENTS_FILE);
+  if (await file.exists()) {
+    return await file.json();
+  }
+  return [];
+}
+
+export async function saveBankStatement(statement: BankStatement): Promise<void> {
+  const statements = await getBankStatements();
+  const existingIndex = statements.findIndex((s) => s.id === statement.id);
+  if (existingIndex >= 0) {
+    statements[existingIndex] = statement;
+  } else {
+    statements.push(statement);
+  }
+  await Bun.write(BANK_STATEMENTS_FILE, JSON.stringify(statements, null, 2));
+}
+
+export async function deleteBankStatement(id: string): Promise<void> {
+  const statements = await getBankStatements();
+  const filtered = statements.filter((s) => s.id !== id);
+  await Bun.write(BANK_STATEMENTS_FILE, JSON.stringify(filtered, null, 2));
 }
 
 // ============================================
@@ -163,6 +223,18 @@ export async function clearAllData(): Promise<void> {
     await Bun.write(EXPENSES_FILE, "{}");
   }
 
+  // Clear payslips
+  const payslipsFile = Bun.file(PAYSLIPS_FILE);
+  if (await payslipsFile.exists()) {
+    await Bun.write(PAYSLIPS_FILE, "[]");
+  }
+
+  // Clear bank statements
+  const statementsFile = Bun.file(BANK_STATEMENTS_FILE);
+  if (await statementsFile.exists()) {
+    await Bun.write(BANK_STATEMENTS_FILE, "[]");
+  }
+
   // Clear API key from .env
   const envFile = Bun.file(ENV_FILE);
   if (await envFile.exists()) {
@@ -171,7 +243,6 @@ export async function clearAllData(): Promise<void> {
     if (content) {
       await Bun.write(ENV_FILE, content + "\n");
     } else {
-      // Delete empty .env file
       const fs = await import("fs/promises");
       await fs.unlink(ENV_FILE);
     }
