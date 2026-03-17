@@ -167,7 +167,8 @@ export function Table<TData>({
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 const meta = header.column.columnDef.meta as ColumnMeta | undefined;
-                const headerAlignClass = (meta?.headerAlign ?? meta?.align) === "right" ? "text-right" : "text-left";
+                const headerAlignClass =
+                  (meta?.headerAlign ?? meta?.align) === "right" ? "text-right" : "text-left";
 
                 const shadows = ["inset 0 -1px 0 var(--color-border-opaque)"];
                 if (meta?.sticky && (isScrolled || isMobile)) {

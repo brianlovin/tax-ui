@@ -1,6 +1,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 
+import { cn } from "../lib/cn";
 import { formatCurrency } from "../lib/format";
 import type { Payslip, TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
@@ -9,7 +10,6 @@ import { type ColumnMeta, Table } from "./Table";
 interface Props {
   data?: TaxReturn;
   returns?: Record<number, TaxReturn>;
-  payslips?: Payslip[];
 }
 
 type TimeGranularity = "month" | "week";
@@ -36,6 +36,7 @@ function collectIncomeRows(
   returns: Record<number, TaxReturn>,
   granularity: TimeGranularity,
   singleYear?: number,
+  payslips?: Payslip[],
 ): IncomeRow[] {
   const rows: IncomeRow[] = [];
   const periods = granularity === "month" ? 12 : 52;
@@ -44,6 +45,12 @@ function collectIncomeRows(
   if (singleYear !== undefined) {
     const data = returns[singleYear];
     if (!data) return [];
+
+    // Filter payslips for this year
+    const yearPayslips = (payslips || []).filter((p) => {
+      const payYear = new Date(p.period.payDate).getFullYear();
+      return payYear === singleYear;
+    });
 
     // Add monthly breakdown
     rows.push({
@@ -97,6 +104,38 @@ function collectIncomeRows(
       values: Array(periods).fill(Math.round(data.income.total / periods)),
     });
 
+    // Add payslip data if available
+    if (yearPayslips.length > 0) {
+      // Aggregate payslip earnings by month
+      const monthlyPayslipGross: number[] = Array(periods).fill(0);
+      const monthlyPayslipNet: number[] = Array(periods).fill(0);
+
+      for (const payslip of yearPayslips) {
+        const month = new Date(payslip.period.payDate).getMonth(); // 0-indexed
+        monthlyPayslipGross[month] = (monthlyPayslipGross[month] ?? 0) + payslip.grossEarnings;
+        monthlyPayslipNet[month] = (monthlyPayslipNet[month] ?? 0) + payslip.netPay;
+      }
+
+      rows.push({
+        id: "header-payslips",
+        label: "Payslips",
+        isHeader: true,
+        values: Array(periods).fill(0),
+      });
+
+      rows.push({
+        id: "payslip-gross",
+        label: "Gross (from payslips)",
+        values: monthlyPayslipGross,
+      });
+
+      rows.push({
+        id: "payslip-net",
+        label: "Net (from payslips)",
+        values: monthlyPayslipNet,
+      });
+    }
+
     return rows;
   }
 
@@ -136,13 +175,22 @@ function formatValue(value: number | undefined): string {
 
 export function IncomeView({ data, returns }: Props) {
   const [granularity, setGranularity] = useState<TimeGranularity>("month");
+  const [payslips, setPayslips] = useState<Payslip[]>([]);
+
+  // Fetch payslips on mount
+  useEffect(() => {
+    fetch("/api/payslips")
+      .then((res) => res.json())
+      .then((data) => setPayslips(data))
+      .catch(console.error);
+  }, []);
 
   const singleYear = data?.year;
   const effectiveReturns = returns || (data ? { [data.year]: data } : {});
 
   const rows = useMemo(
-    () => collectIncomeRows(effectiveReturns, granularity, singleYear),
-    [effectiveReturns, granularity, singleYear],
+    () => collectIncomeRows(effectiveReturns, granularity, singleYear, payslips),
+    [effectiveReturns, granularity, singleYear, payslips],
   );
 
   const periodLabels = granularity === "month" ? MONTHS : getWeekLabels(singleYear);
@@ -180,11 +228,7 @@ export function IncomeView({ data, returns }: Props) {
           cell: (info) => {
             const row = info.row.original;
             if (row.isHeader) return null;
-            return (
-              <span className="slashed-zero tabular-nums">
-                {formatValue(row.values[i])}
-              </span>
-            );
+            return <span className="slashed-zero tabular-nums">{formatValue(row.values[i])}</span>;
           },
           meta: {
             align: "right" as const,
@@ -273,5 +317,3 @@ export function IncomeView({ data, returns }: Props) {
     </div>
   );
 }
-
-import { cn } from "../lib/cn";

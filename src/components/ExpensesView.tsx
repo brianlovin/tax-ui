@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "../lib/cn";
 import { formatCurrency } from "../lib/format";
 import {
+  type BankStatement,
   EXPENSE_CATEGORIES,
   type ExpenseCategoryId,
   type ExpenseEntry,
@@ -163,28 +164,87 @@ export function ExpensesView({ year }: Props) {
   const [amount, setAmount] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
 
-  // Fetch expenses on mount
+  // Fetch expenses and bank statements on mount
   useEffect(() => {
-    fetch("/api/expenses")
-      .then((res) => res.json())
-      .then((data) => {
-        // Transform flat entries into the nested structure
-        const transformed: ExpenseData = {};
-        for (const [yearKey, yearData] of Object.entries(data)) {
-          const year = Number(yearKey);
-          transformed[year] = {};
-          const entries = (yearData as { entries: ExpenseEntry[] }).entries;
-          for (const entry of entries) {
-            const yearEntry = transformed[year];
-            if (!yearEntry) continue;
-            const catData = yearEntry[entry.category]!;
-            catData[entry.month] = (catData[entry.month] || 0) + entry.amount;
+    Promise.all([
+      fetch("/api/expenses").then((res) => res.json()),
+      fetch("/api/bank-statements").then((res) => res.json()),
+    ])
+      .then(
+        ([expenseData, statements]: [
+          Record<number, { entries: ExpenseEntry[] }>,
+          BankStatement[],
+        ]) => {
+          const transformed: ExpenseData = {};
+          // Process manual expenses
+          for (const [yearKey, yearData] of Object.entries(expenseData)) {
+            const yr = Number(yearKey);
+            transformed[yr] = transformed[yr] || {};
+            for (const entry of yearData.entries) {
+              const yearEntry = transformed[yr]!;
+              if (!yearEntry[entry.category]) {
+                yearEntry[entry.category] = {};
+              }
+              const catData = yearEntry[entry.category]!;
+              catData[entry.month] = (catData[entry.month] || 0) + entry.amount;
+            }
           }
-        }
-        setExpenses(transformed);
-      })
+          // Process bank statement transactions
+          for (const statement of statements) {
+            for (const txn of statement.transactions) {
+              // Try to categorize transactions based on description or category
+              const category = txn.category || inferCategory(txn.description);
+              const month = new Date(txn.date).getMonth() + 1;
+              const yr = new Date(txn.date).getFullYear();
+              const amount = Math.abs(txn.amount); // Use absolute value for expenses
+              if (!transformed[yr]) transformed[yr] = {};
+              const yearEntry = transformed[yr]!;
+              if (!yearEntry[category]) yearEntry[category] = {};
+              const catData = yearEntry[category]!;
+              catData[month] = (catData[month] || 0) + amount;
+            }
+          }
+          setExpenses(transformed);
+        },
+      )
       .catch(console.error);
   }, []);
+
+  // Helper to infer category from transaction description
+  function inferCategory(description: string): ExpenseCategoryId {
+    const desc = description.toLowerCase();
+    if (
+      desc.includes("woolworth") ||
+      desc.includes("coles") ||
+      desc.includes("iga") ||
+      desc.includes("aldi")
+    ) {
+      return "groceries";
+    }
+    if (
+      desc.includes("shell") ||
+      desc.includes("bp ") ||
+      desc.includes("ampol") ||
+      desc.includes("fuel")
+    ) {
+      return "fuel";
+    }
+    if (desc.includes("uber") || desc.includes("didi") || desc.includes("taxi")) {
+      return "taxis-share-cars";
+    }
+    if (desc.includes("netflix") || desc.includes("spotify") || desc.includes("disney")) {
+      return "tv-music-streaming";
+    }
+    if (
+      desc.includes("grab") ||
+      desc.includes("menulog") ||
+      desc.includes("doordash") ||
+      desc.includes("uber eats")
+    ) {
+      return "takeaway";
+    }
+    return "life-admin"; // Default category
+  }
 
   const rows = useMemo(
     () => collectExpenseRows(expenses, granularity, year),

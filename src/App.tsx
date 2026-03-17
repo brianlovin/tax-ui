@@ -15,7 +15,13 @@ import { UploadModal } from "./components/UploadModal";
 import { sampleReturns } from "./data/sampleData";
 import { isElectron } from "./lib/electron";
 import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
-import type { DocumentType, FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
+import type {
+  DocumentType,
+  FileProgress,
+  FileWithId,
+  PendingUpload,
+  TaxReturn,
+} from "./lib/schema";
 import type { NavItem } from "./lib/types";
 import { extractYearFromFilename } from "./lib/year-extractor";
 export type UpdateStatus = "available" | "downloading" | "ready";
@@ -155,18 +161,18 @@ function getDefaultSelection(returns: Record<number, TaxReturn>): SelectedView {
 
 function buildNavItems(returns: Record<number, TaxReturn>): NavItem[] {
   const dataYears = Object.keys(returns).map(Number);
-  
+
   // Get the range from earliest data year to current year
   const currentYear = new Date().getFullYear();
   const minYear = dataYears.length > 0 ? Math.min(...dataYears) : currentYear;
   const maxYear = Math.max(...dataYears, currentYear);
-  
+
   // Fill in all years in the range (no gaps)
   const years: number[] = [];
   for (let y = maxYear; y >= minYear; y--) {
     years.push(y);
   }
-  
+
   const items: NavItem[] = [];
   if (years.length > 1) items.push({ id: "summary", label: "All time" });
   items.push(...years.map((y) => ({ id: String(y), label: String(y) })));

@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 
 import index from "./index.html";
 import { extractYearFromPdf, parseTaxReturn } from "./lib/parser";
-import { detectDocumentType, parseDocument } from "./lib/parsers";
+import { parseDocument } from "./lib/parsers";
 import type { BankStatement, Payslip } from "./lib/schema";
 import {
   clearAllData,
@@ -20,9 +20,7 @@ import {
   getReturns,
   removeApiKey,
   saveApiKey,
-  saveBankStatement,
   saveExpenseEntry,
-  savePayslip,
   saveReturn,
 } from "./lib/storage";
 
