@@ -10,6 +10,7 @@ import { type ColumnMeta, Table } from "./Table";
 interface Props {
   data?: TaxReturn;
   returns?: Record<number, TaxReturn>;
+  year?: number;
 }
 
 type TimeGranularity = "month" | "week";
@@ -192,7 +193,7 @@ function formatValue(value: number | undefined): string {
   return formatCurrency(value);
 }
 
-export function IncomeView({ data, returns }: Props) {
+export function IncomeView({ data, returns, year }: Props) {
   const [granularity, setGranularity] = useState<TimeGranularity>("month");
   const [payslips, setPayslips] = useState<Payslip[]>([]);
 
@@ -204,7 +205,7 @@ export function IncomeView({ data, returns }: Props) {
       .catch(console.error);
   }, []);
 
-  const singleYear = data?.year;
+  const singleYear = year ?? data?.year;
   const effectiveReturns = returns || (data ? { [data.year]: data } : {});
 
   const rows = useMemo(

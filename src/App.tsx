@@ -717,18 +717,16 @@ export function App() {
     if (state.selectedYear === "summary") {
       return <MainPanel view="summary" {...commonProps} />;
     }
+    // A year is selected - show single year view (with or without data)
     const receiptData = getReceiptData();
-    if (receiptData) {
-      return (
-        <MainPanel
-          view="receipt"
-          data={receiptData}
-          title={String(state.selectedYear)}
-          {...commonProps}
-        />
-      );
-    }
-    return <MainPanel view="summary" {...commonProps} />;
+    return (
+      <MainPanel
+        view="receipt"
+        data={receiptData ?? undefined}
+        year={state.selectedYear as number}
+        {...commonProps}
+      />
+    );
   }
 
   // Find pending upload if selected

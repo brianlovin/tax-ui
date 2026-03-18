@@ -13,8 +13,6 @@ import { IncomeView } from "./IncomeView";
 import { InvestmentsView } from "./InvestmentsView";
 import { LoadingView } from "./LoadingView";
 import { StatsHeader } from "./StatsHeader";
-import { SummaryReceiptView } from "./SummaryReceiptView";
-import { SummaryTable } from "./SummaryTable";
 import { TaxesView } from "./TaxesView";
 import { YearSelector } from "./YearSelector";
 
@@ -42,8 +40,8 @@ interface CommonProps {
 
 interface ReceiptProps extends CommonProps {
   view: "receipt";
-  data: TaxReturn;
-  title: string;
+  data?: TaxReturn;
+  year: number;
 }
 
 interface SummaryProps extends CommonProps {
@@ -105,35 +103,35 @@ export function MainPanel(props: Props) {
       );
     }
 
-    // Get the data for the selected view
-    if (props.view === "receipt" && props.data) {
-      // Single year view - show the selected tab content
+    // Single year view (with or without data)
+    if (props.view === "receipt") {
+      const year = props.year;
       if (props.activeTab === "income") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
-            <IncomeView data={props.data} />
+            <StatsHeader returns={props.returns} selectedYear={year} />
+            <IncomeView data={props.data} year={year} />
           </div>
         );
       } else if (props.activeTab === "taxes") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
-            <TaxesView data={props.data} />
+            <StatsHeader returns={props.returns} selectedYear={year} />
+            <TaxesView data={props.data} year={year} />
           </div>
         );
       } else if (props.activeTab === "expenses") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
-            <ExpensesView year={props.data.year} />
+            <StatsHeader returns={props.returns} selectedYear={year} />
+            <ExpensesView year={year} />
           </div>
         );
       } else {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
-            <InvestmentsView year={props.data.year} />
+            <StatsHeader returns={props.returns} selectedYear={year} />
+            <InvestmentsView year={year} />
           </div>
         );
       }
@@ -172,21 +170,8 @@ export function MainPanel(props: Props) {
       }
     }
 
-    // Legacy fallback (shouldn't reach here)
-    return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <StatsHeader returns={props.returns} selectedYear="summary" />
-        {summaryViewMode === "table" ? (
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <SummaryTable returns={props.returns} />
-          </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto">
-            <SummaryReceiptView returns={props.returns} />
-          </div>
-        )}
-      </div>
-    );
+    // This should never happen
+    return null;
   };
 
   return (
