@@ -50,11 +50,9 @@ function collectTaxRows(
   // For single year view
   if (singleYear !== undefined) {
     const data = returns[singleYear];
-    if (!data) return [];
+    const hasData = !!data;
 
-    const getData = data;
-
-    // Tax calculation breakdown
+    // Tax calculation breakdown - always show structure
     rows.push({
       id: "header-calculation",
       label: "Tax Calculation",
@@ -62,42 +60,47 @@ function collectTaxRows(
       values: Array(periods).fill(0),
     });
 
+    const grossTax = hasData ? data.tax.grossTax : 0;
+    const medicareLevy = hasData ? data.tax.medicareLevy : 0;
+    const totalBeforeOffsets = hasData ? data.tax.totalTaxBeforeOffsets : 0;
+    const taxPayable = hasData ? data.tax.taxPayable : 0;
+
     rows.push({
       id: "gross-tax",
       label: "Gross Tax",
-      values: Array(periods).fill(Math.round(getData.tax.grossTax / periods)),
+      values: Array(periods).fill(Math.round(grossTax / periods)),
     });
 
     rows.push({
       id: "medicare-levy",
       label: "Medicare Levy",
-      values: Array(periods).fill(Math.round(getData.tax.medicareLevy / periods)),
+      values: Array(periods).fill(Math.round(medicareLevy / periods)),
     });
 
-    if (getData.tax.medicareLevySurcharge) {
+    if (hasData && data.tax.medicareLevySurcharge) {
       rows.push({
         id: "medicare-surcharge",
         label: "Medicare Surcharge",
-        values: Array(periods).fill(Math.round(getData.tax.medicareLevySurcharge / periods)),
+        values: Array(periods).fill(Math.round(data.tax.medicareLevySurcharge / periods)),
       });
     }
 
-    if (getData.tax.helpRepayment) {
+    if (hasData && data.tax.helpRepayment) {
       rows.push({
         id: "help",
         label: "HELP/HECS",
-        values: Array(periods).fill(Math.round(getData.tax.helpRepayment / periods)),
+        values: Array(periods).fill(Math.round(data.tax.helpRepayment / periods)),
       });
     }
 
     rows.push({
       id: "total-before-offsets",
       label: "Total Before Offsets",
-      values: Array(periods).fill(Math.round(getData.tax.totalTaxBeforeOffsets / periods)),
+      values: Array(periods).fill(Math.round(totalBeforeOffsets / periods)),
     });
 
-    // Tax offsets
-    if (getData.tax.offsets.length > 0) {
+    // Tax offsets (only if data exists and has offsets)
+    if (hasData && data.tax.offsets.length > 0) {
       rows.push({
         id: "header-offsets",
         label: "Tax Offsets",
@@ -105,7 +108,7 @@ function collectTaxRows(
         values: Array(periods).fill(0),
       });
 
-      for (const offset of getData.tax.offsets) {
+      for (const offset of data.tax.offsets) {
         rows.push({
           id: `offset-${offset.label}`,
           label: offset.label,
@@ -116,14 +119,14 @@ function collectTaxRows(
       rows.push({
         id: "total-offsets",
         label: "Total Offsets",
-        values: Array(periods).fill(Math.round(getData.tax.totalOffsets / periods)),
+        values: Array(periods).fill(Math.round(data.tax.totalOffsets / periods)),
       });
     }
 
     rows.push({
       id: "tax-payable",
       label: "Tax Payable",
-      values: Array(periods).fill(Math.round(getData.tax.taxPayable / periods)),
+      values: Array(periods).fill(Math.round(taxPayable / periods)),
     });
 
     // PAYG Withholding
@@ -134,18 +137,21 @@ function collectTaxRows(
       values: Array(periods).fill(0),
     });
 
-    for (const payment of getData.paygWithholding.items) {
-      rows.push({
-        id: `payg-${payment.label}`,
-        label: payment.label,
-        values: Array(periods).fill(Math.round(payment.amount / periods)),
-      });
+    if (hasData) {
+      for (const payment of data.paygWithholding.items) {
+        rows.push({
+          id: `payg-${payment.label}`,
+          label: payment.label,
+          values: Array(periods).fill(Math.round(payment.amount / periods)),
+        });
+      }
     }
 
+    const totalPayg = hasData ? data.paygWithholding.total : 0;
     rows.push({
       id: "total-payg",
       label: "Total Tax Paid",
-      values: Array(periods).fill(Math.round(getData.paygWithholding.total / periods)),
+      values: Array(periods).fill(Math.round(totalPayg / periods)),
     });
 
     // Result
@@ -156,15 +162,16 @@ function collectTaxRows(
       values: Array(periods).fill(0),
     });
 
-    const monthlyRefundOrOwing = Math.round(getData.result.refundOrOwing / periods);
+    const refundOrOwing = hasData ? data.result.refundOrOwing : 0;
+    const isRefund = hasData && data.result.isRefund;
     rows.push({
       id: "refund-owing",
-      label: getData.result.isRefund ? "Monthly Refund" : "Monthly Owing",
-      values: Array(periods).fill(monthlyRefundOrOwing),
+      label: isRefund ? "Monthly Refund" : "Monthly Owing",
+      values: Array(periods).fill(Math.round(refundOrOwing / periods)),
     });
 
-    // Rates (annual, shown once)
-    if (getData.rates) {
+    // Rates (only if data exists)
+    if (hasData && data.rates) {
       rows.push({
         id: "header-rates",
         label: "Tax Rates (Annual)",
@@ -175,22 +182,22 @@ function collectTaxRows(
       rows.push({
         id: "marginal-rate",
         label: "Marginal Rate",
-        values: Array(periods).fill(getData.rates.federal.marginal),
+        values: Array(periods).fill(data.rates.federal.marginal),
         isRate: true,
       });
 
       rows.push({
         id: "effective-rate",
         label: "Effective Rate",
-        values: Array(periods).fill(getData.rates.federal.effective),
+        values: Array(periods).fill(data.rates.federal.effective),
         isRate: true,
       });
 
-      if (getData.rates.medicare) {
+      if (data.rates.medicare) {
         rows.push({
           id: "medicare-rate",
           label: "Medicare Rate",
-          values: Array(periods).fill(getData.rates.medicare.rate),
+          values: Array(periods).fill(data.rates.medicare.rate),
           isRate: true,
         });
       }
