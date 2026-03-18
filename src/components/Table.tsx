@@ -187,7 +187,9 @@ export function Table<TData>({
                     className={cn(
                       headerAlignClass,
                       "bg-(--color-bg) px-4 py-2 text-xs font-normal text-(--color-text-muted)",
-                      meta?.sticky ? "sticky top-0 left-0 z-30" : "relative",
+                      meta?.sticky
+                        ? "sticky top-0 left-0 z-30"
+                        : "border-r border-(--color-border)",
                       meta?.className,
                     )}
                     style={{
@@ -228,7 +230,7 @@ export function Table<TData>({
                   const stickyCellHover = hoverDisabled ? "" : "group-hover:bg-(--color-row-hover)";
                   const stickyClass = meta?.sticky
                     ? `sticky left-0 z-10 sticky-cell ${stickyCellHover}`
-                    : "";
+                    : "border-r border-(--color-border)";
 
                   const cellShadows: string[] = [];
                   if (meta?.sticky && (isScrolled || isMobile)) {
