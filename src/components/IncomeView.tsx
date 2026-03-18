@@ -1,10 +1,10 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 
-import { cn } from "../lib/cn";
 import { formatCurrency } from "../lib/format";
 import type { Payslip, TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
+import { Button } from "./Button";
 import { type ColumnMeta, Table } from "./Table";
 
 interface Props {
@@ -313,28 +313,20 @@ export function IncomeView({ data, returns, year }: Props) {
       {singleYear !== undefined && (
         <div className="flex items-center justify-end gap-2 border-b border-(--color-border) px-4 py-2">
           <span className="text-xs text-(--color-text-muted)">View by:</span>
-          <button
+          <Button
+            variant={granularity === "month" ? "secondary" : "ghost"}
+            size="sm"
             onClick={() => setGranularity("month")}
-            className={cn(
-              "rounded px-2 py-1 text-xs font-medium",
-              granularity === "month"
-                ? "bg-(--color-brand) text-white"
-                : "text-(--color-text-muted) hover:text-(--color-text)",
-            )}
           >
             Month
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={granularity === "week" ? "secondary" : "ghost"}
+            size="sm"
             onClick={() => setGranularity("week")}
-            className={cn(
-              "rounded px-2 py-1 text-xs font-medium",
-              granularity === "week"
-                ? "bg-(--color-brand) text-white"
-                : "text-(--color-text-muted) hover:text-(--color-text)",
-            )}
           >
             Week
-          </button>
+          </Button>
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-hidden">

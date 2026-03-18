@@ -422,22 +422,17 @@ export function ExpensesView({ year }: Props) {
             className="w-24 rounded border border-(--color-border) px-2 py-1 text-xs"
           />
 
-          <Menu
-            triggerClassName="text-xs"
-            popupClassName="min-w-[80px]"
-            side="bottom"
-            trigger={MONTHS[selectedMonth - 1]}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="rounded border border-(--color-border) bg-(--color-bg) px-2 py-1 text-xs text-(--color-text) outline-none focus:border-(--color-text-muted)"
           >
             {MONTHS.map((month, i) => (
-              <MenuItem
-                key={month}
-                onClick={() => setSelectedMonth(i + 1)}
-                selected={selectedMonth === i + 1}
-              >
+              <option key={month} value={i + 1}>
                 {month}
-              </MenuItem>
+              </option>
             ))}
-          </Menu>
+          </select>
 
           <Button
             variant="primary"
@@ -451,28 +446,20 @@ export function ExpensesView({ year }: Props) {
           <div className="flex-1" />
 
           <span className="text-xs text-(--color-text-muted)">View by:</span>
-          <button
+          <Button
+            variant={granularity === "month" ? "secondary" : "ghost"}
+            size="sm"
             onClick={() => setGranularity("month")}
-            className={cn(
-              "rounded px-2 py-1 text-xs font-medium",
-              granularity === "month"
-                ? "bg-(--color-brand) text-white"
-                : "text-(--color-text-muted) hover:text-(--color-text)",
-            )}
           >
             Month
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={granularity === "week" ? "secondary" : "ghost"}
+            size="sm"
             onClick={() => setGranularity("week")}
-            className={cn(
-              "rounded px-2 py-1 text-xs font-medium",
-              granularity === "week"
-                ? "bg-(--color-brand) text-white"
-                : "text-(--color-text-muted) hover:text-(--color-text)",
-            )}
           >
             Week
-          </button>
+          </Button>
         </div>
       )}
 
