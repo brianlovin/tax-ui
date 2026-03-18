@@ -296,7 +296,11 @@ export function TaxesView({ data, returns, year }: Props) {
           isCurrentYear && (granularity === "month" ? i === currentMonth : i === currentWeek - 1);
         cols.push({
           id: `period-${i}`,
-          header: periodLabels[i],
+          header: () => (
+            <span className={isCurrentPeriod ? "rounded bg-(--color-brand)/10 px-1.5 py-0.5" : ""}>
+              {periodLabels[i]}
+            </span>
+          ),
           cell: (info) => {
             const row = info.row.original;
             if (row.isHeader) return null;
@@ -309,7 +313,6 @@ export function TaxesView({ data, returns, year }: Props) {
           meta: {
             align: "right" as const,
             headerAlign: "left" as const,
-            className: isCurrentPeriod ? "bg-(--color-brand)/10" : undefined,
           } satisfies ColumnMeta,
           size: 100,
         });
