@@ -261,6 +261,7 @@ export function MainPanel(props: Props) {
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
+                <span className="relative z-10">Expenses</span>
               </Tabs.Tab>
               <Tabs.Tab
                 value="investments"
