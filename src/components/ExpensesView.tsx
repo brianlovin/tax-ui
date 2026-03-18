@@ -9,7 +9,6 @@ import {
   type ExpenseCategoryId,
   type ExpenseEntry,
   getCategoryName,
-  getCategoryParent,
 } from "../lib/schema";
 import { Button } from "./Button";
 import { Menu, MenuItem } from "./Menu";
@@ -63,33 +62,9 @@ function collectExpenseRows(
   const rows: ExpenseRow[] = [];
   const periods = granularity === "month" ? 12 : 52;
 
-  // Get all categories with expenses
-  const categoriesWithExpenses = new Set<ExpenseCategoryId>();
-  const years = selectedYear ? [selectedYear] : Object.keys(expenses).map(Number);
-
-  for (const year of years) {
-    const yearData = expenses[year];
-    if (!yearData) continue;
-    for (const cat of Object.keys(yearData)) {
-      categoriesWithExpenses.add(cat as ExpenseCategoryId);
-    }
-  }
-
-  // Group by parent category
-  const groupedByParent: Record<string, ExpenseCategoryId[]> = {};
-  for (const cat of categoriesWithExpenses) {
-    const parent = getCategoryParent(cat);
-    if (!groupedByParent[parent]) {
-      groupedByParent[parent] = [];
-    }
-    groupedByParent[parent].push(cat);
-  }
-
-  // Build rows
-  for (const [parentKey, categories] of Object.entries(groupedByParent)) {
-    const parent = EXPENSE_CATEGORIES[parentKey as keyof typeof EXPENSE_CATEGORIES];
-    if (!parent) continue;
-
+  // Always show all categories, even if no data
+  for (const [parentKey, parent] of Object.entries(EXPENSE_CATEGORIES)) {
+    // Parent header
     rows.push({
       id: `header-${parentKey}`,
       label: parent.name,
@@ -99,35 +74,38 @@ function collectExpenseRows(
       values: Array(periods).fill(0),
     });
 
-    for (const cat of categories) {
+    // Child categories
+    for (const child of parent.children) {
       const periodValues: number[] = [];
 
       if (selectedYear !== undefined) {
         // Single year view
         const yearData = expenses[selectedYear];
-        if (yearData && yearData[cat]) {
+        const catData = yearData?.[child.id];
+        if (catData) {
           if (granularity === "month") {
             for (let m = 1; m <= 12; m++) {
-              periodValues.push(yearData[cat][m] || 0);
+              periodValues.push(catData[m] || 0);
             }
           } else {
             // For weeks, aggregate from monthly data (simplified)
-            const monthlyData = yearData[cat];
             for (let w = 1; w <= 52; w++) {
               const month = Math.ceil(w / 4.33);
-              periodValues.push((monthlyData[month] || 0) / 4.33);
+              periodValues.push((catData[month] || 0) / 4.33);
             }
           }
         } else {
+          // No data for this category - fill with zeros
           periodValues.push(...Array(periods).fill(0));
         }
       } else {
         // Summary - total across all years
         let total = 0;
-        for (const year of years) {
+        for (const year of Object.keys(expenses).map(Number)) {
           const yearData = expenses[year];
-          if (yearData && yearData[cat]) {
-            for (const monthVal of Object.values(yearData[cat])) {
+          const catData = yearData?.[child.id];
+          if (catData) {
+            for (const monthVal of Object.values(catData)) {
               total += monthVal;
             }
           }
@@ -136,9 +114,9 @@ function collectExpenseRows(
       }
 
       rows.push({
-        id: cat,
-        label: getCategoryName(cat),
-        category: cat,
+        id: child.id,
+        label: child.name,
+        category: child.id,
         parent: parentKey,
         values: periodValues,
       });
