@@ -32,6 +32,17 @@ function getWeekLabels(year?: number): string[] {
   return weeks;
 }
 
+function getCurrentMonth(): number {
+  return new Date().getMonth(); // 0-indexed
+}
+
+function getCurrentWeek(): number {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+  return Math.ceil((days + start.getDay() + 1) / 7);
+}
+
 function collectIncomeRows(
   returns: Record<number, TaxReturn>,
   granularity: TimeGranularity,
@@ -44,7 +55,7 @@ function collectIncomeRows(
   // For single year view
   if (singleYear !== undefined) {
     const data = returns[singleYear];
-    if (!data) return [];
+    const hasData = !!data;
 
     // Filter payslips for this year
     const yearPayslips = (payslips || []).filter((p) => {
@@ -60,9 +71,9 @@ function collectIncomeRows(
       values: Array(periods).fill(0),
     });
 
-    const monthlyGross = Math.round(data.income.total / 12);
-    const monthlyNet = Math.round((data.income.total - getTotalTax(data)) / 12);
-    const monthlyTaxes = Math.round(getTotalTax(data) / 12);
+    const monthlyGross = hasData ? Math.round(data.income.total / 12) : 0;
+    const monthlyNet = hasData ? Math.round((data.income.total - getTotalTax(data)) / 12) : 0;
+    const monthlyTaxes = hasData ? Math.round(getTotalTax(data) / 12) : 0;
 
     rows.push({
       id: "gross-monthly",
@@ -90,19 +101,27 @@ function collectIncomeRows(
       values: Array(periods).fill(0),
     });
 
-    for (const item of data.income.items) {
+    if (hasData) {
+      for (const item of data.income.items) {
+        rows.push({
+          id: `income-${item.label}`,
+          label: item.label,
+          values: Array(periods).fill(Math.round(item.amount / periods)),
+        });
+      }
+
       rows.push({
-        id: `income-${item.label}`,
-        label: item.label,
-        values: Array(periods).fill(Math.round(item.amount / periods)),
+        id: "total-income",
+        label: "Total Income",
+        values: Array(periods).fill(Math.round(data.income.total / periods)),
+      });
+    } else {
+      rows.push({
+        id: "total-income",
+        label: "Total Income",
+        values: Array(periods).fill(0),
       });
     }
-
-    rows.push({
-      id: "total-income",
-      label: "Total Income",
-      values: Array(periods).fill(Math.round(data.income.total / periods)),
-    });
 
     // Add payslip data if available
     if (yearPayslips.length > 0) {
@@ -220,8 +239,16 @@ export function IncomeView({ data, returns }: Props) {
 
     // Add period columns
     if (singleYear !== undefined) {
+      const currentYear = new Date().getFullYear();
+      const isCurrentYear = singleYear === currentYear;
+      const currentMonth = getCurrentMonth();
+      const currentWeek = getCurrentWeek();
+      const numPeriods = granularity === "month" ? 12 : 52;
+
       // Single year - show all periods
-      for (let i = 0; i < (granularity === "month" ? 12 : 52); i++) {
+      for (let i = 0; i < numPeriods; i++) {
+        const isCurrentPeriod =
+          isCurrentYear && (granularity === "month" ? i === currentMonth : i === currentWeek - 1);
         cols.push({
           id: `period-${i}`,
           header: periodLabels[i],
@@ -233,6 +260,7 @@ export function IncomeView({ data, returns }: Props) {
           meta: {
             align: "right" as const,
             headerAlign: "left" as const,
+            className: isCurrentPeriod ? "bg-(--color-brand)/10" : undefined,
           } satisfies ColumnMeta,
           size: 100,
         });

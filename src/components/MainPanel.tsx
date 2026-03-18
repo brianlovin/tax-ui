@@ -9,18 +9,16 @@ import type { NavItem } from "../lib/types";
 import { BrailleSpinner } from "./BrailleSpinner";
 import { Button } from "./Button";
 import { ExpensesView } from "./ExpensesView";
-import { FilePlusIcon } from "./FilePlusIcon";
 import { IncomeView } from "./IncomeView";
+import { InvestmentsView } from "./InvestmentsView";
 import { LoadingView } from "./LoadingView";
-import { Menu, MenuItem } from "./Menu";
 import { StatsHeader } from "./StatsHeader";
 import { SummaryReceiptView } from "./SummaryReceiptView";
 import { SummaryTable } from "./SummaryTable";
 import { TaxesView } from "./TaxesView";
-import { TrashIcon } from "./TrashIcon";
 import { YearSelector } from "./YearSelector";
 
-export type ContentTab = "income" | "taxes" | "expenses";
+export type ContentTab = "income" | "taxes" | "expenses" | "investments";
 
 interface CommonProps {
   isChatOpen: boolean;
@@ -84,7 +82,7 @@ export function MainPanel(props: Props) {
 
       e.preventDefault();
 
-      const tabs: ContentTab[] = ["income", "taxes", "expenses"];
+      const tabs: ContentTab[] = ["income", "taxes", "expenses", "investments"];
       const currentIndex = tabs.indexOf(props.activeTab);
       const direction = e.key === "ArrowLeft" ? -1 : 1;
       const nextIndex = Math.max(0, Math.min(tabs.length - 1, currentIndex + direction));
@@ -124,11 +122,18 @@ export function MainPanel(props: Props) {
             <TaxesView data={props.data} />
           </div>
         );
-      } else {
+      } else if (props.activeTab === "expenses") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
             <ExpensesView year={props.data.year} />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear={props.selectedYear as number} />
+            <InvestmentsView year={props.data.year} />
           </div>
         );
       }
@@ -150,11 +155,18 @@ export function MainPanel(props: Props) {
             <TaxesView returns={props.returns} />
           </div>
         );
-      } else {
+      } else if (props.activeTab === "expenses") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear="summary" />
             <ExpensesView />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear="summary" />
+            <InvestmentsView />
           </div>
         );
       }
@@ -187,53 +199,6 @@ export function MainPanel(props: Props) {
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {/* Hamburger Menu */}
-          <Menu
-            triggerClassName="-ml-1.5"
-            popupClassName="min-w-[180px]"
-            side="bottom"
-            align="start"
-            sideOffset={4}
-            trigger={
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              >
-                <path d="M2 5.5h12M2 10.5h12" />
-              </svg>
-            }
-          >
-            <MenuItem onClick={props.onOpenStart}>
-              <FilePlusIcon />
-              Get started
-            </MenuItem>
-            {!props.isDemo && (props.hasUserData || props.hasStoredKey) && (
-              <MenuItem onClick={props.onOpenReset}>
-                <TrashIcon />
-                Reset data
-              </MenuItem>
-            )}
-            <MenuItem
-              onClick={() => window.open("https://github.com/oscardobsonbrown/pennywise", "_blank")}
-            >
-              <div className="flex h-5 w-5 items-center justify-center">
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M7.5 0C3.35 0 0 3.35 0 7.5c0 3.32 2.15 6.14 5.13 7.13.38.07.51-.16.51-.36 0-.18-.01-.65-.01-.65-2.09.45-2.53-1.01-2.53-1.01-.34-.87-.84-1.1-.84-1.1-.68-.46.05-.46.05-.46.76.05 1.16.78 1.16.78.67 1.15 1.77.82 2.2.62.07-.48.26-.82.47-1.01-1.67-.19-3.43-.84-3.43-3.72 0-.82.3-1.5.78-2.02-.08-.19-.34-.96.07-2 0 0 .64-.2 2.08.77a7.24 7.24 0 013.78 0c1.44-.98 2.08-.77 2.08-.77.42 1.04.15 1.81.07 2 .49.52.78 1.2.78 2.02 0 2.89-1.76 3.53-3.44 3.71.27.24.51.69.51 1.39 0 1.01-.01 1.82-.01 2.07 0 .2.14.44.52.36A7.51 7.51 0 0015 7.5C15 3.35 11.65 0 7.5 0z"
-                  />
-                </svg>
-              </div>
-              Contribute
-            </MenuItem>
-          </Menu>
-
           {/* Content Tabs */}
           <Tabs.Root
             value={props.activeTab}
@@ -296,7 +261,25 @@ export function MainPanel(props: Props) {
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
-                <span className="relative z-10">Expenses</span>
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="investments"
+                className={cn(
+                  "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
+                  props.activeTab === "investments"
+                    ? "text-(--color-text)"
+                    : "text-(--color-text-muted) hover:text-(--color-text)",
+                )}
+              >
+                {props.activeTab === "investments" && (
+                  <motion.div
+                    layoutId={tabLayoutId.current}
+                    className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">Investments</span>
               </Tabs.Tab>
             </Tabs.List>
           </Tabs.Root>

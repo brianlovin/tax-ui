@@ -24,6 +24,17 @@ interface TaxRow {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+function getCurrentMonth(): number {
+  return new Date().getMonth(); // 0-indexed
+}
+
+function getCurrentWeek(): number {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+  return Math.ceil((days + start.getDay() + 1) / 7);
+}
+
 function getWeekLabels(): string[] {
   return Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
 }
@@ -266,7 +277,15 @@ export function TaxesView({ data, returns }: Props) {
     ];
 
     if (singleYear !== undefined) {
-      for (let i = 0; i < (granularity === "month" ? 12 : 52); i++) {
+      const currentYear = new Date().getFullYear();
+      const isCurrentYear = singleYear === currentYear;
+      const currentMonth = getCurrentMonth();
+      const currentWeek = getCurrentWeek();
+      const numPeriods = granularity === "month" ? 12 : 52;
+
+      for (let i = 0; i < numPeriods; i++) {
+        const isCurrentPeriod =
+          isCurrentYear && (granularity === "month" ? i === currentMonth : i === currentWeek - 1);
         cols.push({
           id: `period-${i}`,
           header: periodLabels[i],
@@ -282,6 +301,7 @@ export function TaxesView({ data, returns }: Props) {
           meta: {
             align: "right" as const,
             headerAlign: "left" as const,
+            className: isCurrentPeriod ? "bg-(--color-brand)/10" : undefined,
           } satisfies ColumnMeta,
           size: 100,
         });

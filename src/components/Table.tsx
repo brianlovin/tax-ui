@@ -14,6 +14,7 @@ export interface ColumnMeta {
   headerAlign?: "left" | "right";
   borderLeft?: boolean;
   sticky?: boolean;
+  className?: string;
 }
 
 interface TableProps<TData> {
@@ -187,6 +188,7 @@ export function Table<TData>({
                       headerAlignClass,
                       "bg-(--color-bg) px-4 py-2 text-xs font-normal text-(--color-text-muted)",
                       meta?.sticky ? "sticky top-0 left-0 z-30" : "relative",
+                      meta?.className,
                     )}
                     style={{
                       width: isMobile && meta?.sticky ? "40vw" : header.getSize(),
@@ -239,7 +241,7 @@ export function Table<TData>({
                   return (
                     <td
                       key={cell.id}
-                      className={cn("px-4 py-2 text-sm", stickyClass)}
+                      className={cn("px-4 py-2 text-sm", stickyClass, meta?.className)}
                       style={{
                         width: isMobile && meta?.sticky ? "40vw" : cell.column.getSize(),
                         maxWidth: isMobile && meta?.sticky ? "40vw" : undefined,
