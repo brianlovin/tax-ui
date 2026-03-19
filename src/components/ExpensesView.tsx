@@ -432,7 +432,7 @@ export function ExpensesView({ year }: Props) {
           />
 
           <Button
-            variant="primary"
+            variant="outline"
             size="sm"
             onClick={handleAddExpense}
             disabled={!selectedCategory || !amount}
