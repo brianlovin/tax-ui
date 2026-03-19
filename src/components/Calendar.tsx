@@ -126,10 +126,8 @@ export function Calendar({ selected, onSelect, className }: CalendarProps) {
                   "h-full w-full rounded-md text-sm font-medium transition-colors outline-none",
                   "focus-visible:ring-2 focus-visible:ring-(--color-text-muted) focus-visible:ring-offset-1",
                   isSelected(date)
-                    ? "bg-(--color-text) text-(--color-bg)"
-                    : isToday(date)
-                      ? "bg-(--color-bg-muted) text-(--color-text)"
-                      : "text-(--color-text) hover:bg-(--color-bg-muted)",
+                    ? "bg-(--color-bg-muted) text-(--color-text)"
+                    : "text-(--color-text-muted) hover:bg-(--color-bg-muted)",
                 )}
               >
                 {date.getDate()}
