@@ -72,7 +72,7 @@ export function Calendar({ selected, onSelect, className }: CalendarProps) {
       <div className="mb-3 flex items-center justify-between">
         <button
           onClick={goToPrevMonth}
-          className="rounded p-1 text-(--color-text-muted) hover:bg-(--color-bg-muted) hover:text-(--color-text)"
+          className="rounded-lg p-1.5 text-(--color-text-muted) outline-none hover:bg-(--color-bg-muted) hover:text-(--color-text) focus-visible:ring-2 focus-visible:ring-(--color-text-muted)"
         >
           <svg
             width="16"
@@ -90,7 +90,7 @@ export function Calendar({ selected, onSelect, className }: CalendarProps) {
         </span>
         <button
           onClick={goToNextMonth}
-          className="rounded p-1 text-(--color-text-muted) hover:bg-(--color-bg-muted) hover:text-(--color-text)"
+          className="rounded-lg p-1.5 text-(--color-text-muted) outline-none hover:bg-(--color-bg-muted) hover:text-(--color-text) focus-visible:ring-2 focus-visible:ring-(--color-text-muted)"
         >
           <svg
             width="16"
@@ -123,9 +123,10 @@ export function Calendar({ selected, onSelect, className }: CalendarProps) {
               <button
                 onClick={() => onSelect(date)}
                 className={cn(
-                  "h-full w-full rounded-md text-sm transition-colors",
+                  "h-full w-full rounded-md text-sm font-medium transition-colors outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-(--color-text-muted) focus-visible:ring-offset-1",
                   isSelected(date)
-                    ? "bg-(--color-brand) text-white"
+                    ? "bg-(--color-text) text-(--color-bg)"
                     : isToday(date)
                       ? "bg-(--color-bg-muted) text-(--color-text)"
                       : "text-(--color-text) hover:bg-(--color-bg-muted)",
