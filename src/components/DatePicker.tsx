@@ -50,7 +50,7 @@ export function DatePicker({
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner sideOffset={4}>
-          <Popover.Popup className="z-50 rounded-lg border border-(--color-border) bg-(--color-bg) shadow-lg">
+          <Popover.Popup className="z-[100] rounded-lg border border-(--color-border) bg-(--color-bg) shadow-lg">
             <Popover.Description>
               <Calendar selected={value} onSelect={handleSelect} />
             </Popover.Description>
