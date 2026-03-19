@@ -1,0 +1,52 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Create artifact
+        run: |
+          cd dist
+          tar -czvf ../pennywise-${{ github.ref_name }}.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pennywise-${{ github.ref_name }}
+          path: pennywise-${{ github.ref_name }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pennywise-${{ github.ref_name }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pennywise-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
