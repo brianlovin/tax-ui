@@ -49,8 +49,8 @@ export function DatePicker({
         </Button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Positioner sideOffset={4}>
-          <Popover.Popup className="z-[100] rounded-lg border border-(--color-border) bg-(--color-bg) shadow-lg">
+        <Popover.Positioner sideOffset={4} style={{ zIndex: 9999 }}>
+          <Popover.Popup className="rounded-lg border border-(--color-border) bg-(--color-bg) shadow-lg" style={{ zIndex: 9999 }}>
             <Popover.Description>
               <Calendar selected={value} onSelect={handleSelect} />
             </Popover.Description>
