@@ -11,6 +11,8 @@ import {
   getCategoryName,
 } from "../lib/schema";
 import { Button } from "./Button";
+import { DatePicker } from "./DatePicker";
+import { Input } from "./Input";
 import { Menu, MenuItem } from "./Menu";
 import { type ColumnMeta, Table } from "./Table";
 
@@ -151,7 +153,7 @@ export function ExpensesView({ year }: Props) {
   const [expenses, setExpenses] = useState<ExpenseData>({});
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategoryId | null>(null);
   const [amount, setAmount] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Fetch expenses and bank statements on mount
   useEffect(() => {
@@ -251,7 +253,7 @@ export function ExpensesView({ year }: Props) {
     const entry: ExpenseEntry = {
       id: crypto.randomUUID(),
       year,
-      month: selectedMonth,
+      month: selectedDate.getMonth() + 1,
       category: selectedCategory,
       amount: numAmount,
       createdAt: new Date().toISOString(),
@@ -288,7 +290,7 @@ export function ExpensesView({ year }: Props) {
     } catch (err) {
       console.error("Failed to add expense:", err);
     }
-  }, [selectedCategory, amount, year, selectedMonth]);
+  }, [selectedCategory, amount, year, selectedDate]);
 
   const columns = useMemo<ColumnDef<ExpenseRow>[]>(() => {
     const cols: ColumnDef<ExpenseRow>[] = [
@@ -414,25 +416,19 @@ export function ExpensesView({ year }: Props) {
             ))}
           </Menu>
 
-          <input
+          <Input
             type="number"
             placeholder="Amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-24 rounded border border-(--color-border) px-2 py-1 text-xs"
+            className="w-24"
           />
 
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="rounded border border-(--color-border) bg-(--color-bg) px-2 py-1 text-xs text-(--color-text) outline-none focus:border-(--color-text-muted)"
-          >
-            {MONTHS.map((month, i) => (
-              <option key={month} value={i + 1}>
-                {month}
-              </option>
-            ))}
-          </select>
+          <DatePicker
+            value={selectedDate}
+            onChange={(date) => setSelectedDate(date)}
+            placeholder="Date"
+          />
 
           <Button
             variant="primary"
