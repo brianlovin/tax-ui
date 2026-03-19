@@ -1,16 +1,16 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { formatCurrency, formatPercent } from "../lib/format";
 import type { TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
-import { Button } from "./Button";
 import { type ColumnMeta, Table } from "./Table";
 
 interface Props {
   data?: TaxReturn;
   returns?: Record<number, TaxReturn>;
   year?: number;
+  granularity?: "month" | "week";
 }
 
 type TimeGranularity = "month" | "week";
@@ -248,9 +248,7 @@ function formatValue(value: number | undefined, isRate?: boolean): string {
   return formatCurrency(value);
 }
 
-export function TaxesView({ data, returns, year }: Props) {
-  const [granularity, setGranularity] = useState<TimeGranularity>("month");
-
+export function TaxesView({ data, returns, year, granularity = "month" }: Props) {
   const singleYear = year ?? data?.year;
   const effectiveReturns = returns || (data ? { [data.year]: data } : {});
 
@@ -358,25 +356,6 @@ export function TaxesView({ data, returns, year }: Props) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {singleYear !== undefined && (
-        <div className="flex items-center justify-end gap-2 border-b border-(--color-border) px-4 py-2">
-          <span className="text-xs text-(--color-text-muted)">View by:</span>
-          <Button
-            variant={granularity === "month" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setGranularity("month")}
-          >
-            Month
-          </Button>
-          <Button
-            variant={granularity === "week" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setGranularity("week")}
-          >
-            Week
-          </Button>
-        </div>
-      )}
       <div className="min-h-0 flex-1 overflow-hidden">
         <Table
           data={rows}

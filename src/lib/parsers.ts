@@ -1,6 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-
+import { type AIConfig, generateObjectFromPDF, generateTextFromPDFFast } from "./ai";
 import {
   type BankStatement,
   BankStatementSchema,
@@ -9,9 +7,6 @@ import {
   type Payslip,
   PayslipSchema,
 } from "./schema";
-
-const FAST_MODEL = "claude-haiku-4-5-20251001";
-const MAIN_MODEL = "claude-sonnet-4-5-20250929";
 
 // ============================================
 // DOCUMENT TYPE DETECTION
@@ -29,39 +24,13 @@ Look for:
 - Payslip: Employer name, pay period dates, gross/net pay, PAYG tax withheld, superannuation
 - Bank statement: Bank logo/name, account number, transaction list with dates and amounts`;
 
-export async function detectDocumentType(pdfBase64: string, apiKey: string): Promise<DocumentType> {
-  const client = new Anthropic({ apiKey });
+export async function detectDocumentType(
+  pdfBase64: string,
+  config: AIConfig,
+): Promise<DocumentType> {
+  const response = await generateTextFromPDFFast(config, pdfBase64, DETECT_DOCUMENT_PROMPT);
 
-  const response = await client.messages.create({
-    model: FAST_MODEL,
-    max_tokens: 100,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "document",
-            source: {
-              type: "base64",
-              media_type: "application/pdf",
-              data: pdfBase64,
-            },
-          },
-          {
-            type: "text",
-            text: DETECT_DOCUMENT_PROMPT,
-          },
-        ],
-      },
-    ],
-  });
-
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Failed to detect document type");
-  }
-
-  const text = textBlock.text.trim().toLowerCase();
+  const text = response.trim().toLowerCase();
   const parsed = DocumentTypeSchema.safeParse(text);
   if (!parsed.success) {
     // Try to extract from text
@@ -101,47 +70,8 @@ Important:
 - include ALL earnings and deduction line items
 - if a field is not present, omit it rather than guessing`;
 
-export async function parsePayslip(pdfBase64: string, apiKey: string): Promise<Payslip> {
-  const client = new Anthropic({ apiKey });
-
-  const response = await client.messages.create({
-    model: MAIN_MODEL,
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "document",
-            source: {
-              type: "base64",
-              media_type: "application/pdf",
-              data: pdfBase64,
-            },
-          },
-          {
-            type: "text",
-            text: PAYSLIP_PROMPT,
-          },
-        ],
-      },
-    ],
-    output_config: {
-      format: zodOutputFormat(PayslipSchema),
-    },
-  });
-
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Failed to parse payslip");
-  }
-
-  const parsed = PayslipSchema.safeParse(JSON.parse(textBlock.text));
-  if (!parsed.success) {
-    throw new Error(`Invalid payslip data: ${parsed.error.message}`);
-  }
-
-  return parsed.data;
+export async function parsePayslip(pdfBase64: string, config: AIConfig): Promise<Payslip> {
+  return generateObjectFromPDF(config, pdfBase64, PAYSLIP_PROMPT, PayslipSchema);
 }
 
 // ============================================
@@ -174,48 +104,11 @@ Important:
 
 export async function parseBankStatement(
   pdfBase64: string,
-  apiKey: string,
+  config: AIConfig,
 ): Promise<BankStatement> {
-  const client = new Anthropic({ apiKey });
-
-  const response = await client.messages.create({
-    model: MAIN_MODEL,
-    max_tokens: 8192,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "document",
-            source: {
-              type: "base64",
-              media_type: "application/pdf",
-              data: pdfBase64,
-            },
-          },
-          {
-            type: "text",
-            text: BANK_STATEMENT_PROMPT,
-          },
-        ],
-      },
-    ],
-    output_config: {
-      format: zodOutputFormat(BankStatementSchema),
-    },
+  return generateObjectFromPDF(config, pdfBase64, BANK_STATEMENT_PROMPT, BankStatementSchema, {
+    maxTokens: 8192,
   });
-
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Failed to parse bank statement");
-  }
-
-  const parsed = BankStatementSchema.safeParse(JSON.parse(textBlock.text));
-  if (!parsed.success) {
-    throw new Error(`Invalid bank statement data: ${parsed.error.message}`);
-  }
-
-  return parsed.data;
 }
 
 // ============================================
@@ -231,20 +124,26 @@ export async function parseDocument(
   pdfBase64: string,
   apiKey: string,
   documentType?: DocumentType,
+  provider: string = "anthropic",
 ): Promise<{ type: DocumentType; data: Payslip | BankStatement }> {
+  const config: AIConfig = {
+    provider: provider as AIConfig["provider"],
+    apiKey,
+  };
+
   // Detect document type if not provided
-  const type = documentType || (await detectDocumentType(pdfBase64, apiKey));
+  const type = documentType || (await detectDocumentType(pdfBase64, config));
 
   switch (type) {
     case "payslip":
       return {
         type: "payslip",
-        data: await parsePayslip(pdfBase64, apiKey),
+        data: await parsePayslip(pdfBase64, config),
       };
     case "bank-statement":
       return {
         type: "bank-statement",
-        data: await parseBankStatement(pdfBase64, apiKey),
+        data: await parseBankStatement(pdfBase64, config),
       };
     default:
       throw new Error(`Unsupported document type: ${type}`);

@@ -19,10 +19,16 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{ts,json}\""
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.58",
+    "@ai-sdk/gateway": "^3.0.66",
+    "@ai-sdk/google": "^3.0.43",
+    "@ai-sdk/openai": "^3.0.41",
     "@anthropic-ai/claude-code": "^2.1.25",
     "@anthropic-ai/sdk": "^0.72.1",
     "@base-ui/react": "^1.1.0",
+    "@heroicons/react": "^2.2.0",
     "@tanstack/react-table": "^8.21.3",
+    "ai": "^6.0.116",
     "bun-plugin-tailwind": "^0.1.2",
     "clsx": "^2.1.1",
     "motion": "^12.29.2",

@@ -14,9 +14,10 @@ import { InvestmentsView } from "./InvestmentsView";
 import { LoadingView } from "./LoadingView";
 import { StatsHeader } from "./StatsHeader";
 import { TaxesView } from "./TaxesView";
+import { TransactionsView } from "./TransactionsView";
 import { YearSelector } from "./YearSelector";
 
-export type ContentTab = "income" | "taxes" | "expenses" | "investments";
+export type ContentTab = "income" | "taxes" | "expenses" | "investments" | "transactions";
 
 interface CommonProps {
   isChatOpen: boolean;
@@ -36,6 +37,8 @@ interface CommonProps {
   selectedYear: "summary" | number;
   activeTab: ContentTab;
   onTabChange: (tab: ContentTab) => void;
+  granularity?: "month" | "week";
+  onGranularityChange?: (granularity: "month" | "week") => void;
 }
 
 interface ReceiptProps extends CommonProps {
@@ -80,7 +83,7 @@ export function MainPanel(props: Props) {
 
       e.preventDefault();
 
-      const tabs: ContentTab[] = ["income", "taxes", "expenses", "investments"];
+      const tabs: ContentTab[] = ["income", "taxes", "expenses", "investments", "transactions"];
       const currentIndex = tabs.indexOf(props.activeTab);
       const direction = e.key === "ArrowLeft" ? -1 : 1;
       const nextIndex = Math.max(0, Math.min(tabs.length - 1, currentIndex + direction));
@@ -110,28 +113,34 @@ export function MainPanel(props: Props) {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear={year} />
-            <IncomeView data={props.data} year={year} />
+            <IncomeView data={props.data} year={year} granularity={props.granularity} />
           </div>
         );
       } else if (props.activeTab === "taxes") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear={year} />
-            <TaxesView data={props.data} year={year} />
+            <TaxesView data={props.data} year={year} granularity={props.granularity} />
           </div>
         );
       } else if (props.activeTab === "expenses") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear={year} />
-            <ExpensesView year={year} />
+            <ExpensesView year={year} granularity={props.granularity} />
+          </div>
+        );
+      } else if (props.activeTab === "investments") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear={year} />
+            <InvestmentsView year={year} />
           </div>
         );
       } else {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <StatsHeader returns={props.returns} selectedYear={year} />
-            <InvestmentsView year={year} />
+            <TransactionsView year={year} />
           </div>
         );
       }
@@ -143,28 +152,34 @@ export function MainPanel(props: Props) {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear="summary" />
-            <IncomeView returns={props.returns} />
+            <IncomeView returns={props.returns} granularity={props.granularity} />
           </div>
         );
       } else if (props.activeTab === "taxes") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear="summary" />
-            <TaxesView returns={props.returns} />
+            <TaxesView returns={props.returns} granularity={props.granularity} />
           </div>
         );
       } else if (props.activeTab === "expenses") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear="summary" />
-            <ExpensesView />
+            <ExpensesView granularity={props.granularity} />
+          </div>
+        );
+      } else if (props.activeTab === "investments") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StatsHeader returns={props.returns} selectedYear="summary" />
+            <InvestmentsView />
           </div>
         );
       } else {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <StatsHeader returns={props.returns} selectedYear="summary" />
-            <InvestmentsView />
+            <TransactionsView />
           </div>
         );
       }
@@ -249,15 +264,15 @@ export function MainPanel(props: Props) {
                 <span className="relative z-10">Expenses</span>
               </Tabs.Tab>
               <Tabs.Tab
-                value="investments"
+                value="transactions"
                 className={cn(
                   "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
-                  props.activeTab === "investments"
+                  props.activeTab === "transactions"
                     ? "text-(--color-text)"
                     : "text-(--color-text-muted) hover:text-(--color-text)",
                 )}
               >
-                {props.activeTab === "investments" && (
+                {props.activeTab === "transactions" && (
                   <motion.div
                     layoutId={tabLayoutId.current}
                     className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
@@ -265,6 +280,16 @@ export function MainPanel(props: Props) {
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
+                <span className="relative z-10">Transactions</span>
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="investments"
+                disabled
+                className={cn(
+                  "relative shrink-0 cursor-not-allowed rounded-lg px-3 py-1.5 text-sm font-medium opacity-50 outline-none",
+                  "text-(--color-text-muted)",
+                )}
+              >
                 <span className="relative z-10">Investments</span>
               </Tabs.Tab>
             </Tabs.List>
@@ -292,6 +317,8 @@ export function MainPanel(props: Props) {
         navItems={props.navItems}
         selectedId={props.selectedId}
         onSelect={props.onSelect}
+        granularity={props.granularity}
+        onGranularityChange={props.onGranularityChange}
       />
     </div>
   );

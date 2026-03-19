@@ -427,3 +427,94 @@ export type BankStatement = z.infer<typeof BankStatementSchema>;
 export const DocumentTypeSchema = z.enum(["tax-return", "payslip", "bank-statement"]);
 
 export type DocumentType = z.infer<typeof DocumentTypeSchema>;
+
+// ============================================
+// TRANSACTIONS
+// ============================================
+
+export const INCOME_CATEGORIES = {
+  employment: {
+    id: "employment",
+    name: "Employment",
+    children: [
+      { id: "salary", name: "Salary" },
+      { id: "bonus", name: "Bonus" },
+      { id: "commission", name: "Commission" },
+      { id: "overtime", name: "Overtime" },
+      { id: "allowances", name: "Allowances" },
+    ],
+  },
+  business: {
+    id: "business",
+    name: "Business",
+    children: [
+      { id: "business-income", name: "Business Income" },
+      { id: "consulting", name: "Consulting" },
+      { id: "freelance", name: "Freelance" },
+    ],
+  },
+  investments: {
+    id: "investments",
+    name: "Investments",
+    children: [
+      { id: "dividends", name: "Dividends" },
+      { id: "interest", name: "Interest" },
+      { id: "capital-gains", name: "Capital Gains" },
+      { id: "rental-income", name: "Rental Income" },
+    ],
+  },
+  other: {
+    id: "other",
+    name: "Other",
+    children: [
+      { id: "government-benefits", name: "Government Benefits" },
+      { id: "gifts", name: "Gifts" },
+      { id: "refunds", name: "Refunds" },
+      { id: "other-income", name: "Other Income" },
+    ],
+  },
+} as const;
+
+export type IncomeCategoryId =
+  | (typeof INCOME_CATEGORIES.employment.children)[number]["id"]
+  | (typeof INCOME_CATEGORIES.business.children)[number]["id"]
+  | (typeof INCOME_CATEGORIES.investments.children)[number]["id"]
+  | (typeof INCOME_CATEGORIES.other.children)[number]["id"];
+
+export type IncomeCategoryParent = "employment" | "business" | "investments" | "other";
+
+export function getIncomeCategoryParent(categoryId: IncomeCategoryId): IncomeCategoryParent {
+  for (const [parentKey, parent] of Object.entries(INCOME_CATEGORIES)) {
+    if (parent.children.some((c) => c.id === categoryId)) {
+      return parentKey as IncomeCategoryParent;
+    }
+  }
+  return "other"; // default
+}
+
+export function getIncomeCategoryName(categoryId: IncomeCategoryId): string {
+  for (const parent of Object.values(INCOME_CATEGORIES)) {
+    const found = parent.children.find((c) => c.id === categoryId);
+    if (found) return found.name;
+  }
+  return categoryId;
+}
+
+export const TransactionSchema = z.object({
+  id: z.string(),
+  // Date of transaction
+  date: z.string(), // ISO date YYYY-MM-DD
+  // Amount in dollars (positive)
+  amount: z.number(),
+  // Category based on type
+  category: z.string(),
+  // Type: income or expense
+  type: z.enum(["income", "expense"]),
+  // Optional description/notes
+  description: z.string().optional(),
+  // Created/updated timestamps
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type Transaction = z.infer<typeof TransactionSchema>;

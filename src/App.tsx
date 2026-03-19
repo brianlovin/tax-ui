@@ -227,6 +227,7 @@ export function App() {
   const hasShownOnboardingRef = useRef(false);
   const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
   const [activeTab, setActiveTab] = useState<ContentTab>("income");
+  const [granularity, setGranularity] = useState<"month" | "week">("month");
   const updater = useElectronUpdater(devUpdateOverride);
 
   // Compute effective demo mode early (dev override takes precedence)
@@ -709,6 +710,8 @@ export function App() {
       selectedYear: statsSelectedYear,
       activeTab,
       onTabChange: setActiveTab,
+      granularity,
+      onGranularityChange: setGranularity,
     };
 
     if (selectedPendingUpload) {

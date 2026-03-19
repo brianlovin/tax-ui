@@ -18,6 +18,7 @@ import { type ColumnMeta, Table } from "./Table";
 
 interface Props {
   year?: number;
+  granularity?: "month" | "week";
 }
 
 type TimeGranularity = "month" | "week";
@@ -148,8 +149,7 @@ function collectExpenseRows(
   return rows;
 }
 
-export function ExpensesView({ year }: Props) {
-  const [granularity, setGranularity] = useState<TimeGranularity>("month");
+export function ExpensesView({ year, granularity = "month" }: Props) {
   const [expenses, setExpenses] = useState<ExpenseData>({});
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategoryId | null>(null);
   const [amount, setAmount] = useState("");
@@ -441,22 +441,6 @@ export function ExpensesView({ year }: Props) {
           </Button>
 
           <div className="flex-1" />
-
-          <span className="text-xs text-(--color-text-muted)">View by:</span>
-          <Button
-            variant={granularity === "month" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setGranularity("month")}
-          >
-            Month
-          </Button>
-          <Button
-            variant={granularity === "week" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setGranularity("week")}
-          >
-            Week
-          </Button>
         </div>
       )}
 

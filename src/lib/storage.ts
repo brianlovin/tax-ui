@@ -6,6 +6,7 @@ import {
   type Payslip,
   type TaxReturn,
   TaxReturnSchema,
+  type Transaction,
   type YearExpenses,
 } from "./schema";
 
@@ -14,6 +15,7 @@ const RETURNS_FILE = path.join(DATA_DIR, ".tax-returns.json");
 const EXPENSES_FILE = path.join(DATA_DIR, ".expenses.json");
 const PAYSLIPS_FILE = path.join(DATA_DIR, ".payslips.json");
 const BANK_STATEMENTS_FILE = path.join(DATA_DIR, ".bank-statements.json");
+const TRANSACTIONS_FILE = path.join(DATA_DIR, ".transactions.json");
 const ENV_FILE = path.join(DATA_DIR, ".env");
 
 // Backfill missing array fields for old stored data, then validate with Zod
@@ -173,26 +175,74 @@ export async function deleteBankStatement(id: string): Promise<void> {
 // ============================================
 
 export function getApiKey(): string | undefined {
-  return process.env.ANTHROPIC_API_KEY;
+  const provider = getStoredProvider();
+  switch (provider) {
+    case "openai":
+      return process.env.OPENAI_API_KEY;
+    case "google":
+      return process.env.GOOGLE_API_KEY;
+    case "anthropic":
+    default:
+      return process.env.ANTHROPIC_API_KEY;
+  }
 }
 
-export async function saveApiKey(key: string): Promise<void> {
+export function getApiKeys(): Record<string, string> {
+  return {
+    anthropic: process.env.ANTHROPIC_API_KEY || "",
+    openai: process.env.OPENAI_API_KEY || "",
+    google: process.env.GOOGLE_API_KEY || "",
+  };
+}
+
+export function getStoredProvider(): string {
+  return process.env.AI_PROVIDER || "anthropic";
+}
+
+export async function saveApiKey(key: string, provider: string = "anthropic"): Promise<void> {
+  const keyName =
+    provider === "openai"
+      ? "OPENAI_API_KEY"
+      : provider === "google"
+        ? "GOOGLE_API_KEY"
+        : "ANTHROPIC_API_KEY";
+
   const file = Bun.file(ENV_FILE);
   let content = "";
 
   if (await file.exists()) {
     content = await file.text();
-    if (content.includes("ANTHROPIC_API_KEY=")) {
-      content = content.replace(/ANTHROPIC_API_KEY=.*/g, `ANTHROPIC_API_KEY=${key}`);
+    const regex = new RegExp(`^${keyName}=.*$`, "gm");
+    if (regex.test(content)) {
+      content = content.replace(regex, `${keyName}=${key}`);
     } else {
-      content = content.trim() + `\nANTHROPIC_API_KEY=${key}\n`;
+      content = content.trim() + `\n${keyName}=${key}\n`;
     }
   } else {
-    content = `ANTHROPIC_API_KEY=${key}\n`;
+    content = `${keyName}=${key}\n`;
   }
 
   await Bun.write(ENV_FILE, content);
-  process.env.ANTHROPIC_API_KEY = key;
+  process.env[keyName] = key;
+}
+
+export async function saveProvider(provider: string): Promise<void> {
+  const file = Bun.file(ENV_FILE);
+  let content = "";
+
+  if (await file.exists()) {
+    content = await file.text();
+    if (content.includes("AI_PROVIDER=")) {
+      content = content.replace(/AI_PROVIDER=.*/g, `AI_PROVIDER=${provider}`);
+    } else {
+      content = content.trim() + `\nAI_PROVIDER=${provider}\n`;
+    }
+  } else {
+    content = `AI_PROVIDER=${provider}\n`;
+  }
+
+  await Bun.write(ENV_FILE, content);
+  process.env.AI_PROVIDER = provider;
 }
 
 export async function removeApiKey(): Promise<void> {
@@ -248,4 +298,33 @@ export async function clearAllData(): Promise<void> {
     }
   }
   delete process.env.ANTHROPIC_API_KEY;
+}
+
+// ============================================
+// TRANSACTIONS
+// ============================================
+
+export async function getTransactions(): Promise<Transaction[]> {
+  const file = Bun.file(TRANSACTIONS_FILE);
+  if (await file.exists()) {
+    return await file.json();
+  }
+  return [];
+}
+
+export async function saveTransaction(transaction: Transaction): Promise<void> {
+  const transactions = await getTransactions();
+  const existingIndex = transactions.findIndex((t) => t.id === transaction.id);
+  if (existingIndex >= 0) {
+    transactions[existingIndex] = transaction;
+  } else {
+    transactions.push(transaction);
+  }
+  await Bun.write(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2));
+}
+
+export async function deleteTransaction(id: string): Promise<void> {
+  const transactions = await getTransactions();
+  const filtered = transactions.filter((t) => t.id !== id);
+  await Bun.write(TRANSACTIONS_FILE, JSON.stringify(filtered, null, 2));
 }

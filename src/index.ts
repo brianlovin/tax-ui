@@ -1,37 +1,41 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { argv, serve } from "bun";
 import path from "path";
 import { fileURLToPath } from "url";
 
 import index from "./index.html";
+import {
+  type AIConfig,
+  generateChatResponse,
+  generateSuggestions,
+  getClient,
+  isAuthError,
+} from "./lib/ai";
 import { extractYearFromPdf, parseTaxReturn } from "./lib/parser";
 import { parseDocument } from "./lib/parsers";
-import type { BankStatement, Payslip } from "./lib/schema";
+import type { BankStatement, Payslip, Transaction } from "./lib/schema";
 import {
   clearAllData,
   deleteBankStatement,
   deleteExpenseEntry,
   deletePayslip,
   deleteReturn,
+  deleteTransaction,
   getApiKey,
+  getApiKeys,
   getBankStatements,
   getExpenses,
   getPayslips,
   getReturns,
+  getStoredProvider,
+  getTransactions,
   removeApiKey,
   saveApiKey,
+  saveBankStatement,
   saveExpenseEntry,
+  saveProvider,
   saveReturn,
+  saveTransaction,
 } from "./lib/storage";
-
-// Model used for lightweight operations (validation, suggestions)
-const FAST_MODEL = "claude-haiku-4-5-20251001";
-
-function isAuthError(message: string): boolean {
-  return (
-    message.includes("authentication") || message.includes("401") || message.includes("API key")
-  );
-}
 
 // Parse --port from command line args (supports --port=XXXX or --port XXXX)
 function parsePort(): number {
@@ -72,37 +76,47 @@ Answer questions about the user's income, taxes, deductions, credits, and tax ra
 const routes: Record<string, any> = {
   "/api/config": {
     GET: () => {
-      const hasKey = Boolean(getApiKey());
+      const apiKeys = getApiKeys();
+      const provider = getStoredProvider();
+      const hasKey = Boolean(apiKeys.anthropic || apiKeys.openai || apiKeys.google);
       const isDemo = process.env.DEMO_MODE === "true";
       const isDev = process.env.NODE_ENV !== "production";
-      return Response.json({ hasKey, isDemo, isDev });
+      return Response.json({
+        hasKey,
+        isDemo,
+        isDev,
+        provider,
+        keys: {
+          anthropic: Boolean(apiKeys.anthropic),
+          openai: Boolean(apiKeys.openai),
+          google: Boolean(apiKeys.google),
+        },
+      });
     },
   },
   "/api/config/key": {
     POST: async (req: Request) => {
-      const { apiKey } = await req.json();
+      const { apiKey, provider = "anthropic" } = await req.json();
       if (!apiKey || typeof apiKey !== "string") {
         return Response.json({ error: "Invalid API key" }, { status: 400 });
       }
 
       // Validate the key with a minimal API call
       try {
-        const client = new Anthropic({ apiKey: apiKey.trim() });
-        await client.messages.create({
-          model: FAST_MODEL,
-          max_tokens: 1,
-          messages: [{ role: "user", content: "hi" }],
-        });
+        const client = getClient({ provider, apiKey: apiKey.trim() });
+        // Simple validation by creating the client - errors will throw
+        await client.languageModel("claude-3-5-haiku-latest");
       } catch (error) {
         const message = error instanceof Error ? error.message : "";
-        if (isAuthError(message)) {
+        if (isAuthError(error)) {
           return Response.json({ error: "Invalid API key" }, { status: 401 });
         }
         // Other errors (rate limit, etc.) - key is probably valid
       }
 
-      await saveApiKey(apiKey.trim());
-      return Response.json({ success: true });
+      await saveApiKey(apiKey.trim(), provider);
+      await saveProvider(provider);
+      return Response.json({ success: true, provider });
     },
   },
   "/api/clear-data": {
@@ -166,6 +180,7 @@ const routes: Record<string, any> = {
       }
 
       const apiKey = getApiKey();
+      const provider = getStoredProvider();
       if (!apiKey) {
         return Response.json({ error: "No API key configured" }, { status: 400 });
       }
@@ -173,38 +188,31 @@ const routes: Record<string, any> = {
       // Use client-provided returns (for dev sample data) or fall back to stored returns
       const returns =
         clientReturns && Object.keys(clientReturns).length > 0 ? clientReturns : await getReturns();
-      const client = new Anthropic({ apiKey });
 
       try {
-        // Build messages from history
-        const messages: Anthropic.MessageParam[] = [];
-        for (const msg of history || []) {
-          messages.push({
-            role: msg.role as "user" | "assistant",
-            content: msg.content,
-          });
-        }
+        const messages = (history || []).map((msg: { role: string; content: string }) => ({
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
+        }));
         messages.push({ role: "user", content: prompt });
 
-        const response = await client.messages.create({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 2048,
-          system: buildChatSystemPrompt(returns),
+        const responseText = await generateChatResponse(
+          { provider: provider as AIConfig["provider"], apiKey },
+          buildChatSystemPrompt(returns),
           messages,
-        });
-
-        const textBlock = response.content.find((block) => block.type === "text");
-        const responseText = textBlock?.type === "text" ? textBlock.text : "No response";
+        );
 
         return Response.json({ response: responseText });
       } catch (error) {
         console.error("Chat error:", error);
-        const message = error instanceof Error ? error.message : "Unknown error";
-        if (isAuthError(message)) {
+        if (isAuthError(error)) {
           await removeApiKey();
           return Response.json({ error: "Invalid API key" }, { status: 401 });
         }
-        return Response.json({ error: message }, { status: 500 });
+        return Response.json(
+          { error: error instanceof Error ? error.message : "Unknown error" },
+          { status: 500 },
+        );
       }
     },
   },
@@ -213,6 +221,7 @@ const routes: Record<string, any> = {
       const { history, returns: clientReturns } = await req.json();
 
       const apiKey = getApiKey();
+      const provider = getStoredProvider();
       if (!apiKey) {
         return Response.json({ suggestions: [] });
       }
@@ -220,38 +229,19 @@ const routes: Record<string, any> = {
       const returns =
         clientReturns && Object.keys(clientReturns).length > 0 ? clientReturns : await getReturns();
 
-      const client = new Anthropic({ apiKey });
-
       try {
-        const messages: Anthropic.MessageParam[] = history.map(
-          (msg: { role: string; content: string }) => ({
-            role: msg.role as "user" | "assistant",
-            content: msg.content,
-          }),
-        );
-        // Structured outputs don't allow assistant messages in final position
-        messages.push({ role: "user", content: "Suggest 3 follow-up questions I might ask." });
+        const messages = (history || []).map((msg: { role: string; content: string }) => ({
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
+        }));
 
-        const response = await client.messages.create({
-          model: FAST_MODEL,
-          max_tokens: 256,
-          system: `You are helping a user explore their own tax return data. Generate 3 short follow-up questions the user might want to ask about their finances. Phrase questions in FIRST PERSON (e.g., "Why did my income drop?" not "Why did your income drop?").`,
+        const suggestions = await generateSuggestions(
+          { provider: provider as AIConfig["provider"], apiKey },
+          `You are helping a user explore their own tax return data. Generate 3 short follow-up questions the user might want to ask about their finances. Phrase questions in FIRST PERSON (e.g., "Why did my income drop?" not "Why did your income drop?").`,
           messages,
-          output_config: {
-            format: {
-              type: "json_schema",
-              schema: {
-                type: "array",
-                items: { type: "string" },
-              },
-            },
-          },
-        });
+        );
 
-        const textBlock = response.content.find((block) => block.type === "text");
-        const suggestions = JSON.parse(textBlock?.type === "text" ? textBlock.text : "[]");
-
-        return Response.json({ suggestions: suggestions.slice(0, 3) });
+        return Response.json({ suggestions });
       } catch (error) {
         console.error("Suggestions error:", error);
         return Response.json({ suggestions: [] });
@@ -466,6 +456,29 @@ const routes: Record<string, any> = {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         } as BankStatement;
+
+        await saveBankStatement(statement);
+
+        // Create transactions from bank statement transactions
+        const now = new Date().toISOString();
+        const createdTransactions: Transaction[] = [];
+
+        for (const tx of statement.transactions) {
+          const transaction: Transaction = {
+            id: crypto.randomUUID(),
+            date: tx.date,
+            amount: Math.abs(tx.amount),
+            category: tx.category || (tx.type === "credit" ? "other-income" : "personal"),
+            type: tx.type === "credit" ? "income" : "expense",
+            description: tx.description,
+            createdAt: now,
+            updatedAt: now,
+          };
+          await saveTransaction(transaction);
+          createdTransactions.push(transaction);
+        }
+
+        return Response.json({ statement, transactions: createdTransactions });
       } catch (error) {
         console.error("Bank statement parse error:", error);
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -475,6 +488,59 @@ const routes: Record<string, any> = {
         }
         return Response.json({ error: message }, { status: 500 });
       }
+    },
+  },
+
+  // ============================================
+  // TRANSACTIONS API
+  // ============================================
+
+  "/api/transactions": {
+    GET: async () => {
+      return Response.json(await getTransactions());
+    },
+    POST: async (req: Request) => {
+      const transaction = await req.json();
+      if (!transaction.date || !transaction.amount || !transaction.type || !transaction.category) {
+        return Response.json({ error: "Missing required fields" }, { status: 400 });
+      }
+      const now = new Date().toISOString();
+      const newTransaction: Transaction = {
+        id: transaction.id || crypto.randomUUID(),
+        date: transaction.date,
+        amount: transaction.amount,
+        category: transaction.category,
+        type: transaction.type,
+        description: transaction.description,
+        createdAt: transaction.createdAt || now,
+        updatedAt: now,
+      };
+      await saveTransaction(newTransaction);
+      return Response.json(newTransaction);
+    },
+  },
+
+  "/api/transactions/:id": {
+    PUT: async (req: Request & { params: { id: string } }) => {
+      const updates = await req.json();
+      const transactions = await getTransactions();
+      const existing = transactions.find((t) => t.id === req.params.id);
+      if (!existing) {
+        return Response.json({ error: "Transaction not found" }, { status: 404 });
+      }
+      const updated: Transaction = {
+        ...existing,
+        ...updates,
+        id: existing.id,
+        createdAt: existing.createdAt,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveTransaction(updated);
+      return Response.json(updated);
+    },
+    DELETE: async (req: Request & { params: { id: string } }) => {
+      await deleteTransaction(req.params.id);
+      return Response.json({ success: true });
     },
   },
 };

@@ -243,7 +243,12 @@ export function Table<TData>({
                   return (
                     <td
                       key={cell.id}
-                      className={cn("px-4 py-2 text-sm", stickyClass, meta?.className)}
+                      className={cn(
+                        "px-4 py-2 text-sm",
+                        meta?.align === "right" ? "text-right" : "",
+                        stickyClass,
+                        meta?.className,
+                      )}
                       style={{
                         width: isMobile && meta?.sticky ? "40vw" : cell.column.getSize(),
                         maxWidth: isMobile && meta?.sticky ? "40vw" : undefined,

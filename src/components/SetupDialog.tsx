@@ -182,7 +182,7 @@ export function SetupDialog({
       return;
     }
     if (files.length === 0) {
-      setError("Please upload at least one tax return PDF");
+      setError("Please upload at least one PDF file");
       return;
     }
 
@@ -250,8 +250,8 @@ export function SetupDialog({
     <Dialog
       open={isOpen}
       onClose={onClose}
-      title={hasStoredKey ? "Upload tax returns" : "Tax UI"}
-      description={hasStoredKey ? "Upload more tax returns" : "Make sense of your tax returns"}
+      title={hasStoredKey ? "Upload files" : "Tax UI"}
+      description={hasStoredKey ? "Upload more documents" : "Make sense of your tax returns"}
       size="lg"
       fullScreenMobile
       showClose={!isProcessing}
@@ -262,10 +262,10 @@ export function SetupDialog({
       <div>
         {/* API Key Section - always visible */}
         <div className="mb-6">
-          <label className="mb-2 block text-sm font-medium">Anthropic API Key</label>
+          <label className="mb-2 block text-sm font-medium">Vercel AI Gateway Key</label>
           {hasStoredKey ? (
             <div className="w-full rounded-lg border border-(--color-border) bg-(--color-bg-muted) px-3 py-2.5 text-sm text-(--color-text-muted)">
-              sk-ant-•••••••••••••••
+              vck_•••••••••••••••
             </div>
           ) : (
             <>
@@ -274,7 +274,7 @@ export function SetupDialog({
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-ant-..."
+                placeholder="vck_..."
                 disabled={isInteractionDisabled}
                 autoComplete="off"
                 data-1p-ignore
@@ -284,12 +284,12 @@ export function SetupDialog({
               <p className="mt-2 text-xs text-(--color-text-muted)">
                 Get your API key from{" "}
                 <a
-                  href="https://console.anthropic.com/settings/keys"
+                  href="https://vercel.com/dashboard"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-(--color-text)"
                 >
-                  console.anthropic.com
+                  vercel.com/dashboard
                 </a>
               </p>
             </>
@@ -326,8 +326,8 @@ export function SetupDialog({
               className="hidden"
             />
             <div className="text-(--color-text-muted)">
-              <p className="text-sm">Drop your tax return PDFs here</p>
-              <p className="mt-1 text-xs opacity-70">Click to browse</p>
+              <p className="text-sm">Drop your PDFs here</p>
+              <p className="mt-1 text-xs opacity-70">Payslips, bank statements, or tax returns</p>
             </div>
           </div>
 

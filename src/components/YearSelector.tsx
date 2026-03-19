@@ -10,6 +10,8 @@ interface YearSelectorProps {
   navItems: NavItem[];
   selectedId: string;
   onSelect: (id: string) => void;
+  granularity?: "month" | "week";
+  onGranularityChange?: (granularity: "month" | "week") => void;
 }
 
 // Animated highlight context (same pattern as MainPanel)
@@ -45,7 +47,13 @@ function useTabHighlightStore() {
 const ITEM_WIDTH = 70; // Approximate width of each year tab
 const OVERFLOW_BUTTON_WIDTH = 48;
 
-export function YearSelector({ navItems, selectedId, onSelect }: YearSelectorProps) {
+export function YearSelector({
+  navItems,
+  selectedId,
+  onSelect,
+  granularity,
+  onGranularityChange,
+}: YearSelectorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = React.useState(navItems.length);
 
@@ -85,8 +93,9 @@ export function YearSelector({ navItems, selectedId, onSelect }: YearSelectorPro
   return (
     <div
       ref={containerRef}
-      className="flex items-center justify-center gap-1 border-t border-(--color-border) bg-(--color-bg) px-4 py-2"
+      className="flex items-center justify-between gap-4 border-t border-(--color-border) bg-(--color-bg) px-4 py-2"
     >
+      {/* Years on the left */}
       <Tabs.Root
         value={selectedId}
         onValueChange={(val) => val && onSelect(String(val))}
@@ -128,6 +137,34 @@ export function YearSelector({ navItems, selectedId, onSelect }: YearSelectorPro
           </Menu>
         )}
       </Tabs.Root>
+
+      {/* View toggle on the right */}
+      {granularity && onGranularityChange && (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onGranularityChange("month")}
+            className={cn(
+              "rounded-md px-2.5 py-1 text-xs font-medium outline-none",
+              granularity === "month"
+                ? "bg-(--color-bg-muted) text-(--color-text)"
+                : "text-(--color-text-muted) hover:text-(--color-text)",
+            )}
+          >
+            Month
+          </button>
+          <button
+            onClick={() => onGranularityChange("week")}
+            className={cn(
+              "rounded-md px-2.5 py-1 text-xs font-medium outline-none",
+              granularity === "week"
+                ? "bg-(--color-bg-muted) text-(--color-text)"
+                : "text-(--color-text-muted) hover:text-(--color-text)",
+            )}
+          >
+            Week
+          </button>
+        </div>
+      )}
     </div>
   );
 }

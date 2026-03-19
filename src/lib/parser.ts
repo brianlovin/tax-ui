@@ -1,7 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { PDFDocument } from "pdf-lib";
 
+import { type AIConfig, generateObjectFromPDF, generateTextFromPDFFast } from "./ai";
 import { classifyPages } from "./classifier";
 import { EXTRACTION_PROMPT } from "./prompt";
 import { type LabeledAmount, type TaxReturn, TaxReturnSchema } from "./schema";
@@ -64,40 +63,8 @@ async function splitPdf(pdfBase64: string): Promise<string[]> {
   return chunks;
 }
 
-async function parseChunk(pdfBase64: string, client: Anthropic): Promise<TaxReturn> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-5-20250929",
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "document",
-            source: {
-              type: "base64",
-              media_type: "application/pdf",
-              data: pdfBase64,
-            },
-          },
-          {
-            type: "text",
-            text: EXTRACTION_PROMPT,
-          },
-        ],
-      },
-    ],
-    output_config: {
-      format: zodOutputFormat(TaxReturnSchema),
-    },
-  });
-
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No text response from Claude");
-  }
-
-  return JSON.parse(textBlock.text);
+async function parseChunk(pdfBase64: string, config: AIConfig): Promise<TaxReturn> {
+  return generateObjectFromPDF(config, pdfBase64, EXTRACTION_PROMPT, TaxReturnSchema);
 }
 
 function mergeLabeledAmounts(
@@ -183,7 +150,7 @@ function mergeReturns(returns: TaxReturn[]): TaxReturn {
   return base;
 }
 
-async function smartExtract(pdfBase64: string, client: Anthropic): Promise<TaxReturn> {
+async function smartExtract(pdfBase64: string, config: AIConfig): Promise<TaxReturn> {
   const pdfBytes = Buffer.from(pdfBase64, "base64");
   const pdfDoc = await PDFDocument.load(pdfBytes);
   const totalPages = pdfDoc.getPageCount();
@@ -192,11 +159,11 @@ async function smartExtract(pdfBase64: string, client: Anthropic): Promise<TaxRe
   if (totalPages <= CLASSIFICATION_THRESHOLD) {
     const chunks = await splitPdf(pdfBase64);
     if (chunks.length === 1) {
-      return parseChunk(chunks[0]!, client);
+      return parseChunk(chunks[0]!, config);
     }
     const results: TaxReturn[] = [];
     for (const chunk of chunks) {
-      results.push(await parseChunk(chunk, client));
+      results.push(await parseChunk(chunk, config));
     }
     return mergeReturns(results);
   }
@@ -204,13 +171,13 @@ async function smartExtract(pdfBase64: string, client: Anthropic): Promise<TaxRe
   // Classify pages using Haiku
   let classifications;
   try {
-    classifications = await classifyPages(pdfBase64, client);
+    classifications = await classifyPages(pdfBase64, config);
   } catch (error) {
     // Fallback: process first 40 pages if classification fails
     console.error("Classification failed, using fallback:", error);
     const fallbackPages = Array.from({ length: Math.min(totalPages, MAX_PAGES) }, (_, i) => i + 1);
     const fallbackPdf = await extractPages(pdfBase64, fallbackPages);
-    return parseChunk(fallbackPdf, client);
+    return parseChunk(fallbackPdf, config);
   }
 
   // Select important pages based on classification
@@ -221,13 +188,13 @@ async function smartExtract(pdfBase64: string, client: Anthropic): Promise<TaxRe
   if (selectedPages.length === 0) {
     const fallbackPages = Array.from({ length: Math.min(totalPages, MAX_PAGES) }, (_, i) => i + 1);
     const fallbackPdf = await extractPages(pdfBase64, fallbackPages);
-    return parseChunk(fallbackPdf, client);
+    return parseChunk(fallbackPdf, config);
   }
 
   // Extract only selected pages
   if (selectedPages.length <= MAX_PAGES) {
     const selectedPdf = await extractPages(pdfBase64, selectedPages);
-    return parseChunk(selectedPdf, client);
+    return parseChunk(selectedPdf, config);
   }
 
   // If still too many pages, chunk the selected pages
@@ -235,22 +202,33 @@ async function smartExtract(pdfBase64: string, client: Anthropic): Promise<TaxRe
   for (let start = 0; start < selectedPages.length; start += MAX_PAGES) {
     const chunkPageNumbers = selectedPages.slice(start, start + MAX_PAGES);
     const chunkPdf = await extractPages(pdfBase64, chunkPageNumbers);
-    results.push(await parseChunk(chunkPdf, client));
+    results.push(await parseChunk(chunkPdf, config));
   }
 
   return mergeReturns(results);
 }
 
-export async function parseTaxReturn(pdfBase64: string, apiKey: string): Promise<TaxReturn> {
-  const client = new Anthropic({ apiKey });
-  return smartExtract(pdfBase64, client);
+export async function parseTaxReturn(
+  pdfBase64: string,
+  apiKey: string,
+  provider: string = "anthropic",
+): Promise<TaxReturn> {
+  const config: AIConfig = {
+    provider: provider as AIConfig["provider"],
+    apiKey,
+  };
+  return smartExtract(pdfBase64, config);
 }
 
 export async function extractYearFromPdf(
   pdfBase64: string,
   apiKey: string,
+  provider: string = "anthropic",
 ): Promise<number | null> {
-  const client = new Anthropic({ apiKey });
+  const config: AIConfig = {
+    provider: provider as AIConfig["provider"],
+    apiKey,
+  };
 
   // Extract just the first page for fast year detection
   const pdfBytes = Buffer.from(pdfBase64, "base64");
@@ -261,36 +239,13 @@ export async function extractYearFromPdf(
   const firstPageBase64 = Buffer.from(await firstPageDoc.save()).toString("base64");
 
   try {
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 50,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: firstPageBase64,
-              },
-            },
-            {
-              type: "text",
-              text: "What Australian financial year is this tax return for? Respond with ONLY the 4-digit ending year (e.g., 2023 for the 2022-23 financial year). If you cannot determine the year, respond with 'UNKNOWN'.",
-            },
-          ],
-        },
-      ],
-    });
+    const response = await generateTextFromPDFFast(
+      config,
+      firstPageBase64,
+      "What Australian financial year is this tax return for? Respond with ONLY the 4-digit ending year (e.g., 2023 for the 2022-23 financial year). If you cannot determine the year, respond with 'UNKNOWN'.",
+    );
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      return null;
-    }
-
-    const yearMatch = textBlock.text.match(/\b(19|20)\d{2}\b/);
+    const yearMatch = response.match(/\b(19|20)\d{2}\b/);
     if (yearMatch) {
       return parseInt(yearMatch[0], 10);
     }

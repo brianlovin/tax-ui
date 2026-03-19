@@ -2,7 +2,6 @@ import { Popover } from "@base-ui/react/popover";
 import * as React from "react";
 
 import { cn } from "../lib/cn";
-import { Button } from "./Button";
 import { Calendar } from "./Calendar";
 
 interface DatePickerProps {
@@ -35,18 +34,14 @@ export function DatePicker({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn(
-            "justify-start text-left font-normal",
-            !value && "text-(--color-text-muted)",
-            className,
-          )}
-        >
-          {value ? formatValue(value) : placeholder}
-        </Button>
+      <Popover.Trigger
+        className={cn(
+          "inline-flex items-center justify-start rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-1.5 text-left text-sm font-normal text-(--color-text) outline-none hover:bg-(--color-bg-muted) focus-visible:ring-2 focus-visible:ring-(--color-text-muted) focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          !value && "text-(--color-text-muted)",
+          className,
+        )}
+      >
+        {value ? formatValue(value) : placeholder}
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner sideOffset={4} style={{ zIndex: 40 }}>
