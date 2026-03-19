@@ -393,7 +393,7 @@ export function ExpensesView({ year }: Props) {
       {year !== undefined && (
         <div className="flex items-center gap-2 border-b border-(--color-border) px-4 py-2">
           <Menu
-            triggerClassName="text-xs"
+            triggerClassName="px-3 py-1.5 text-sm font-medium rounded-lg border border-(--color-border) bg-(--color-bg) text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted)"
             popupClassName="min-w-[180px]"
             side="bottom"
             trigger={selectedCategory ? getCategoryName(selectedCategory) : "Select category"}
@@ -421,7 +421,8 @@ export function ExpensesView({ year }: Props) {
             placeholder="Amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-24"
+            prefix="$"
+            className="w-28"
           />
 
           <DatePicker
