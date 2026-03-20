@@ -12,12 +12,20 @@ import { ExpensesView } from "./ExpensesView";
 import { IncomeView } from "./IncomeView";
 import { InvestmentsView } from "./InvestmentsView";
 import { LoadingView } from "./LoadingView";
+import { Menu, MenuItem } from "./Menu";
+import { OverviewView } from "./OverviewView";
 import { StatsHeader } from "./StatsHeader";
 import { TaxesView } from "./TaxesView";
 import { TransactionsView } from "./TransactionsView";
 import { YearSelector } from "./YearSelector";
 
-export type ContentTab = "income" | "taxes" | "expenses" | "investments" | "transactions";
+export type ContentTab =
+  | "overview"
+  | "income"
+  | "taxes"
+  | "expenses"
+  | "investments"
+  | "transactions";
 
 interface CommonProps {
   isChatOpen: boolean;
@@ -30,6 +38,7 @@ interface CommonProps {
   onOpenStart: () => void;
   onOpenReset: () => void;
   onDeleteYear?: (year: string) => void;
+  onOpenSettings?: () => void;
   isDemo: boolean;
   hasUserData: boolean;
   hasStoredKey: boolean;
@@ -83,7 +92,14 @@ export function MainPanel(props: Props) {
 
       e.preventDefault();
 
-      const tabs: ContentTab[] = ["income", "taxes", "expenses", "investments", "transactions"];
+      const tabs: ContentTab[] = [
+        "overview",
+        "income",
+        "taxes",
+        "expenses",
+        "investments",
+        "transactions",
+      ];
       const currentIndex = tabs.indexOf(props.activeTab);
       const direction = e.key === "ArrowLeft" ? -1 : 1;
       const nextIndex = Math.max(0, Math.min(tabs.length - 1, currentIndex + direction));
@@ -109,7 +125,13 @@ export function MainPanel(props: Props) {
     // Single year view (with or without data)
     if (props.view === "receipt") {
       const year = props.year;
-      if (props.activeTab === "income") {
+      if (props.activeTab === "overview") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <OverviewView />
+          </div>
+        );
+      } else if (props.activeTab === "income") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear={year} />
@@ -148,7 +170,13 @@ export function MainPanel(props: Props) {
 
     // Summary view (all years)
     if (props.view === "summary") {
-      if (props.activeTab === "income") {
+      if (props.activeTab === "overview") {
+        return (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <OverviewView />
+          </div>
+        );
+      } else if (props.activeTab === "income") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <StatsHeader returns={props.returns} selectedYear="summary" />
@@ -207,15 +235,15 @@ export function MainPanel(props: Props) {
           >
             <Tabs.List ref={tabListRef} className="flex min-w-0 items-center gap-1" activateOnFocus>
               <Tabs.Tab
-                value="income"
+                value="overview"
                 className={cn(
                   "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
-                  props.activeTab === "income"
+                  props.activeTab === "overview"
                     ? "text-(--color-text)"
                     : "text-(--color-text-muted) hover:text-(--color-text)",
                 )}
               >
-                {props.activeTab === "income" && (
+                {props.activeTab === "overview" && (
                   <motion.div
                     layoutId={tabLayoutId.current}
                     className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
@@ -223,7 +251,7 @@ export function MainPanel(props: Props) {
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
-                <span className="relative z-10">Income</span>
+                <span className="relative z-10">Overview</span>
               </Tabs.Tab>
               <Tabs.Tab
                 value="taxes"
@@ -294,6 +322,16 @@ export function MainPanel(props: Props) {
               </Tabs.Tab>
             </Tabs.List>
           </Tabs.Root>
+
+          {/* Settings dropdown */}
+          <Menu
+            triggerClassName="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-(--color-text-muted) hover:bg-(--color-bg-muted) hover:text-(--color-text)"
+            popupClassName="min-w-[140px]"
+            side="bottom"
+            trigger="Settings"
+          >
+            <MenuItem onClick={props.onOpenSettings}>Preferences</MenuItem>
+          </Menu>
         </div>
 
         {props.showChatButton !== false && !props.isChatOpen && (

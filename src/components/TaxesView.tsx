@@ -295,7 +295,13 @@ export function TaxesView({ data, returns, year, granularity = "month" }: Props)
         cols.push({
           id: `period-${i}`,
           header: () => (
-            <span className={isCurrentPeriod ? "rounded bg-(--color-brand)/10 px-1.5 py-0.5" : ""}>
+            <span
+              className={
+                isCurrentPeriod
+                  ? "rounded bg-(--color-bg-muted) px-1.5 py-0.5 text-(--color-text)"
+                  : ""
+              }
+            >
               {periodLabels[i]}
             </span>
           ),
