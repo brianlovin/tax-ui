@@ -12,7 +12,12 @@ import {
 } from "./lib/ai";
 import { extractYearFromPdf, parseTaxReturn } from "./lib/parser";
 import { parseDocument } from "./lib/parsers";
-import type { BankStatement, Payslip, Transaction } from "./lib/schema";
+import {
+  type BankStatement,
+  normalizeExpenseCategory,
+  type Payslip,
+  type Transaction,
+} from "./lib/schema";
 import {
   clearAllData,
   deleteBankStatement,
@@ -468,7 +473,10 @@ const routes: Record<string, any> = {
             id: crypto.randomUUID(),
             date: tx.date,
             amount: Math.abs(tx.amount),
-            category: tx.category || (tx.type === "credit" ? "other-income" : "personal"),
+            category:
+              tx.type === "credit"
+                ? "salary"
+                : normalizeExpenseCategory(tx.category || tx.description),
             type: tx.type === "credit" ? "income" : "expense",
             description: tx.description,
             createdAt: now,

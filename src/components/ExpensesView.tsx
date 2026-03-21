@@ -9,6 +9,7 @@ import {
   type ExpenseCategoryId,
   type ExpenseEntry,
   getCategoryName,
+  normalizeExpenseCategory,
 } from "../lib/schema";
 import { Button } from "./Button";
 import { DatePicker } from "./DatePicker";
@@ -184,7 +185,7 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
           for (const statement of statements) {
             for (const txn of statement.transactions) {
               // Try to categorize transactions based on description or category
-              const category = txn.category || inferCategory(txn.description);
+              const category = normalizeExpenseCategory(txn.category || txn.description);
               const month = new Date(txn.date).getMonth() + 1;
               const yr = new Date(txn.date).getFullYear();
               const amount = Math.abs(txn.amount); // Use absolute value for expenses
@@ -200,42 +201,6 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
       )
       .catch(console.error);
   }, []);
-
-  // Helper to infer category from transaction description
-  function inferCategory(description: string): ExpenseCategoryId {
-    const desc = description.toLowerCase();
-    if (
-      desc.includes("woolworth") ||
-      desc.includes("coles") ||
-      desc.includes("iga") ||
-      desc.includes("aldi")
-    ) {
-      return "groceries";
-    }
-    if (
-      desc.includes("shell") ||
-      desc.includes("bp ") ||
-      desc.includes("ampol") ||
-      desc.includes("fuel")
-    ) {
-      return "fuel";
-    }
-    if (desc.includes("uber") || desc.includes("didi") || desc.includes("taxi")) {
-      return "taxis-share-cars";
-    }
-    if (desc.includes("netflix") || desc.includes("spotify") || desc.includes("disney")) {
-      return "tv-music-streaming";
-    }
-    if (
-      desc.includes("grab") ||
-      desc.includes("menulog") ||
-      desc.includes("doordash") ||
-      desc.includes("uber eats")
-    ) {
-      return "takeaway";
-    }
-    return "life-admin"; // Default category
-  }
 
   const rows = useMemo(
     () => collectExpenseRows(expenses, granularity, year),

@@ -263,6 +263,80 @@ export function getCategoryParent(categoryId: ExpenseCategoryId): ExpenseCategor
   return "personal"; // default
 }
 
+// Map common category names/IDs to ExpenseCategoryId
+export const EXPENSE_CATEGORY_MAP: Record<string, ExpenseCategoryId> = {
+  // Groceries
+  groceries: "groceries",
+  // Home
+  utilities: "utilities",
+  internet: "internet",
+  "rent-mortgage": "rent-mortgage",
+  // Transport
+  fuel: "fuel",
+  parking: "parking",
+  "public-transport": "public-transport",
+  "taxis-share-cars": "taxis-share-cars",
+  tolls: "tolls",
+  // Good Life
+  "restaurants-cafes": "restaurants-cafes",
+  "restaurants & cafes": "restaurants-cafes",
+  "pubs-bars": "pubs-bars",
+  booze: "booze",
+  "alcohol & liquor": "booze",
+  takeaway: "takeaway",
+  "uber eats": "takeaway",
+  doordash: "takeaway",
+  menulog: "takeaway",
+  grab: "takeaway",
+  "events-gigs": "events-gigs",
+  "tv-music-streaming": "tv-music-streaming",
+  netflix: "tv-music-streaming",
+  spotify: "tv-music-streaming",
+  disney: "tv-music-streaming",
+  subscriptions: "apps-games-software",
+  hobbies: "hobbies",
+  // Personal
+  shopping: "clothing-accessories",
+  "clothing-accessories": "clothing-accessories",
+  "health-medical": "health-medical",
+  pharmacy: "health-medical",
+  fitness: "fitness-wellbeing",
+  hair: "hair-beauty",
+  "life-admin": "life-admin",
+  fees: "life-admin",
+  "mobile-phone": "mobile-phone",
+  technology: "technology",
+  gifts: "gifts-charity",
+  charity: "gifts-charity",
+  education: "education-student-loans",
+  children: "children-family",
+};
+
+// Normalize a category name/ID to an ExpenseCategoryId
+export function normalizeExpenseCategory(category: string | undefined): ExpenseCategoryId {
+  if (!category) return "life-admin";
+  
+  const normalized = category
+    .toLowerCase()
+    .replace(/[ &\-_]+/g, "-")
+    .replace(/--+/g, "-")
+    .replace(/^-|-$/g, "");
+  
+  // Direct match
+  if (normalized in EXPENSE_CATEGORY_MAP) {
+    return EXPENSE_CATEGORY_MAP[normalized]!;
+  }
+  
+  // Try partial match (contains)
+  for (const [key, value] of Object.entries(EXPENSE_CATEGORY_MAP)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return value;
+    }
+  }
+  
+  return "life-admin"; // Default fallback
+}
+
 // Helper to get category name by id
 export function getCategoryName(categoryId: ExpenseCategoryId): string {
   for (const parent of Object.values(EXPENSE_CATEGORIES)) {
