@@ -250,7 +250,7 @@ export function SetupDialog({
     <Dialog
       open={isOpen}
       onClose={onClose}
-      title={hasStoredKey ? "Upload files" : "Tax UI"}
+      title={hasStoredKey ? "Upload files" : "Pennywise"}
       description={hasStoredKey ? "Upload more documents" : "Make sense of your tax returns"}
       size="lg"
       fullScreenMobile

@@ -1,0 +1,991 @@
+[
+  {
+    "id": "594f23d0-fe15-46d0-b55b-edd520313f88",
+    "date": "2026-03-19",
+    "amount": 45,
+    "category": "internet",
+    "type": "expense",
+    "createdAt": "2026-03-19T13:15:21.484Z",
+    "updatedAt": "2026-03-19T14:19:33.661Z"
+  },
+  {
+    "id": "3bdeaf93-c1bd-427d-b8be-0a7b16203659",
+    "date": "2026-02-01",
+    "amount": 66.08,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Sq *Roasting Warehouse Sosouth Fremantau",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "037305f8-25cc-4b65-aa24-f11455f4fed1",
+    "date": "2026-02-01",
+    "amount": 50,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "2e93e1fc-1dc9-4905-829f-e24e7aa311ba",
+    "date": "2026-02-02",
+    "amount": 35.4,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Grilld Pty Ltd Richmond AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "9fb9f0df-a1e6-4f76-9937-5e8b3acbbc10",
+    "date": "2026-02-02",
+    "amount": 2216,
+    "category": "Income",
+    "type": "income",
+    "description": "Direct Credit Stakeshop Pty Lt - Withdrawal From St",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "766b0431-d591-46b9-a137-1bf72f63e929",
+    "date": "2026-02-02",
+    "amount": 2120.43,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "2c079a29-c962-464e-9f33-1eca40cc8cd4",
+    "date": "2026-02-03",
+    "amount": 50,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "540b5f96-4404-449f-8818-74092d1a2c24",
+    "date": "2026-02-03",
+    "amount": 70.43,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "608c87d1-93c2-4081-9f42-a25d43a126c1",
+    "date": "2026-02-03",
+    "amount": 13.5,
+    "category": "Business Services",
+    "type": "expense",
+    "description": "Ass Enterprise Pty Ltd Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "7885e910-3881-468e-a0f3-88ea76a9022a",
+    "date": "2026-02-03",
+    "amount": 35.47,
+    "category": "Groceries",
+    "type": "expense",
+    "description": "The Herdsman Market\\churchlands AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "33780e31-6bcd-4b89-b8e3-f63b8c0d3c6b",
+    "date": "2026-02-03",
+    "amount": 20,
+    "category": "Groceries",
+    "type": "expense",
+    "description": "The Good Grocer Boul City Beach AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "363f37c8-e625-4362-b125-9ba8c50f93fd",
+    "date": "2026-02-04",
+    "amount": 28.83,
+    "category": "Software & Services",
+    "type": "expense",
+    "description": "Factory Ai Factory.ai Us",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "80b5405f-f5b2-4dd2-bdda-53ff1e4a86fe",
+    "date": "2026-02-04",
+    "amount": 10,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "d76b3458-3a89-4940-bf04-1619d55820eb",
+    "date": "2026-02-04",
+    "amount": 10.15,
+    "category": "Groceries",
+    "type": "expense",
+    "description": "Coles 0481 Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "f2559806-39a1-4d47-ac11-89ca6d0e323a",
+    "date": "2026-02-05",
+    "amount": 118,
+    "category": "Entertainment",
+    "type": "expense",
+    "description": "Perth Festival Crawley AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "c5a5c6a7-84cc-46d5-8eca-6d265e7670e1",
+    "date": "2026-02-05",
+    "amount": 90,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "567a6f66-d60c-402a-8a28-2ba907fd8bea",
+    "date": "2026-02-05",
+    "amount": 13.5,
+    "category": "Business Services",
+    "type": "expense",
+    "description": "Ass Enterprise Pty Ltd Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "462bfac2-e969-4adf-baae-97e2f507ec4e",
+    "date": "2026-02-05",
+    "amount": 100,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "8cdc7169-0a3c-4644-91b0-3b850770967d",
+    "date": "2026-02-05",
+    "amount": 82.95,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "The Flower Market WA Churchlands AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "7aaba24d-e272-42b6-8be1-4bde309b5fcd",
+    "date": "2026-02-05",
+    "amount": 59.99,
+    "category": "Health & Pharmacy",
+    "type": "expense",
+    "description": "North Beach Pharmacy North Beach WA AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "13560176-10a3-4eab-bd6b-e526e1c01894",
+    "date": "2026-02-07",
+    "amount": 9.99,
+    "category": "Entertainment",
+    "type": "expense",
+    "description": "Amznprimea* Amznprimea Sydney South AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "1e66a0ae-27c1-42a1-a867-7879102a852d",
+    "date": "2026-02-07",
+    "amount": 110,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "706cd199-261b-4632-986d-c9062e38334b",
+    "date": "2026-02-07",
+    "amount": 109.81,
+    "category": "Fuel",
+    "type": "expense",
+    "description": "Atlas Fuel Wanneroo Wanneroo AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "0bba93dc-49d5-4a7f-bfa5-761864766e26",
+    "date": "2026-02-07",
+    "amount": 30,
+    "category": "Income",
+    "type": "income",
+    "description": "Payment from Ajahna G Lillee",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "1a2a184b-faba-4d20-885f-b7dde3904228",
+    "date": "2026-02-07",
+    "amount": 30,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "04c07d0b-ead8-4ee4-a2a6-31e3e6046dfc",
+    "date": "2026-02-07",
+    "amount": 30,
+    "category": "Income",
+    "type": "income",
+    "description": "Payment from Ajahna G Lillee",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "aff8db89-ecfe-4ded-9e3f-2004c3822941",
+    "date": "2026-02-07",
+    "amount": 60,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "277fdc10-6c64-4c9b-b447-d8859f1c6fe6",
+    "date": "2026-02-07",
+    "amount": 100,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "041f135e-133c-4fe6-949f-7ed840636cea",
+    "date": "2026-02-07",
+    "amount": 50,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "45632c22-e490-4ad8-b1d3-2805c1a6d94f",
+    "date": "2026-02-07",
+    "amount": 165,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Payment to 086-412 241337683 Kara St",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "d890c852-ac08-4b61-aa7a-bc723c41b8f1",
+    "date": "2026-02-08",
+    "amount": 59.95,
+    "category": "Software & Services",
+    "type": "expense",
+    "description": "Microsoft*store Msbill.info AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "61b4cd4c-42dd-4eb1-8b22-5e0187bbc3bf",
+    "date": "2026-02-08",
+    "amount": 31,
+    "category": "Alcohol & Liquor",
+    "type": "expense",
+    "description": "Bws Liquor/whitfords Cty Hillarys AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "d326c8d5-0b26-49e9-90e8-9975ab6e2e7c",
+    "date": "2026-02-08",
+    "amount": 8.06,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Xing Da WA Pty Ltd Hillarys AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "9b0605d7-3f42-43ef-82ee-e2a61f74ff72",
+    "date": "2026-02-08",
+    "amount": 16.72,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Sp Doughstreet Balcatta AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "324b364e-03d8-4a78-a1a1-5c1627182253",
+    "date": "2026-02-08",
+    "amount": 50,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "75a933eb-c454-4763-ba4a-9101559f45df",
+    "date": "2026-02-09",
+    "amount": 4.5,
+    "category": "Entertainment",
+    "type": "expense",
+    "description": "Sq *Perth Festival Casa Mcanning Vale AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "c14fe46a-4efa-4db8-a8fe-52906f419eea",
+    "date": "2026-02-09",
+    "amount": 8,
+    "category": "Entertainment",
+    "type": "expense",
+    "description": "Sq *Perth Festival Menora AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "0cfd3f8f-ee01-4198-8036-5c408d8cc766",
+    "date": "2026-02-09",
+    "amount": 22,
+    "category": "Entertainment",
+    "type": "expense",
+    "description": "Stan.com.AU\\",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "8f1d6b85-7f34-49c2-91fd-bd4e895d21aa",
+    "date": "2026-02-10",
+    "amount": 49.42,
+    "category": "Groceries",
+    "type": "expense",
+    "description": "Aldi Stores Currambine AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "cde198ca-9e8b-4504-9ec8-d11531286f47",
+    "date": "2026-02-11",
+    "amount": 2314.61,
+    "category": "Income",
+    "type": "income",
+    "description": "Direct Credit CBA - Wemoney Salary",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "43c95eb8-498e-4db2-8d7b-5c712327ce21",
+    "date": "2026-02-12",
+    "amount": 462,
+    "category": "Automotive",
+    "type": "expense",
+    "description": "Custom Offroad\\",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "1371fc9e-dab6-4239-a799-57b76194a310",
+    "date": "2026-02-12",
+    "amount": 1000,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "73f2cdca-b6ce-48a3-9f12-b14c180ffa90",
+    "date": "2026-02-12",
+    "amount": 32.12,
+    "category": "Health & Pharmacy",
+    "type": "expense",
+    "description": "Chemist Warehouse Perth City Centre Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "28162e29-ae0a-41c2-adbc-51ec101235be",
+    "date": "2026-02-13",
+    "amount": 150,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "f2b724e7-88e9-4614-96fe-c32ac0a42c66",
+    "date": "2026-02-13",
+    "amount": 52.85,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "Paddy Pallin \\Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "24cf2839-dec3-43e4-9a7a-6ef4ae33c2d1",
+    "date": "2026-02-14",
+    "amount": 36.5,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Ryu Bento Currambine AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "6b83f952-85c7-4b1d-8a30-f2f8091bc0a2",
+    "date": "2026-02-14",
+    "amount": 128.95,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "Sp Floraly Alexandria AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "6a3192b9-fe94-463c-98e3-2424eca225fa",
+    "date": "2026-02-15",
+    "amount": 98.68,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Lils Rooftop & Bar Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "de300372-cdb1-45d6-be57-2ac3e1c6b638",
+    "date": "2026-02-15",
+    "amount": 24.29,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Lils Rooftop & Bar Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "43fa4fe2-ac8c-4cb5-a1cc-70e63f72fb46",
+    "date": "2026-02-15",
+    "amount": 23.28,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Lils Rooftop & Bar Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "32d172bb-b953-4e2b-8452-df1cf3c53e4e",
+    "date": "2026-02-15",
+    "amount": 47.3,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Grilld Currambine Carrumbine AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "6ff34fba-3076-4fe7-bf1c-36692cc84360",
+    "date": "2026-02-16",
+    "amount": 43.99,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "Sp Milligram Melbourne AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "c5c145b0-bca9-4e5f-ba13-2f6f75b50574",
+    "date": "2026-02-16",
+    "amount": 6.57,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Jindalee Beach Shack Jindalee AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "ad282e05-7b3a-4b15-845c-bdca025e8bda",
+    "date": "2026-02-17",
+    "amount": 17.18,
+    "category": "Transport",
+    "type": "expense",
+    "description": "Didimobility Sydney AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "e2dc6b37-13d0-4b3d-b62d-7424248a224b",
+    "date": "2026-02-17",
+    "amount": 5.05,
+    "category": "Parking",
+    "type": "expense",
+    "description": "Cpp Elder Street Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "b4b437ef-5f5f-4455-a51c-80944affb3f2",
+    "date": "2026-02-17",
+    "amount": 1400,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "24861acf-168e-49c3-9b85-181180871e75",
+    "date": "2026-02-17",
+    "amount": 76.62,
+    "category": "Recreation",
+    "type": "expense",
+    "description": "West Australian Marathon Club Inc\\burswo",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "5a070c19-376c-4338-b94e-79010e4d1925",
+    "date": "2026-02-18",
+    "amount": 128.95,
+    "category": "Refund",
+    "type": "income",
+    "description": "Refund From Sp Floraly Alexandria AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "e04593e6-18c4-43b4-8980-ce7b32a21217",
+    "date": "2026-02-18",
+    "amount": 9.99,
+    "category": "Transport",
+    "type": "expense",
+    "description": "Didimobility Sydney AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "2a1550ea-7199-4947-9f94-e854275aaf06",
+    "date": "2026-02-18",
+    "amount": 11.1,
+    "category": "Transport",
+    "type": "expense",
+    "description": "Didimobility Sydney AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "c8306386-a9e7-459b-a585-7f9035afd586",
+    "date": "2026-02-18",
+    "amount": 0.61,
+    "category": "Transport",
+    "type": "expense",
+    "description": "Didimobility Sydney AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "44783567-cf27-4125-823b-08c4484ba253",
+    "date": "2026-02-18",
+    "amount": 179.5,
+    "category": "Refund",
+    "type": "income",
+    "description": "Direct Credit Mcnaughtans Pty - Mcnaughtans Refund",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "7f3ca705-8577-481b-97cf-42aad8e97a6e",
+    "date": "2026-02-18",
+    "amount": 280.33,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "3cae6f0f-4af8-4f5d-9697-fbbddc9bb6ec",
+    "date": "2026-02-19",
+    "amount": 9.64,
+    "category": "Software & Services",
+    "type": "expense",
+    "description": "Serptag London Gb",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "89c9061e-1825-45f3-b803-355fdcd5ce6d",
+    "date": "2026-02-19",
+    "amount": 118.42,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "7c37eee1-e974-451a-8446-728956785563",
+    "date": "2026-02-19",
+    "amount": 300,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "29d6f662-36b5-4101-9d62-b3f0c7dafa35",
+    "date": "2026-02-20",
+    "amount": 1302.6,
+    "category": "Automotive",
+    "type": "expense",
+    "description": "Al Wanneroo Pty Ltd Wangara AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "2f13e7f0-0264-4203-8931-8df8bf2f20aa",
+    "date": "2026-02-20",
+    "amount": 9.08,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Sushia (Cloisters) Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "c326367c-eb12-4caa-aa5b-f54cda97e463",
+    "date": "2026-02-20",
+    "amount": 17,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Zlr*asaka Sushi Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "53421b61-656b-44fd-b425-c3fa3ec6f3df",
+    "date": "2026-02-20",
+    "amount": 9,
+    "category": "Groceries",
+    "type": "expense",
+    "description": "Coles 0481 Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "113e8867-ee0f-42bb-a787-d52143a07012",
+    "date": "2026-02-20",
+    "amount": 20,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "7e4d3ee2-0e84-4a7a-857d-0ea7a16908eb",
+    "date": "2026-02-21",
+    "amount": 13.5,
+    "category": "Business Services",
+    "type": "expense",
+    "description": "Ass Enterprise Pty Ltd Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "b7cb72fa-2e27-42e4-8713-9817dc7dd069",
+    "date": "2026-02-21",
+    "amount": 26.49,
+    "category": "Alcohol & Liquor",
+    "type": "expense",
+    "description": "Dan Murphy S/401 Scarboroinnaloo AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "649862dc-76d6-4cfc-ba92-a39f146ffe6b",
+    "date": "2026-02-21",
+    "amount": 269.99,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "The Athletes Foot Joondalup Dc AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "8ffacc94-c2c4-464b-be9d-9afd80f38b22",
+    "date": "2026-02-21",
+    "amount": 50,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "e4212f2c-bea5-49de-8dbf-31368114a514",
+    "date": "2026-02-22",
+    "amount": 50,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "6da3b6b6-2eec-4c3f-9c37-eabe05849838",
+    "date": "2026-02-22",
+    "amount": 20,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "505afdfd-5079-4c26-8316-a55d9feac740",
+    "date": "2026-02-22",
+    "amount": 50,
+    "category": "Transfer",
+    "type": "income",
+    "description": "Transfer",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "9db64f62-46b8-4fb8-9b2e-13109f529381",
+    "date": "2026-02-23",
+    "amount": 8.64,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Sq *Bennies By The Beach Marmion AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "41738107-ce68-46f8-962f-19bb06f35bb9",
+    "date": "2026-02-23",
+    "amount": 59.8,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "Uniqlo Joondalup Joondalup AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "6029602f-b2a6-4d02-acb7-0d203ec81c22",
+    "date": "2026-02-24",
+    "amount": 269.99,
+    "category": "Refund",
+    "type": "income",
+    "description": "Refund From The Athletes Foot Joondalup Dc AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "91cdb8b4-b42e-476d-b29f-3d10b730e00e",
+    "date": "2026-02-24",
+    "amount": 15.2,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "McDonald's Innaloo Innaloo AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "ad909523-3e0b-43b0-bb67-f390a1f7dfc4",
+    "date": "2026-02-24",
+    "amount": 40.87,
+    "category": "Groceries",
+    "type": "expense",
+    "description": "Aldi Stores Joondalup AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "4f5e7d38-390a-42b1-8e4e-b87e4f074938",
+    "date": "2026-02-24",
+    "amount": 104.87,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Burk Alkimos Alkimos AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "81246c60-0785-4f19-ac2f-6b9c305056ea",
+    "date": "2026-02-25",
+    "amount": 17,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Zlr*asaka Sushi Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "5be8e064-3373-407d-82f5-ac6be95d8ff1",
+    "date": "2026-02-25",
+    "amount": 13.5,
+    "category": "Business Services",
+    "type": "expense",
+    "description": "Ass Enterprise Pty Ltd Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "119f7210-1aff-4b4c-8230-14452020afe1",
+    "date": "2026-02-25",
+    "amount": 216.99,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "Hy Carillon Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "d61e6b50-5636-4aa6-8ebc-03f3060b257d",
+    "date": "2026-02-25",
+    "amount": 2314.62,
+    "category": "Income",
+    "type": "income",
+    "description": "Direct Credit CBA - Wemoney Salary",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "aec71b09-dd85-4f43-8ec9-ad3d25db8448",
+    "date": "2026-02-25",
+    "amount": 1000,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Payment to 013-943 612169222 Airwall",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "c1a33446-9521-4eea-a0b5-b53ace0ef99b",
+    "date": "2026-02-25",
+    "amount": 851.26,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Payment to 013-943 612169222 Airwall",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "319a7461-dfb8-4d55-b49b-112e63a78365",
+    "date": "2026-02-26",
+    "amount": 24.09,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Zlr*asaka Sushi Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "7df6285c-26cd-4c0f-b645-59c783cbe59d",
+    "date": "2026-02-26",
+    "amount": 500,
+    "category": "Income",
+    "type": "income",
+    "description": "Payment from GEORGE DOBSON-BROWN",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "30121234-dcb4-4ea9-9849-17817f8a0cd3",
+    "date": "2026-02-27",
+    "amount": 210,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Payment to A G Lillee",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "def6127f-8481-445c-8a54-ff01f6b6aac7",
+    "date": "2026-02-28",
+    "amount": 35,
+    "category": "Transfer",
+    "type": "expense",
+    "description": "Payment to 014-111 158266255 DOBSON-",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:07:39.517Z"
+  },
+  {
+    "id": "b4fc8599-ec62-4f37-903b-696da01402f9",
+    "date": "2026-02-28",
+    "amount": 128.7,
+    "category": "Shopping",
+    "type": "expense",
+    "description": "Amazon Marketplace AU Sydney AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "eb6c223c-fc68-4fbd-858e-06173ad207ec",
+    "date": "2026-02-28",
+    "amount": 15.45,
+    "category": "Groceries",
+    "type": "expense",
+    "description": "Beaumaris IGA Ocean Reef AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "b9e34980-fd56-4b3f-9ad1-7ef4d02d5d67",
+    "date": "2026-02-28",
+    "amount": 2,
+    "category": "Parking",
+    "type": "expense",
+    "description": "Transperth Parking Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "7280f37f-9d93-4bd1-8ad3-7a31ee935eb2",
+    "date": "2026-02-28",
+    "amount": 10.12,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "The Generous Squire Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  },
+  {
+    "id": "6a842c7a-c02d-42e1-9019-eb84454491c0",
+    "date": "2026-02-28",
+    "amount": 20.55,
+    "category": "Food & Dining",
+    "type": "expense",
+    "description": "Zlr*asaka Sushi Perth AU",
+    "createdAt": "2026-03-19T14:01:26.215Z",
+    "updatedAt": "2026-03-19T14:01:26.215Z"
+  }
+]

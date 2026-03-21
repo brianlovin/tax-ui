@@ -916,7 +916,7 @@ export function App() {
             className="dark:shadow-contrast fixed right-8 bottom-8 left-8 z-100 flex cursor-pointer flex-col gap-3 rounded-2xl bg-black p-4 text-white shadow-md ring-[0.5px] ring-black/10 md:max-w-lg md:p-6 dark:bg-neutral-900"
           >
             <div className="mb-2 flex flex-col items-start justify-start text-left text-lg">
-              <span className="font-semibold text-white">Tax UI</span>
+              <span className="font-semibold text-white">Pennywise</span>
               <span className="font-medium opacity-70">
                 Visualize and chat with your tax returns.
               </span>

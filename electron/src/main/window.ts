@@ -34,7 +34,7 @@ export function createWindow(port: number): BrowserWindow {
     ...bounds,
     minWidth: 800,
     minHeight: 600,
-    title: "Tax UI",
+    title: "Pennywise",
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {

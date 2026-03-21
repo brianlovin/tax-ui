@@ -278,7 +278,7 @@ export function SetupDialogPreview({ onClose }: Props) {
   useHotkeys("right", next, { preventDefault: true });
   useHotkeys("escape", onClose, { preventDefault: true });
 
-  const dialogTitle = scenario.hasStoredKey ? "Upload tax returns" : "Tax UI";
+  const dialogTitle = scenario.hasStoredKey ? "Upload tax returns" : "Pennywise";
   const dialogDescription = scenario.hasStoredKey
     ? "Upload more tax returns"
     : "Make sense of your tax returns";

@@ -110,11 +110,11 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
         {/* App icon + version */}
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="flex flex-col items-center">
-            <img src={appIconUrl} alt="Tax UI" width={80} height={80} className="rounded-2xl" />
+            <img src={appIconUrl} alt="Pennywise" width={80} height={80} className="rounded-2xl" />
           </div>
 
           <div className="flex flex-col">
-            <div className="text-center text-2xl font-semibold">Tax UI</div>
+            <div className="text-center text-2xl font-semibold">Pennywise</div>
             <div className="text-center text-lg font-medium text-neutral-500 dark:text-neutral-400">
               Visualize and chat with your tax returns.
             </div>

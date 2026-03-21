@@ -313,7 +313,7 @@ export function AustralianSetupDialog({
     <Dialog
       open={isOpen}
       onClose={onClose}
-      title={hasStoredKey ? "Upload Tax Returns" : "Australian Tax UI"}
+      title={hasStoredKey ? "Upload Tax Returns" : "Australian Pennywise"}
       description={
         hasStoredKey
           ? "Upload more Australian tax return PDFs"
