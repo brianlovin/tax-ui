@@ -315,25 +315,25 @@ export const EXPENSE_CATEGORY_MAP: Record<string, ExpenseCategoryId> = {
 // Normalize a category name/ID to an ExpenseCategoryId
 export function normalizeExpenseCategory(category: string | undefined): ExpenseCategoryId {
   if (!category) return "life-admin";
-  
+
   const normalized = category
     .toLowerCase()
     .replace(/[ &\-_]+/g, "-")
     .replace(/--+/g, "-")
     .replace(/^-|-$/g, "");
-  
+
   // Direct match
   if (normalized in EXPENSE_CATEGORY_MAP) {
     return EXPENSE_CATEGORY_MAP[normalized]!;
   }
-  
+
   // Try partial match (contains)
   for (const [key, value] of Object.entries(EXPENSE_CATEGORY_MAP)) {
     if (normalized.includes(key) || key.includes(normalized)) {
       return value;
     }
   }
-  
+
   return "life-admin"; // Default fallback
 }
 
@@ -592,3 +592,96 @@ export const TransactionSchema = z.object({
 });
 
 export type Transaction = z.infer<typeof TransactionSchema>;
+
+// ============================================
+// DATE UTILITIES
+// ============================================
+
+export type Granularity = "month" | "week";
+
+/**
+ * Get the week number of the year (1-52) for a given date
+ */
+export function getWeekOfYear(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 1);
+  const diff = date.getTime() - start.getTime();
+  const oneWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.ceil((diff + start.getDay() * 24 * 60 * 60 * 1000) / oneWeek);
+}
+
+/**
+ * Get the period (week or month) for a given date
+ */
+export function getPeriod(date: Date, granularity: Granularity): number {
+  if (granularity === "week") {
+    return getWeekOfYear(date);
+  }
+  return date.getMonth() + 1; // 1-12
+}
+
+/**
+ * Get the total number of periods for a granularity
+ */
+export function getTotalPeriods(granularity: Granularity): number {
+  return granularity === "week" ? 52 : 12;
+}
+
+/**
+ * Get a label for a period
+ */
+export function getPeriodLabel(period: number, granularity: Granularity): string {
+  if (granularity === "week") {
+    return `W${period}`;
+  }
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  return months[period - 1] || "";
+}
+
+/**
+ * Aggregate transactions by category and period
+ * Returns { categoryId: { period: amount } }
+ */
+export function aggregateByCategoryAndPeriod(
+  transactions: Array<{ date: string; category: string; amount: number; type: string }>,
+  granularity: Granularity,
+  year?: number,
+): Record<string, Record<number, number>> {
+  const result: Record<string, Record<number, number>> = {};
+
+  for (const tx of transactions) {
+    const date = new Date(tx.date);
+
+    // Filter by year if specified
+    if (year !== undefined && date.getFullYear() !== year) {
+      continue;
+    }
+
+    const period = getPeriod(date, granularity);
+
+    if (!result[tx.category]) {
+      result[tx.category] = {};
+    }
+    const catData = result[tx.category]!;
+
+    if (!catData[period]) {
+      catData[period] = 0;
+    }
+
+    catData[period] += tx.amount;
+  }
+
+  return result;
+}

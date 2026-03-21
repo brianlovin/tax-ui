@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "../lib/cn";
 import { formatCurrency } from "../lib/format";
 import {
+  aggregateByCategoryAndPeriod,
   type BankStatement,
   EXPENSE_CATEGORIES,
   type ExpenseCategoryId,
   type ExpenseEntry,
   getCategoryName,
+  getPeriodLabel,
+  getTotalPeriods,
   normalizeExpenseCategory,
 } from "../lib/schema";
 import { Button } from "./Button";
@@ -24,23 +27,6 @@ interface Props {
 
 type TimeGranularity = "month" | "week";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function getWeekLabels(): string[] {
-  return Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
-}
-
-function getCurrentMonth(): number {
-  return new Date().getMonth(); // 0-indexed
-}
-
-function getCurrentWeek(): number {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
-  return Math.ceil((days + start.getDay() + 1) / 7);
-}
-
 interface ExpenseRow {
   id: string;
   label: string;
@@ -50,12 +36,16 @@ interface ExpenseRow {
   values: number[];
 }
 
+interface TransactionData {
+  date: string;
+  category: string;
+  amount: number;
+  type: string;
+}
+
 interface ExpenseData {
-  [year: number]: {
-    [category: string]: {
-      [month: number]: number;
-    };
-  };
+  transactions: TransactionData[];
+  manualExpenses: TransactionData[];
 }
 
 function collectExpenseRows(
@@ -64,7 +54,13 @@ function collectExpenseRows(
   selectedYear?: number,
 ): ExpenseRow[] {
   const rows: ExpenseRow[] = [];
-  const periods = granularity === "month" ? 12 : 52;
+  const periods = getTotalPeriods(granularity);
+
+  // Combine all transactions
+  const allTransactions = [...expenses.manualExpenses, ...expenses.transactions];
+
+  // Aggregate by category and period
+  const aggregated = aggregateByCategoryAndPeriod(allTransactions, granularity, selectedYear);
 
   // Always show all categories, even if no data
   for (const [parentKey, parent] of Object.entries(EXPENSE_CATEGORIES)) {
@@ -81,40 +77,10 @@ function collectExpenseRows(
     // Child categories
     for (const child of parent.children) {
       const periodValues: number[] = [];
+      const catData = aggregated[child.id] || {};
 
-      if (selectedYear !== undefined) {
-        // Single year view
-        const yearData = expenses[selectedYear];
-        const catData = yearData?.[child.id];
-        if (catData) {
-          if (granularity === "month") {
-            for (let m = 1; m <= 12; m++) {
-              periodValues.push(catData[m] || 0);
-            }
-          } else {
-            // For weeks, aggregate from monthly data (simplified)
-            for (let w = 1; w <= 52; w++) {
-              const month = Math.ceil(w / 4.33);
-              periodValues.push((catData[month] || 0) / 4.33);
-            }
-          }
-        } else {
-          // No data for this category - fill with zeros
-          periodValues.push(...Array(periods).fill(0));
-        }
-      } else {
-        // Summary - total across all years
-        let total = 0;
-        for (const year of Object.keys(expenses).map(Number)) {
-          const yearData = expenses[year];
-          const catData = yearData?.[child.id];
-          if (catData) {
-            for (const monthVal of Object.values(catData)) {
-              total += monthVal;
-            }
-          }
-        }
-        periodValues.push(total);
+      for (let p = 1; p <= periods; p++) {
+        periodValues.push(catData[p] || 0);
       }
 
       rows.push({
@@ -143,7 +109,7 @@ function collectExpenseRows(
     id: "total",
     label: "Total Expenses",
     category: "total",
-    parent: "",
+    parent: "total",
     values: totalValues,
   });
 
@@ -151,7 +117,7 @@ function collectExpenseRows(
 }
 
 export function ExpensesView({ year, granularity = "month" }: Props) {
-  const [expenses, setExpenses] = useState<ExpenseData>({});
+  const [expenses, setExpenses] = useState<ExpenseData>({ transactions: [], manualExpenses: [] });
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategoryId | null>(null);
   const [amount, setAmount] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -167,33 +133,34 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
           Record<number, { entries: ExpenseEntry[] }>,
           BankStatement[],
         ]) => {
-          const transformed: ExpenseData = {};
+          const transformed: ExpenseData = { transactions: [], manualExpenses: [] };
+
           // Process manual expenses
           for (const [yearKey, yearData] of Object.entries(expenseData)) {
-            const yr = Number(yearKey);
-            transformed[yr] = transformed[yr] || {};
             for (const entry of yearData.entries) {
-              const yearEntry = transformed[yr]!;
-              if (!yearEntry[entry.category]) {
-                yearEntry[entry.category] = {};
-              }
-              const catData = yearEntry[entry.category]!;
-              catData[entry.month] = (catData[entry.month] || 0) + entry.amount;
+              const date = new Date(entry.year, entry.month - 1, 15); // Use middle of month
+              transformed.manualExpenses.push({
+                date: date.toISOString().slice(0, 10),
+                category: entry.category,
+                amount: entry.amount,
+                type: "expense",
+              });
             }
           }
+
           // Process bank statement transactions
           for (const statement of statements) {
             for (const txn of statement.transactions) {
-              // Try to categorize transactions based on description or category
+              // Skip credits (income)
+              if (txn.type === "credit") continue;
+
               const category = normalizeExpenseCategory(txn.category || txn.description);
-              const month = new Date(txn.date).getMonth() + 1;
-              const yr = new Date(txn.date).getFullYear();
-              const amount = Math.abs(txn.amount); // Use absolute value for expenses
-              if (!transformed[yr]) transformed[yr] = {};
-              const yearEntry = transformed[yr]!;
-              if (!yearEntry[category]) yearEntry[category] = {};
-              const catData = yearEntry[category]!;
-              catData[month] = (catData[month] || 0) + amount;
+              transformed.transactions.push({
+                date: txn.date,
+                category,
+                amount: Math.abs(txn.amount),
+                type: txn.type,
+              });
             }
           }
           setExpenses(transformed);
@@ -207,7 +174,13 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
     [expenses, granularity, year],
   );
 
-  const periodLabels = granularity === "month" ? MONTHS : getWeekLabels();
+  const periodLabels = useMemo(
+    () =>
+      Array.from({ length: getTotalPeriods(granularity) }, (_, i) =>
+        getPeriodLabel(i + 1, granularity),
+      ),
+    [granularity],
+  );
 
   const handleAddExpense = useCallback(async () => {
     if (!selectedCategory || !amount || !year) return;
@@ -235,19 +208,16 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
       // Refresh expenses
       const res = await fetch("/api/expenses");
       const data = await res.json();
-      const transformed: ExpenseData = {};
+      const transformed: ExpenseData = { transactions: expenses.transactions, manualExpenses: [] };
       for (const [yearKey, yearData] of Object.entries(data)) {
-        const y = Number(yearKey);
-        transformed[y] = {};
-        const entries = (yearData as { entries: ExpenseEntry[] }).entries;
-        for (const entry of entries) {
-          const yearEntry = transformed[y];
-          if (!yearEntry) continue;
-          if (!yearEntry[entry.category]) {
-            yearEntry[entry.category] = {};
-          }
-          const catData = yearEntry[entry.category]!;
-          catData[entry.month] = (catData[entry.month] || 0) + entry.amount;
+        for (const e of (yearData as { entries: ExpenseEntry[] }).entries) {
+          const date = new Date(e.year, e.month - 1, 15);
+          transformed.manualExpenses.push({
+            date: date.toISOString().slice(0, 10),
+            category: e.category,
+            amount: e.amount,
+            type: "expense",
+          });
         }
       }
       setExpenses(transformed);
@@ -255,7 +225,7 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
     } catch (err) {
       console.error("Failed to add expense:", err);
     }
-  }, [selectedCategory, amount, year, selectedDate]);
+  }, [selectedCategory, amount, year, selectedDate, expenses.transactions]);
 
   const columns = useMemo<ColumnDef<ExpenseRow>[]>(() => {
     const cols: ColumnDef<ExpenseRow>[] = [
@@ -266,170 +236,125 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
           const row = info.row.original;
           if (row.isHeader) {
             return (
-              <div className="pt-2">
-                <span className="text-xs font-medium text-(--color-text-muted)">{row.label}</span>
-              </div>
+              <span className="flex items-center gap-2 font-semibold">
+                {row.label}
+                {row.category !== "total" && (
+                  <span className="text-xs text-(--color-text-muted)">({row.parent})</span>
+                )}
+              </span>
             );
           }
-          const isTotal = row.id === "total";
           return (
-            <span className={cn("truncate", isTotal && "font-medium")}>
-              {String(info.getValue())}
-            </span>
+            <span className={row.parent === "goodlife" ? "text-pink-600" : ""}>{row.label}</span>
           );
         },
-        meta: {
-          sticky: true,
-        } satisfies ColumnMeta,
-        size: 160,
+        size: 200,
       },
     ];
 
-    if (year !== undefined) {
-      const currentYear = new Date().getFullYear();
-      const isCurrentYear = year === currentYear;
-      const currentMonth = getCurrentMonth();
-      const currentWeek = getCurrentWeek();
-      const numPeriods = granularity === "month" ? 12 : 52;
+    // Add period columns dynamically
+    for (let i = 0; i < periodLabels.length; i++) {
+      const periodIndex = i;
+      const isCurrentPeriod =
+        granularity === "month"
+          ? i === new Date().getMonth()
+          : i === Math.ceil(new Date().getDate() / 7);
 
-      for (let i = 0; i < numPeriods; i++) {
-        const isCurrentPeriod =
-          isCurrentYear && (granularity === "month" ? i === currentMonth : i === currentWeek - 1);
-        cols.push({
-          id: `period-${i}`,
-          header: () => (
-            <span
-              className={
-                isCurrentPeriod
-                  ? "rounded bg-(--color-bg-muted) px-1.5 py-0.5 text-(--color-text)"
-                  : ""
-              }
-            >
-              {periodLabels[i]}
-            </span>
-          ),
-          cell: (info) => {
-            const row = info.row.original;
-            if (row.isHeader) return null;
-            const value = row.values[i] || 0;
-            const isTotal = row.id === "total";
-            return (
-              <span className={cn("slashed-zero tabular-nums", isTotal && "font-medium")}>
-                {value === 0 ? "—" : formatCurrency(value)}
-              </span>
-            );
-          },
-          meta: {
-            align: "right" as const,
-            headerAlign: "left" as const,
-          } satisfies ColumnMeta,
-          size: 100,
-        });
-      }
-    } else {
       cols.push({
-        id: "total",
-        header: "Total",
+        accessorKey: `period-${i}`,
+        header: periodLabels[i]!,
         cell: (info) => {
           const row = info.row.original;
-          if (row.isHeader) return null;
-          const total = row.values[0] || 0;
-          const isTotal = row.id === "total";
+          const value = row.values[periodIndex] || 0;
+          if (row.category === "total") {
+            return (
+              <span className={cn("font-medium tabular-nums", isCurrentPeriod && "font-bold")}>
+                {value > 0 ? formatCurrency(value) : "-"}
+              </span>
+            );
+          }
           return (
-            <span className={cn("slashed-zero tabular-nums", isTotal && "font-medium")}>
-              {total === 0 ? "—" : formatCurrency(total)}
+            <span
+              className={cn(
+                "text-(--color-text-muted) tabular-nums",
+                isCurrentPeriod && "text-(--color-text)",
+              )}
+            >
+              {value > 0 ? formatCurrency(value) : "-"}
             </span>
           );
         },
         meta: {
           align: "right" as const,
         } satisfies ColumnMeta,
-        size: 120,
+        size: 80,
       });
     }
 
     return cols;
-  }, [granularity, year, periodLabels]);
+  }, [granularity, periodLabels]);
 
-  const getRowClassName = (row: ExpenseRow) => {
-    if (row.isHeader) {
-      return "border-t border-(--color-border)";
-    }
-    return "";
-  };
+  const categories = Object.entries(EXPENSE_CATEGORIES).flatMap(([parentKey, parent]) => [
+    { id: parentKey, name: parent.name, isParent: true },
+    ...parent.children.map((c) => ({ id: c.id, name: `  ${c.name}`, isParent: false })),
+  ]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Add expense UI for single year view */}
-      {year !== undefined && (
-        <div className="flex items-center gap-2 border-b border-(--color-border) px-4 py-2">
-          <Menu
-            triggerClassName="px-3 py-1.5 text-sm font-medium rounded-lg border border-(--color-border) bg-(--color-bg) text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted)"
-            popupClassName="min-w-[180px]"
-            side="bottom"
-            trigger={selectedCategory ? getCategoryName(selectedCategory) : "Select category"}
-          >
-            {Object.entries(EXPENSE_CATEGORIES).map(([parentKey, parent]) => (
-              <div key={parentKey}>
-                <div className="px-2 py-1 text-xs font-medium text-(--color-text-muted)">
-                  {parent.name}
-                </div>
-                {parent.children.map((child) => (
-                  <MenuItem
-                    key={child.id}
-                    onClick={() => setSelectedCategory(child.id)}
-                    selected={selectedCategory === child.id}
-                  >
-                    {child.name}
-                  </MenuItem>
-                ))}
-              </div>
-            ))}
-          </Menu>
+      {/* Add expense form */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-(--color-border) px-3 py-1.5">
+        <Menu
+          triggerClassName="px-3 py-1.5 text-sm font-medium rounded-lg border border-(--color-border) bg-(--color-bg) text-(--color-text-muted) hover:text-(--color-text) hover:bg-(--color-bg-muted)"
+          popupClassName="min-w-[180px]"
+          side="right"
+          trigger={selectedCategory ? getCategoryName(selectedCategory) : "Category"}
+        >
+          {categories.map((cat) => (
+            <MenuItem
+              key={cat.id}
+              onClick={() => !cat.isParent && setSelectedCategory(cat.id as ExpenseCategoryId)}
+              selected={selectedCategory === cat.id}
+              className={cat.isParent ? "cursor-default font-medium text-(--color-text-muted)" : ""}
+            >
+              {cat.name}
+            </MenuItem>
+          ))}
+        </Menu>
 
-          <Input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            prefix="$"
-            className="w-28"
-          />
+        <Input
+          type="number"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          prefix="$"
+          className="w-28"
+        />
 
-          <DatePicker
-            value={selectedDate}
-            onChange={(date) => setSelectedDate(date)}
-            placeholder="Date"
-          />
+        <DatePicker
+          value={selectedDate}
+          onChange={(date) => setSelectedDate(date)}
+          placeholder="Date"
+        />
 
-          <Button
-            variant={!selectedCategory || !amount ? "outline" : "secondary"}
-            size="sm"
-            onClick={handleAddExpense}
-            disabled={!selectedCategory || !amount}
-          >
-            Add
-          </Button>
+        <Button
+          variant={!selectedCategory || !amount ? "outline" : "secondary"}
+          size="sm"
+          onClick={handleAddExpense}
+          disabled={!selectedCategory || !amount}
+        >
+          Add
+        </Button>
+      </div>
 
-          <div className="flex-1" />
-        </div>
-      )}
-
-      {rows.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center text-(--color-text-muted)">
-          No expenses recorded yet
-        </div>
-      ) : (
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <Table
-            data={rows}
-            columns={columns}
-            storageKey={`expenses-table-${year ?? "summary"}`}
-            isRowHoverDisabled={(row) => row.isHeader === true}
-            getRowClassName={getRowClassName}
-          />
-        </div>
-      )}
+      {/* Expenses table */}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <Table
+          data={rows}
+          columns={columns}
+          storageKey={`expenses-table-${year ?? "all"}`}
+          getRowClassName={(row) => (row.isHeader ? "bg-(--color-bg-muted) font-semibold" : "")}
+        />
+      </div>
     </div>
   );
 }
