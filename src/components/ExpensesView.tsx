@@ -12,6 +12,7 @@ import {
   getCategoryName,
   getPeriodLabel,
   getTotalPeriods,
+  getWeekOfYear,
   normalizeExpenseCategory,
 } from "../lib/schema";
 import { Button } from "./Button";
@@ -248,44 +249,64 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
             <span className={row.parent === "goodlife" ? "text-pink-600" : ""}>{row.label}</span>
           );
         },
-        size: 200,
+        size: 220,
+        enableResizing: true,
       },
     ];
 
     // Add period columns dynamically
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentWeek = getWeekOfYear(now);
+    const currentYear = now.getFullYear();
+    const selectedOrCurrentYear = year ?? currentYear;
+    const isCurrentYear = selectedOrCurrentYear === currentYear;
+
     for (let i = 0; i < periodLabels.length; i++) {
       const periodIndex = i;
-      const isCurrentPeriod =
-        granularity === "month"
-          ? i === new Date().getMonth()
-          : i === Math.ceil(new Date().getDate() / 7);
+      let isCurrentPeriod = false;
+      if (isCurrentYear) {
+        if (granularity === "month") {
+          isCurrentPeriod = i === currentMonth;
+        } else {
+          // week granularity - i is 0-based, so add 1 to match week number
+          isCurrentPeriod = i + 1 === currentWeek;
+        }
+      }
 
       cols.push({
         accessorKey: `period-${i}`,
-        header: periodLabels[i]!,
+        header: () => (
+          <span className={cn(isCurrentPeriod && "text-(--color-text)")}>{periodLabels[i]}</span>
+        ),
         cell: (info) => {
           const row = info.row.original;
           const value = row.values[periodIndex] || 0;
           if (row.category === "total") {
             return (
               <span className={cn("font-medium tabular-nums", isCurrentPeriod && "font-bold")}>
-                {value > 0 ? formatCurrency(value) : "-"}
+                {value > 0 ? formatCurrency(value) : "—"}
               </span>
             );
           }
           return (
             <span
               className={cn(
-                "text-(--color-text-muted) tabular-nums",
-                isCurrentPeriod && "text-(--color-text)",
+                "tabular-nums",
+                isCurrentPeriod ? "font-medium text-(--color-text)" : "text-(--color-text-muted)",
               )}
             >
-              {value > 0 ? formatCurrency(value) : "-"}
+              {value > 0 ? formatCurrency(value) : "—"}
             </span>
           );
         },
         meta: {
           align: "right" as const,
+          className: cn(
+            isCurrentPeriod && "bg-(--color-bg-muted)/50",
+            i === 0 && "border-l",
+            i === periodLabels.length - 1 && "border-r",
+          ),
         } satisfies ColumnMeta,
         size: 80,
       });
@@ -351,7 +372,7 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
         <Table
           data={rows}
           columns={columns}
-          storageKey={`expenses-table-${year ?? "all"}`}
+          storageKey={`expenses-table-${year ?? "all"}-${granularity}`}
           getRowClassName={(row) => (row.isHeader ? "bg-(--color-bg-muted) font-semibold" : "")}
         />
       </div>

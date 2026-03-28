@@ -1,6 +1,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 
+import { cn } from "../lib/cn";
 import { formatCurrency, formatPercent } from "../lib/format";
 import type { TaxReturn } from "../lib/schema";
 import { getTotalTax } from "../lib/tax-calculations";
@@ -278,7 +279,7 @@ export function TaxesView({ data, returns, year, granularity = "month" }: Props)
         meta: {
           sticky: true,
         } satisfies ColumnMeta,
-        size: 160,
+        size: 220,
       },
     ];
 
@@ -295,15 +296,7 @@ export function TaxesView({ data, returns, year, granularity = "month" }: Props)
         cols.push({
           id: `period-${i}`,
           header: () => (
-            <span
-              className={
-                isCurrentPeriod
-                  ? "rounded bg-(--color-bg-muted) px-1.5 py-0.5 text-(--color-text)"
-                  : ""
-              }
-            >
-              {periodLabels[i]}
-            </span>
+            <span className={cn(isCurrentPeriod && "text-(--color-text)")}>{periodLabels[i]}</span>
           ),
           cell: (info) => {
             const row = info.row.original;
@@ -317,6 +310,7 @@ export function TaxesView({ data, returns, year, granularity = "month" }: Props)
           meta: {
             align: "right" as const,
             headerAlign: "left" as const,
+            className: cn(isCurrentPeriod && "bg-(--color-bg-muted)/50"),
           } satisfies ColumnMeta,
           size: 100,
         });

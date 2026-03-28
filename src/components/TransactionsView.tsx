@@ -245,7 +245,10 @@ export function TransactionsView({ year, onImport }: Props) {
           const date = new Date(row.date);
           return <span className="tabular-nums">{date.toLocaleDateString()}</span>;
         },
-        size: 100,
+        size: 220,
+        meta: {
+          sticky: true,
+        } satisfies ColumnMeta,
       },
       {
         accessorKey: "type",
