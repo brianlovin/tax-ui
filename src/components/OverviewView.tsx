@@ -6,6 +6,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
@@ -22,7 +23,7 @@ import {
   type Transaction,
 } from "../lib/schema";
 import { Dialog } from "./Dialog";
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
+import { type ChartConfig, ChartContainer, ChartTooltip } from "./ui/chart";
 
 const CATEGORY_COLORS: Record<ExpenseCategoryId | string, string> = {
   groceries: "#3b82f6",
@@ -462,11 +463,11 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded-full bg-green-500" />
-              <span className="text-(--color-text-muted)">Income</span>
+              <span className="text-(--color-text-muted)">Net Positive</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded-full bg-red-500" />
-              <span className="text-(--color-text-muted)">Expenses</span>
+              <span className="text-(--color-text-muted)">Net Negative</span>
             </div>
           </div>
 
@@ -489,24 +490,50 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                 />
                 <ChartTooltip
-                  content={
-                    <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
-                  }
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length && payload[0]) {
+                      const data = payload[0].payload as PeriodData;
+                      return (
+                        <div className="rounded-lg border border-(--color-border) bg-(--color-bg) p-3 shadow-lg">
+                          <p className="mb-2 font-medium text-(--color-text)">{label}</p>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between gap-4">
+                              <span className="text-(--color-text-muted)">Income:</span>
+                              <span className="font-medium text-green-600">
+                                {formatCurrency(data.income)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="text-(--color-text-muted)">Expenses:</span>
+                              <span className="font-medium text-red-500">
+                                {formatCurrency(data.expenses)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-t border-(--color-border) pt-1">
+                              <span className="text-(--color-text-muted)">Net:</span>
+                              <span
+                                className={`font-medium ${
+                                  data.savings >= 0 ? "text-green-600" : "text-red-500"
+                                }`}
+                              >
+                                {formatCurrency(data.savings)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
-                <Bar
-                  dataKey="income"
-                  name="Income"
-                  stackId="cashflow"
-                  fill="var(--color-income)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="expenses"
-                  name="Expenses"
-                  stackId="cashflow"
-                  fill="var(--color-expenses)"
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
+                  {periodData.map((entry) => (
+                    <Cell
+                      key={`cell-${entry.period}`}
+                      fill={entry.savings >= 0 ? "#10b981" : "#ef4444"}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </div>
@@ -718,11 +745,11 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-green-500" />
-              <span className="text-(--color-text)">Income</span>
+              <span className="text-(--color-text)">Net Positive</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-red-500" />
-              <span className="text-(--color-text)">Expenses</span>
+              <span className="text-(--color-text)">Net Negative</span>
             </div>
           </div>
           <div className="h-96">
@@ -744,24 +771,50 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                 />
                 <ChartTooltip
-                  content={
-                    <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
-                  }
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length && payload[0]) {
+                      const data = payload[0].payload as PeriodData;
+                      return (
+                        <div className="rounded-lg border border-(--color-border) bg-(--color-bg) p-3 shadow-lg">
+                          <p className="mb-2 font-medium text-(--color-text)">{label}</p>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between gap-4">
+                              <span className="text-(--color-text-muted)">Income:</span>
+                              <span className="font-medium text-green-600">
+                                {formatCurrency(data.income)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="text-(--color-text-muted)">Expenses:</span>
+                              <span className="font-medium text-red-500">
+                                {formatCurrency(data.expenses)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-t border-(--color-border) pt-1">
+                              <span className="text-(--color-text-muted)">Net:</span>
+                              <span
+                                className={`font-medium ${
+                                  data.savings >= 0 ? "text-green-600" : "text-red-500"
+                                }`}
+                              >
+                                {formatCurrency(data.savings)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
-                <Bar
-                  dataKey="income"
-                  name="Income"
-                  stackId="cashflow"
-                  fill="var(--color-income)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="expenses"
-                  name="Expenses"
-                  stackId="cashflow"
-                  fill="var(--color-expenses)"
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
+                  {periodData.map((entry) => (
+                    <Cell
+                      key={`fullscreen-cell-${entry.period}`}
+                      fill={entry.savings >= 0 ? "#10b981" : "#ef4444"}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </div>
