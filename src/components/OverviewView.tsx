@@ -605,7 +605,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
 
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
           <span className="text-sm font-medium text-(--color-text)">Spending by Category</span>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-1 flex-col justify-end gap-3">
             {categorySpending.map((bill) => {
               const IconComponent = getCategoryIcon(bill.parent);
               return (
