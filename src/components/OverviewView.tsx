@@ -221,7 +221,12 @@ function aggregateCategorySpending(
   transactions: Transaction[],
   year: number | undefined,
 ): CategorySpending[] {
-  const spendingByParent = new Map<string, number>();
+  const spendingByParent = new Map<string, number>([
+    ["home", 0],
+    ["transport", 0],
+    ["goodlife", 0],
+    ["personal", 0],
+  ]);
 
   const allCategories = getAllExpenseCategories();
 
@@ -240,22 +245,21 @@ function aggregateCategorySpending(
     spendingByParent.set(parentKey, existing + tx.amount);
   }
 
+  const parentNames: Record<string, string> = {
+    home: "Home",
+    transport: "Transport",
+    goodlife: "Good Life",
+    personal: "Personal",
+  };
+
   return Array.from(spendingByParent.entries())
-    .map(([parentKey, amount]) => {
-      const parentNames: Record<string, string> = {
-        home: "Home",
-        transport: "Transport",
-        goodlife: "Good Life",
-        personal: "Personal",
-      };
-      return {
-        id: parentKey,
-        name: parentNames[parentKey] || parentKey,
-        amount,
-        color: PARENT_CATEGORY_COLORS[parentKey] || "#94a3b8",
-        parent: parentKey,
-      };
-    })
+    .map(([parentKey, amount]) => ({
+      id: parentKey,
+      name: parentNames[parentKey] || parentKey,
+      amount,
+      color: PARENT_CATEGORY_COLORS[parentKey] || "#94a3b8",
+      parent: parentKey,
+    }))
     .sort((a, b) => b.amount - a.amount);
 }
 
@@ -602,7 +606,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
           <span className="text-sm font-medium text-(--color-text)">Spending by Category</span>
           <div className="flex flex-col gap-3">
-            {categorySpending.slice(0, 4).map((bill) => {
+            {categorySpending.map((bill) => {
               const IconComponent = getCategoryIcon(bill.parent);
               return (
                 <div key={bill.id} className="flex items-center gap-3">
