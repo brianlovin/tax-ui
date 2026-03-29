@@ -605,11 +605,11 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
 
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
           <span className="text-sm font-medium text-(--color-text)">Spending by Category</span>
-          <div className="flex flex-1 flex-col justify-end gap-3">
+          <div className="flex flex-1 flex-col justify-end gap-4">
             {categorySpending.map((bill) => {
               const IconComponent = getCategoryIcon(bill.parent);
               return (
-                <div key={bill.id} className="flex items-center gap-3">
+                <div key={bill.id} className="flex items-center gap-3 py-1">
                   <div
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
                     style={{ backgroundColor: `${bill.color}20` }}
