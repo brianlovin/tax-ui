@@ -74,7 +74,6 @@ const PARENT_CATEGORY_COLORS: Record<string, string> = {
   personal: "#10b981",
 };
 
-type CashFlowView = "income" | "expense" | "savings";
 type TimeGranularity = "month" | "week";
 
 interface PeriodData {
@@ -314,7 +313,6 @@ function HorizontalStackedBar({ data }: HorizontalStackedBarProps) {
 export function OverviewView({ year, granularity = "month" }: OverviewViewProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [cashFlowView, setCashFlowView] = useState<CashFlowView>("income");
   const [fullscreenChart, setFullscreenChart] = useState<"income" | "spending" | "cashflow" | null>(
     null,
   );
@@ -461,20 +459,15 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
             </button>
           </div>
 
-          <div className="flex gap-2">
-            {(["income", "expense", "savings"] as CashFlowView[]).map((view) => (
-              <button
-                key={view}
-                onClick={() => setCashFlowView(view)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  cashFlowView === view
-                    ? "bg-(--color-bg-muted) text-(--color-text)"
-                    : "text-(--color-text-muted) hover:bg-(--color-bg-muted)/50 hover:text-(--color-text)"
-                }`}
-              >
-                {view.charAt(0).toUpperCase() + view.slice(1)}
-              </button>
-            ))}
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-green-500" />
+              <span className="text-(--color-text-muted)">Income</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-red-500" />
+              <span className="text-(--color-text-muted)">Expenses</span>
+            </div>
           </div>
 
           <div className="h-48">
@@ -501,8 +494,17 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   }
                 />
                 <Bar
-                  dataKey={cashFlowView}
-                  fill={`var(--color-${cashFlowView === "expense" ? "expenses" : cashFlowView})`}
+                  dataKey="income"
+                  name="Income"
+                  stackId="cashflow"
+                  fill="var(--color-income)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="expenses"
+                  name="Expenses"
+                  stackId="cashflow"
+                  fill="var(--color-expenses)"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -713,20 +715,15 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
         size="lg"
       >
         <div className="flex flex-col gap-4">
-          <div className="flex gap-2">
-            {(["income", "expense", "savings"] as CashFlowView[]).map((view) => (
-              <button
-                key={view}
-                onClick={() => setCashFlowView(view)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  cashFlowView === view
-                    ? "bg-(--color-bg-muted) text-(--color-text)"
-                    : "text-(--color-text-muted) hover:bg-(--color-bg-muted)/50 hover:text-(--color-text)"
-                }`}
-              >
-                {view.charAt(0).toUpperCase() + view.slice(1)}
-              </button>
-            ))}
+          <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-green-500" />
+              <span className="text-(--color-text)">Income</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-red-500" />
+              <span className="text-(--color-text)">Expenses</span>
+            </div>
           </div>
           <div className="h-96">
             <ChartContainer config={cashFlowConfig} className="h-full w-full">
@@ -752,8 +749,17 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   }
                 />
                 <Bar
-                  dataKey={cashFlowView}
-                  fill={`var(--color-${cashFlowView === "expense" ? "expenses" : cashFlowView})`}
+                  dataKey="income"
+                  name="Income"
+                  stackId="cashflow"
+                  fill="var(--color-income)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="expenses"
+                  name="Expenses"
+                  stackId="cashflow"
+                  fill="var(--color-expenses)"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
