@@ -189,10 +189,10 @@ function aggregatePeriodData(
   });
 
   if (currentIndex === -1) {
-    return allPeriods.slice(-6);
+    return allPeriods.slice(-12);
   }
 
-  const startIndex = Math.max(0, currentIndex - 5);
+  const startIndex = Math.max(0, currentIndex - 11);
   return allPeriods.slice(startIndex, currentIndex + 1);
 }
 
@@ -404,7 +404,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-sm text-(--color-text-muted)">
-                Income ({granularity === "month" ? "6 months" : "6 weeks"})
+                Income ({granularity === "month" ? "12 months" : "12 weeks"})
               </span>
               <span className="text-2xl font-semibold text-(--color-text)">
                 {formatCurrency(currentPeriodTotal)}
@@ -618,7 +618,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
       <Dialog
         open={fullscreenChart === "income"}
         onClose={() => setFullscreenChart(null)}
-        title={`Income Trend (${granularity === "month" ? "6 months" : "6 weeks"})`}
+        title={`Income Trend (${granularity === "month" ? "12 months" : "12 weeks"})`}
         size="lg"
       >
         <div className="h-96">
