@@ -19,6 +19,7 @@ import {
   getPeriodLabel,
   getTotalPeriods,
   getWeekOfYear,
+  normalizeExpenseCategory,
   type Transaction,
 } from "../lib/schema";
 import { Dialog } from "./Dialog";
@@ -171,6 +172,9 @@ function aggregatePeriodData(
 
     if (year !== undefined && txYear !== year) continue;
 
+    const catId = normalizeExpenseCategory(tx.category);
+    if (catId === "exclude") continue;
+
     const periodNum = getPeriodFromDate(date, granularity);
 
     const matchingPeriod = periodDataArray.find(
@@ -205,7 +209,9 @@ function aggregateCategorySpending(
     const date = new Date(tx.date);
     if (year !== undefined && date.getFullYear() !== year) continue;
 
-    const catId = tx.category || "life-admin";
+    const catId = normalizeExpenseCategory(tx.category);
+    if (catId === "exclude") continue;
+
     const categoryInfo = allCategories.find((c) => c.id === catId);
     const parentKey = categoryInfo?.parent || "personal";
 

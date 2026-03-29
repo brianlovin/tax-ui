@@ -264,38 +264,41 @@ export function getCategoryParent(categoryId: ExpenseCategoryId): ExpenseCategor
 }
 
 // Map common category names/IDs to ExpenseCategoryId
-export const EXPENSE_CATEGORY_MAP: Record<string, ExpenseCategoryId> = {
-  // Groceries
+// Use "exclude" for non-expense categories like transfers
+export const EXPENSE_CATEGORY_MAP: Record<string, ExpenseCategoryId | "exclude"> = {
   groceries: "groceries",
-  // Home
   utilities: "utilities",
   internet: "internet",
   "rent-mortgage": "rent-mortgage",
-  // Transport
   fuel: "fuel",
   parking: "parking",
   "public-transport": "public-transport",
   "taxis-share-cars": "taxis-share-cars",
   tolls: "tolls",
-  // Good Life
+  automotive: "maintenance-improvements",
+  "car-insurance-rego": "car-insurance-rego",
   "restaurants-cafes": "restaurants-cafes",
   "restaurants & cafes": "restaurants-cafes",
+  "food-dining": "restaurants-cafes",
+  dining: "restaurants-cafes",
   "pubs-bars": "pubs-bars",
   booze: "booze",
-  "alcohol & liquor": "booze",
+  "alcohol-liquor": "booze",
   takeaway: "takeaway",
-  "uber eats": "takeaway",
+  "uber-eats": "takeaway",
   doordash: "takeaway",
   menulog: "takeaway",
   grab: "takeaway",
   "events-gigs": "events-gigs",
+  entertainment: "events-gigs",
   "tv-music-streaming": "tv-music-streaming",
   netflix: "tv-music-streaming",
   spotify: "tv-music-streaming",
   disney: "tv-music-streaming",
   subscriptions: "apps-games-software",
+  "software-services": "apps-games-software",
   hobbies: "hobbies",
-  // Personal
+  recreation: "hobbies",
   shopping: "clothing-accessories",
   "clothing-accessories": "clothing-accessories",
   "health-medical": "health-medical",
@@ -303,6 +306,7 @@ export const EXPENSE_CATEGORY_MAP: Record<string, ExpenseCategoryId> = {
   fitness: "fitness-wellbeing",
   hair: "hair-beauty",
   "life-admin": "life-admin",
+  "business-services": "life-admin",
   fees: "life-admin",
   "mobile-phone": "mobile-phone",
   technology: "technology",
@@ -310,10 +314,17 @@ export const EXPENSE_CATEGORY_MAP: Record<string, ExpenseCategoryId> = {
   charity: "gifts-charity",
   education: "education-student-loans",
   children: "children-family",
+  transfer: "exclude",
+  transfers: "exclude",
+  payment: "exclude",
+  income: "exclude",
+  deposit: "exclude",
 };
 
 // Normalize a category name/ID to an ExpenseCategoryId
-export function normalizeExpenseCategory(category: string | undefined): ExpenseCategoryId {
+export function normalizeExpenseCategory(
+  category: string | undefined,
+): ExpenseCategoryId | "exclude" {
   if (!category) return "life-admin";
 
   const normalized = category
@@ -322,19 +333,21 @@ export function normalizeExpenseCategory(category: string | undefined): ExpenseC
     .replace(/--+/g, "-")
     .replace(/^-|-$/g, "");
 
-  // Direct match
   if (normalized in EXPENSE_CATEGORY_MAP) {
-    return EXPENSE_CATEGORY_MAP[normalized]!;
+    const mapped = EXPENSE_CATEGORY_MAP[normalized]!;
+    if (mapped === "exclude") {
+      return "exclude";
+    }
+    return mapped;
   }
 
-  // Try partial match (contains)
   for (const [key, value] of Object.entries(EXPENSE_CATEGORY_MAP)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
+    if (value !== "exclude" && (normalized.includes(key) || key.includes(normalized))) {
       return value;
     }
   }
 
-  return "life-admin"; // Default fallback
+  return "life-admin";
 }
 
 // Helper to get category name by id
