@@ -477,8 +477,8 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                 onClick={() => setCashFlowView(view)}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   cashFlowView === view
-                    ? "bg-(--color-bg) text-(--color-text)"
-                    : "text-(--color-text-muted) hover:text-(--color-text)"
+                    ? "bg-(--color-bg-muted) text-(--color-text)"
+                    : "text-(--color-text-muted) hover:bg-(--color-bg-muted)/50 hover:text-(--color-text)"
                 }`}
               >
                 {view.charAt(0).toUpperCase() + view.slice(1)}
@@ -729,8 +729,8 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                 onClick={() => setCashFlowView(view)}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   cashFlowView === view
-                    ? "bg-(--color-bg) text-(--color-text)"
-                    : "text-(--color-text-muted) hover:text-(--color-text)"
+                    ? "bg-(--color-bg-muted) text-(--color-text)"
+                    : "text-(--color-text-muted) hover:bg-(--color-bg-muted)/50 hover:text-(--color-text)"
                 }`}
               >
                 {view.charAt(0).toUpperCase() + view.slice(1)}
