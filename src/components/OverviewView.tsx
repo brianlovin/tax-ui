@@ -1,19 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { formatCurrency } from "../lib/format";
 import { EXPENSE_CATEGORIES, type ExpenseCategoryId, type Transaction } from "../lib/schema";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "./ui/chart";
 
 const CATEGORY_COLORS: Record<ExpenseCategoryId | string, string> = {
   groceries: "#3b82f6",
@@ -147,71 +144,30 @@ function aggregateMonthlyData(
     .map(([, data]) => data);
 }
 
-function AreaTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string }>;
-  label?: string;
-}) {
-  if (active && payload && payload.length) {
-    return (
-      <div className="rounded-lg border border-(--color-border) bg-(--color-bg) p-3 shadow-lg">
-        <p className="mb-2 font-medium text-(--color-text)">{label}</p>
-        {payload.map((entry) => (
-          <p key={entry.name} className="flex items-center gap-2 text-sm">
-            <span
-              className="inline-block h-3 w-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-(--color-text-muted)">{entry.name}:</span>
-            <span className="font-medium text-(--color-text)">{formatCurrency(entry.value)}</span>
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
+function createIncomeExpenseChartConfig(): ChartConfig {
+  return {
+    income: {
+      label: "Income",
+      color: "#10b981",
+    },
+    expenses: {
+      label: "Expenses",
+      color: "#ef4444",
+    },
+  };
 }
 
-function BarTooltip({
-  active,
-  payload,
-  label,
-  categories,
-}: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
-  label?: string;
-  categories: { id: ExpenseCategoryId; name: string; parent: string }[];
-}) {
-  if (active && payload && payload.length) {
-    const topEntries = payload
-      .filter((p) => p.value > 0)
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10);
-
-    return (
-      <div className="max-h-64 max-w-xs overflow-auto rounded-lg border border-(--color-border) bg-(--color-bg) p-3 shadow-lg">
-        <p className="mb-2 font-medium text-(--color-text)">{label}</p>
-        {topEntries.map((entry) => (
-          <p key={entry.dataKey} className="flex items-center gap-2 text-sm">
-            <span
-              className="inline-block h-3 w-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-(--color-text-muted)">
-              {categories.find((c) => c.id === entry.dataKey)?.name || entry.dataKey}:
-            </span>
-            <span className="font-medium text-(--color-text)">{formatCurrency(entry.value)}</span>
-          </p>
-        ))}
-      </div>
-    );
+function createExpenseCategoryChartConfig(
+  categories: { id: ExpenseCategoryId; name: string; parent: string }[],
+): ChartConfig {
+  const config: ChartConfig = {};
+  for (const cat of categories) {
+    config[cat.id] = {
+      label: cat.name,
+      color: CATEGORY_COLORS[cat.id],
+    };
   }
-  return null;
+  return config;
 }
 
 export function OverviewView({ year }: OverviewViewProps) {
@@ -238,15 +194,9 @@ export function OverviewView({ year }: OverviewViewProps) {
     [transactions, year, allExpenseCategories],
   );
 
-  const BarTooltipWithCategories = useMemo(
-    () =>
-      function BarTooltipWrapper(props: {
-        active?: boolean;
-        payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
-        label?: string;
-      }) {
-        return <BarTooltip {...props} categories={allExpenseCategories} />;
-      },
+  const incomeExpenseConfig = useMemo(() => createIncomeExpenseChartConfig(), []);
+  const expenseCategoryConfig = useMemo(
+    () => createExpenseCategoryChartConfig(allExpenseCategories),
     [allExpenseCategories],
   );
 
@@ -271,16 +221,16 @@ export function OverviewView({ year }: OverviewViewProps) {
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold text-(--color-text)">Income & Expenses Over Time</h2>
         <div className="h-64 w-full rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer config={incomeExpenseConfig} className="h-full w-full">
             <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--color-expenses)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-expenses)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.5} />
@@ -298,38 +248,37 @@ export function OverviewView({ year }: OverviewViewProps) {
                 axisLine={{ stroke: "var(--color-border)" }}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
               />
-              <Tooltip content={<AreaTooltip />} />
-              <Legend
-                wrapperStyle={{ paddingTop: "10px" }}
-                formatter={(value) => <span className="text-(--color-text)">{value}</span>}
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
+                }
               />
+              <ChartLegend content={<ChartLegendContent />} />
               <Area
                 type="monotone"
                 dataKey="income"
-                name="Income"
                 stackId="1"
-                stroke="#10b981"
+                stroke="var(--color-income)"
                 fill="url(#incomeGradient)"
                 strokeWidth={2}
               />
               <Area
                 type="monotone"
                 dataKey="expenses"
-                name="Expenses"
                 stackId="1"
-                stroke="#ef4444"
+                stroke="var(--color-expenses)"
                 fill="url(#expenseGradient)"
                 strokeWidth={2}
               />
             </AreaChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-3">
         <h2 className="text-lg font-semibold text-(--color-text)">Monthly Expenses by Category</h2>
         <div className="min-h-96 w-full flex-1 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer config={expenseCategoryConfig} className="h-full w-full">
             <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.5} />
               <XAxis
@@ -349,21 +298,30 @@ export function OverviewView({ year }: OverviewViewProps) {
                 axisLine={{ stroke: "var(--color-border)" }}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
               />
-              <Tooltip content={<BarTooltipWithCategories />} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    nameKey="dataKey"
+                    formatter={(value, name) => {
+                      const category = allExpenseCategories.find((c) => c.id === name);
+                      return `${category?.name ?? name}: ${formatCurrency(Number(value))}`;
+                    }}
+                  />
+                }
+              />
               {allExpenseCategories.map((category) => (
                 <Bar
                   key={category.id}
                   dataKey={category.id}
-                  name={category.name}
                   stackId="expenses"
-                  fill={CATEGORY_COLORS[category.id]}
-                  stroke={CATEGORY_COLORS[category.id]}
+                  fill={`var(--color-${category.id})`}
+                  stroke={`var(--color-${category.id})`}
                   strokeWidth={1}
                   radius={[0, 0, 0, 0]}
                 />
               ))}
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
 
         <div className="flex flex-wrap gap-3 rounded-lg border border-(--color-border) bg-(--color-bg-muted)/30 p-3">
