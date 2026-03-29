@@ -245,9 +245,7 @@ export function ExpensesView({ year, granularity = "month" }: Props) {
               </span>
             );
           }
-          return (
-            <span className={row.parent === "goodlife" ? "text-pink-600" : ""}>{row.label}</span>
-          );
+          return <span className="text-(--color-text)">{row.label}</span>;
         },
         size: 220,
         enableResizing: true,
