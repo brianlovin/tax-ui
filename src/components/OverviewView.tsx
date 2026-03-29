@@ -375,6 +375,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
   const [fullscreenChart, setFullscreenChart] = useState<"income" | "spending" | "cashflow" | null>(
     null,
   );
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/transactions")
@@ -587,12 +588,19 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   }}
                 />
                 <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
-                  {periodData.map((entry) => (
-                    <Cell
-                      key={`cell-${entry.period}`}
-                      fill={entry.savings >= 0 ? "#d1d5db" : "#4b5563"}
-                    />
-                  ))}
+                  {periodData.map((entry, index) => {
+                    const isHovered = hoveredBar === index;
+                    const baseColor = entry.savings >= 0 ? "#d1d5db" : "#4b5563";
+                    const hoverColor = entry.savings >= 0 ? "#e5e7eb" : "#6b7280";
+                    return (
+                      <Cell
+                        key={`cell-${entry.period}`}
+                        fill={isHovered ? hoverColor : baseColor}
+                        onMouseEnter={() => setHoveredBar(index)}
+                        onMouseLeave={() => setHoveredBar(null)}
+                      />
+                    );
+                  })}
                 </Bar>
               </BarChart>
             </ChartContainer>
@@ -873,12 +881,19 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   }}
                 />
                 <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
-                  {periodData.map((entry) => (
-                    <Cell
-                      key={`fullscreen-cell-${entry.period}`}
-                      fill={entry.savings >= 0 ? "#d1d5db" : "#4b5563"}
-                    />
-                  ))}
+                  {periodData.map((entry, index) => {
+                    const isHovered = hoveredBar === index;
+                    const baseColor = entry.savings >= 0 ? "#d1d5db" : "#4b5563";
+                    const hoverColor = entry.savings >= 0 ? "#e5e7eb" : "#6b7280";
+                    return (
+                      <Cell
+                        key={`fullscreen-cell-${entry.period}`}
+                        fill={isHovered ? hoverColor : baseColor}
+                        onMouseEnter={() => setHoveredBar(index)}
+                        onMouseLeave={() => setHoveredBar(null)}
+                      />
+                    );
+                  })}
                 </Bar>
               </BarChart>
             </ChartContainer>
