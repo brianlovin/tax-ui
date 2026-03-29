@@ -200,7 +200,9 @@ function aggregateCategorySpending(
   transactions: Transaction[],
   year: number | undefined,
 ): CategorySpending[] {
-  const spendingByCategory = new Map<string, { amount: number; parent: string; name: string }>();
+  const spendingByParent = new Map<string, number>();
+
+  const allCategories = getAllExpenseCategories();
 
   for (const tx of transactions) {
     if (tx.type !== "expense") continue;
@@ -208,26 +210,27 @@ function aggregateCategorySpending(
     if (year !== undefined && date.getFullYear() !== year) continue;
 
     const catId = tx.category || "life-admin";
-    const existing = spendingByCategory.get(catId) || {
-      amount: 0,
-      parent: "personal",
-      name: "Unknown",
-    };
-    existing.amount += tx.amount;
-    spendingByCategory.set(catId, existing);
+    const categoryInfo = allCategories.find((c) => c.id === catId);
+    const parentKey = categoryInfo?.parent || "personal";
+
+    const existing = spendingByParent.get(parentKey) || 0;
+    spendingByParent.set(parentKey, existing + tx.amount);
   }
 
-  const allCategories = getAllExpenseCategories();
-
-  return Array.from(spendingByCategory.entries())
-    .map(([id, data]) => {
-      const categoryInfo = allCategories.find((c) => c.id === id);
+  return Array.from(spendingByParent.entries())
+    .map(([parentKey, amount]) => {
+      const parentNames: Record<string, string> = {
+        home: "Home",
+        transport: "Transport",
+        goodlife: "Good Life",
+        personal: "Personal",
+      };
       return {
-        id,
-        name: categoryInfo?.name || id,
-        amount: data.amount,
-        color: CATEGORY_COLORS[id] || "#94a3b8",
-        parent: categoryInfo?.parent || "personal",
+        id: parentKey,
+        name: parentNames[parentKey] || parentKey,
+        amount,
+        color: PARENT_CATEGORY_COLORS[parentKey] || "#94a3b8",
+        parent: parentKey,
       };
     })
     .sort((a, b) => b.amount - a.amount);
@@ -517,7 +520,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
         </div>
 
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
-          <span className="text-sm font-medium text-(--color-text)">Upcoming Bills</span>
+          <span className="text-sm font-medium text-(--color-text)">Spending by Category</span>
           <div className="flex flex-col gap-3">
             {categorySpending.slice(0, 4).map((bill) => (
               <div key={bill.id} className="flex items-center gap-3">
@@ -533,10 +536,12 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   <span className="truncate text-sm font-medium text-(--color-text)">
                     {bill.name}
                   </span>
-                  <span className="text-xs text-(--color-text-muted)">Monthly average</span>
+                  <span className="text-xs text-(--color-text-muted)">
+                    {((bill.amount / totals.expenses) * 100).toFixed(1)}% of spending
+                  </span>
                 </div>
                 <span className="text-sm font-medium text-(--color-text)">
-                  {formatCurrency(bill.amount / 12)}
+                  {formatCurrency(bill.amount)}
                 </span>
               </div>
             ))}
