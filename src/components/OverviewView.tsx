@@ -417,8 +417,8 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
 
   const cashFlowConfig: ChartConfig = useMemo(() => {
     return {
-      positiveSavings: { label: "Net Positive", color: "#10b981" },
-      negativeSavings: { label: "Net Negative", color: "#ef4444" },
+      positiveSavings: { label: "Net Positive", color: "#d1d5db" },
+      negativeSavings: { label: "Net Negative", color: "#4b5563" },
     };
   }, []);
 
