@@ -1,4 +1,10 @@
-import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowsPointingOutIcon,
+  HeartIcon,
+  HomeIcon,
+  TruckIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
 import {
   Area,
@@ -100,6 +106,21 @@ interface CategorySpending {
 interface OverviewViewProps {
   year?: number;
   granularity?: TimeGranularity;
+}
+
+function getCategoryIcon(parentKey: string) {
+  switch (parentKey) {
+    case "home":
+      return HomeIcon;
+    case "transport":
+      return TruckIcon;
+    case "goodlife":
+      return HeartIcon;
+    case "personal":
+      return UserIcon;
+    default:
+      return UserIcon;
+  }
 }
 
 function getAllExpenseCategories(): { id: ExpenseCategoryId; name: string; parent: string }[] {
@@ -560,29 +581,30 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
           <span className="text-sm font-medium text-(--color-text)">Spending by Category</span>
           <div className="flex flex-col gap-3">
-            {categorySpending.slice(0, 4).map((bill) => (
-              <div key={bill.id} className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: `${bill.color}20` }}
-                >
-                  <span className="text-lg font-semibold" style={{ color: bill.color }}>
-                    {bill.name.charAt(0)}
+            {categorySpending.slice(0, 4).map((bill) => {
+              const IconComponent = getCategoryIcon(bill.parent);
+              return (
+                <div key={bill.id} className="flex items-center gap-3">
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: `${bill.color}20` }}
+                  >
+                    <IconComponent className="h-5 w-5" style={{ color: bill.color }} />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm font-medium text-(--color-text)">
+                      {bill.name}
+                    </span>
+                    <span className="text-xs text-(--color-text-muted)">
+                      {((bill.amount / totals.expenses) * 100).toFixed(1)}% of spending
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-(--color-text)">
+                    {formatCurrency(bill.amount)}
                   </span>
                 </div>
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-sm font-medium text-(--color-text)">
-                    {bill.name}
-                  </span>
-                  <span className="text-xs text-(--color-text-muted)">
-                    {((bill.amount / totals.expenses) * 100).toFixed(1)}% of spending
-                  </span>
-                </div>
-                <span className="text-sm font-medium text-(--color-text)">
-                  {formatCurrency(bill.amount)}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
