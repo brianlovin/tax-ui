@@ -127,10 +127,40 @@ function aggregatePeriodData(
   granularity: TimeGranularity,
   categories: { id: ExpenseCategoryId; name: string; parent: string }[],
 ): PeriodData[] {
-  if (transactions.length === 0) return [];
-
-  const periodMap = new Map<string, PeriodData>();
+  const targetYear = year ?? new Date().getFullYear();
+  const currentPeriod =
+    granularity === "month" ? new Date().getMonth() + 1 : getWeekOfYear(new Date());
   const periods = getTotalPeriods(granularity);
+
+  const periodDataArray: PeriodData[] = [];
+  for (let i = 11; i >= 0; i--) {
+    let periodNum: number;
+    let periodYear = targetYear;
+
+    if (granularity === "month") {
+      periodNum = currentPeriod - i;
+      while (periodNum <= 0) {
+        periodNum += 12;
+        periodYear--;
+      }
+    } else {
+      periodNum = currentPeriod - i;
+      while (periodNum <= 0) {
+        periodNum += periods;
+        periodYear--;
+      }
+    }
+
+    const periodLabel = getPeriodLabel(periodNum, granularity);
+    periodDataArray.push({
+      period: `${periodLabel} ${String(periodYear).slice(-2)}`,
+      periodIndex: periodNum,
+      year: periodYear,
+      income: 0,
+      expenses: 0,
+      savings: 0,
+    });
+  }
 
   for (const tx of transactions) {
     const date = new Date(tx.date);
@@ -139,61 +169,22 @@ function aggregatePeriodData(
     if (year !== undefined && txYear !== year) continue;
 
     const periodNum = getPeriodFromDate(date, granularity);
-    const periodKey = `${txYear}-${String(periodNum).padStart(2, "0")}`;
-    const periodLabel = getPeriodLabel(periodNum, granularity);
 
-    if (!periodMap.has(periodKey)) {
-      const emptyData: PeriodData = {
-        period: `${periodLabel} ${String(txYear).slice(-2)}`,
-        periodIndex: periodNum,
-        year: txYear,
-        income: 0,
-        expenses: 0,
-        savings: 0,
-      };
-      for (const cat of categories) {
-        emptyData[cat.id] = 0;
+    const matchingPeriod = periodDataArray.find(
+      (p) => p.year === txYear && p.periodIndex === periodNum,
+    );
+
+    if (matchingPeriod) {
+      if (tx.type === "income") {
+        matchingPeriod.income += tx.amount;
+      } else {
+        matchingPeriod.expenses += tx.amount;
       }
-      periodMap.set(periodKey, emptyData);
+      matchingPeriod.savings = matchingPeriod.income - matchingPeriod.expenses;
     }
-
-    const data = periodMap.get(periodKey)!;
-
-    if (tx.type === "income") {
-      data.income += tx.amount;
-    } else {
-      data.expenses += tx.amount;
-      if (tx.category) {
-        const catId = tx.category as ExpenseCategoryId;
-        if (typeof data[catId] === "number") {
-          data[catId] += tx.amount;
-        }
-      }
-    }
-    data.savings = data.income - data.expenses;
   }
 
-  const allPeriods = Array.from(periodMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, data]) => data);
-
-  const targetYear = year ?? new Date().getFullYear();
-  const currentPeriod =
-    granularity === "month" ? new Date().getMonth() + 1 : getWeekOfYear(new Date());
-
-  const currentPeriodKey = `${targetYear}-${String(currentPeriod).padStart(2, "0")}`;
-  const currentIndex = allPeriods.findIndex((p) => {
-    const periodNum = granularity === "month" ? p.periodIndex : p.periodIndex;
-    const key = `${p.year}-${String(periodNum).padStart(2, "0")}`;
-    return key === currentPeriodKey;
-  });
-
-  if (currentIndex === -1) {
-    return allPeriods.slice(-12);
-  }
-
-  const startIndex = Math.max(0, currentIndex - 11);
-  return allPeriods.slice(startIndex, currentIndex + 1);
+  return periodDataArray;
 }
 
 function aggregateCategorySpending(
@@ -784,7 +775,9 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
             <div className="text-center">
               <div className="text-sm text-(--color-text-muted)">Savings</div>
               <div
-                className={`text-xl font-semibold ${totals.savings >= 0 ? "text-blue-500" : "text-red-500"}`}
+                className={`text-xl font-semibold ${
+                  totals.savings >= 0 ? "text-blue-500" : "text-red-500"
+                }`}
               >
                 {formatCurrency(totals.savings)}
               </div>
