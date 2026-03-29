@@ -487,7 +487,11 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  tickFormatter={(value) => {
+                    const absValue = Math.abs(value);
+                    const sign = value < 0 ? "-" : "";
+                    return `${sign}$${(absValue / 1000).toFixed(0)}k`;
+                  }}
                 />
                 <ChartTooltip
                   content={({ active, payload, label }) => {
@@ -768,7 +772,11 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  tickFormatter={(value) => {
+                    const absValue = Math.abs(value);
+                    const sign = value < 0 ? "-" : "";
+                    return `${sign}$${(absValue / 1000).toFixed(0)}k`;
+                  }}
                 />
                 <ChartTooltip
                   content={({ active, payload, label }) => {
