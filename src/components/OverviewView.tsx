@@ -266,11 +266,17 @@ interface HorizontalStackedBarProps {
 
 function HorizontalStackedBar({ data }: HorizontalStackedBarProps) {
   const [hoveredItem, setHoveredItem] = useState<CategorySpending | null>(null);
+  const [mouseX, setMouseX] = useState(0);
   const total = data.reduce((sum, item) => sum + item.amount, 0);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMouseX(e.clientX - rect.left);
+  };
 
   return (
     <div className="relative">
-      <div className="flex h-8 w-full overflow-hidden rounded-full">
+      <div className="flex h-8 w-full overflow-hidden rounded-full" onMouseMove={handleMouseMove}>
         {data.map((item) => (
           <div
             key={item.id}
@@ -285,25 +291,21 @@ function HorizontalStackedBar({ data }: HorizontalStackedBarProps) {
         ))}
       </div>
       {hoveredItem && (
-        <div className="absolute top-full right-0 left-0 z-10 mt-2 rounded-lg border border-(--color-border) bg-(--color-bg) p-3 shadow-lg">
+        <div
+          className="pointer-events-none absolute top-full z-10 mt-2 -translate-x-1/2 rounded-md border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm whitespace-nowrap shadow-lg"
+          style={{ left: mouseX }}
+        >
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: hoveredItem.color }} />
+            <span
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: hoveredItem.color }}
+            />
             <span className="font-medium text-(--color-text)">{hoveredItem.name}</span>
           </div>
-          <div className="mt-1 flex justify-between text-sm">
-            <span className="text-(--color-text-muted)">Amount:</span>
-            <span className="font-medium text-(--color-text)">
-              {formatCurrency(hoveredItem.amount)}
-            </span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-(--color-text-muted)">Total Spending:</span>
-            <span className="font-medium text-(--color-text)">{formatCurrency(total)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-(--color-text-muted)">Percentage:</span>
-            <span className="font-medium text-(--color-text)">
-              {((hoveredItem.amount / total) * 100).toFixed(1)}%
+          <div className="mt-1 text-(--color-text)">
+            {formatCurrency(hoveredItem.amount)}
+            <span className="ml-1 text-xs text-(--color-text-muted)">
+              ({((hoveredItem.amount / total) * 100).toFixed(1)}% of {formatCurrency(total)})
             </span>
           </div>
         </div>
