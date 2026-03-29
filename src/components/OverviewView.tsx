@@ -6,9 +6,8 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
-  Tooltip as RechartsTooltip,
+  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -84,6 +83,8 @@ interface PeriodData {
   income: number;
   expenses: number;
   savings: number;
+  positiveSavings: number;
+  negativeSavings: number;
   [category: string]: number | string;
 }
 
@@ -159,6 +160,8 @@ function aggregatePeriodData(
       income: 0,
       expenses: 0,
       savings: 0,
+      positiveSavings: 0,
+      negativeSavings: 0,
     });
   }
 
@@ -181,6 +184,8 @@ function aggregatePeriodData(
         matchingPeriod.expenses += tx.amount;
       }
       matchingPeriod.savings = matchingPeriod.income - matchingPeriod.expenses;
+      matchingPeriod.positiveSavings = matchingPeriod.savings >= 0 ? matchingPeriod.savings : 0;
+      matchingPeriod.negativeSavings = matchingPeriod.savings < 0 ? matchingPeriod.savings : 0;
     }
   }
 
@@ -360,9 +365,8 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
 
   const cashFlowConfig: ChartConfig = useMemo(() => {
     return {
-      income: { label: "Income", color: "#10b981" },
-      expenses: { label: "Expenses", color: "#ef4444" },
-      savings: { label: "Savings", color: "#3b82f6" },
+      positiveSavings: { label: "Net Positive", color: "#10b981" },
+      negativeSavings: { label: "Net Negative", color: "#ef4444" },
     };
   }, []);
 
@@ -530,14 +534,18 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                     return null;
                   }}
                 />
-                <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
-                  {periodData.map((entry) => (
-                    <Cell
-                      key={`cell-${entry.period}`}
-                      fill={entry.savings >= 0 ? "#10b981" : "#ef4444"}
-                    />
-                  ))}
-                </Bar>
+                <Bar
+                  dataKey="positiveSavings"
+                  name="Net Positive"
+                  fill="var(--color-positiveSavings)"
+                  radius={[4, 4, 4, 4]}
+                />
+                <Bar
+                  dataKey="negativeSavings"
+                  name="Net Negative"
+                  fill="var(--color-negativeSavings)"
+                  radius={[4, 4, 4, 4]}
+                />
               </BarChart>
             </ChartContainer>
           </div>
@@ -669,7 +677,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                 axisLine={false}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
               />
-              <RechartsTooltip
+              <Tooltip
                 contentStyle={{
                   backgroundColor: "var(--color-bg)",
                   border: "1px solid var(--color-border)",
@@ -815,14 +823,18 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                     return null;
                   }}
                 />
-                <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
-                  {periodData.map((entry) => (
-                    <Cell
-                      key={`fullscreen-cell-${entry.period}`}
-                      fill={entry.savings >= 0 ? "#10b981" : "#ef4444"}
-                    />
-                  ))}
-                </Bar>
+                <Bar
+                  dataKey="positiveSavings"
+                  name="Net Positive"
+                  fill="var(--color-positiveSavings)"
+                  radius={[4, 4, 4, 4]}
+                />
+                <Bar
+                  dataKey="negativeSavings"
+                  name="Net Negative"
+                  fill="var(--color-negativeSavings)"
+                  radius={[4, 4, 4, 4]}
+                />
               </BarChart>
             </ChartContainer>
           </div>
