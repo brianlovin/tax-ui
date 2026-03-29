@@ -254,6 +254,25 @@ export function MainPanel(props: Props) {
                 <span className="relative z-10">Overview</span>
               </Tabs.Tab>
               <Tabs.Tab
+                value="income"
+                className={cn(
+                  "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
+                  props.activeTab === "income"
+                    ? "text-(--color-text)"
+                    : "text-(--color-text-muted) hover:text-(--color-text)",
+                )}
+              >
+                {props.activeTab === "income" && (
+                  <motion.div
+                    layoutId={tabLayoutId.current}
+                    className="absolute inset-0 rounded-lg bg-(--color-bg-muted)"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">Income</span>
+              </Tabs.Tab>
+              <Tabs.Tab
                 value="taxes"
                 className={cn(
                   "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium outline-none",
