@@ -268,6 +268,10 @@ function MiniAreaChart({
   dataKey: string;
   color: string;
 }) {
+  const maxValue = Math.max(...data.map((d) => (d[dataKey] as number) || 0));
+  const minValue = Math.min(...data.map((d) => (d[dataKey] as number) || 0));
+  const yDomainMax = maxValue > 0 ? maxValue * 1.1 : 100;
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -277,12 +281,14 @@ function MiniAreaChart({
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
+        <YAxis domain={[0, yDomainMax]} hide />
         <Area
           type="monotone"
           dataKey={dataKey}
           stroke={color}
           fill={`url(#${dataKey}Gradient)`}
           strokeWidth={2}
+          baseLine={0}
         />
       </AreaChart>
     </ResponsiveContainer>
