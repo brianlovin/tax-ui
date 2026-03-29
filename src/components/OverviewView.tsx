@@ -11,7 +11,14 @@ import {
 } from "recharts";
 
 import { formatCurrency } from "../lib/format";
-import { EXPENSE_CATEGORIES, type ExpenseCategoryId, type Transaction } from "../lib/schema";
+import {
+  EXPENSE_CATEGORIES,
+  type ExpenseCategoryId,
+  getPeriodLabel,
+  getTotalPeriods,
+  getWeekOfYear,
+  type Transaction,
+} from "../lib/schema";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 
 const CATEGORY_COLORS: Record<ExpenseCategoryId | string, string> = {
@@ -65,10 +72,11 @@ const PARENT_CATEGORY_COLORS: Record<string, string> = {
 };
 
 type CashFlowView = "income" | "expense" | "savings";
+type TimeGranularity = "month" | "week";
 
-interface MonthlyData {
-  month: string;
-  monthIndex: number;
+interface PeriodData {
+  period: string;
+  periodIndex: number;
   year: number;
   income: number;
   expenses: number;
@@ -86,6 +94,7 @@ interface CategorySpending {
 
 interface OverviewViewProps {
   year?: number;
+  granularity?: TimeGranularity;
 }
 
 function getAllExpenseCategories(): { id: ExpenseCategoryId; name: string; parent: string }[] {
@@ -102,14 +111,23 @@ function getAllExpenseCategories(): { id: ExpenseCategoryId; name: string; paren
   return categories;
 }
 
-function aggregateMonthlyData(
+function getPeriodFromDate(date: Date, granularity: TimeGranularity): number {
+  if (granularity === "week") {
+    return getWeekOfYear(date);
+  }
+  return date.getMonth() + 1;
+}
+
+function aggregatePeriodData(
   transactions: Transaction[],
   year: number | undefined,
+  granularity: TimeGranularity,
   categories: { id: ExpenseCategoryId; name: string; parent: string }[],
-): MonthlyData[] {
+): PeriodData[] {
   if (transactions.length === 0) return [];
 
-  const monthMap = new Map<string, MonthlyData>();
+  const periodMap = new Map<string, PeriodData>();
+  const periods = getTotalPeriods(granularity);
 
   for (const tx of transactions) {
     const date = new Date(tx.date);
@@ -117,13 +135,14 @@ function aggregateMonthlyData(
 
     if (year !== undefined && txYear !== year) continue;
 
-    const monthKey = `${txYear}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    const periodNum = getPeriodFromDate(date, granularity);
+    const periodKey = `${txYear}-${String(periodNum).padStart(2, "0")}`;
+    const periodLabel = getPeriodLabel(periodNum, granularity);
 
-    if (!monthMap.has(monthKey)) {
-      const emptyData: MonthlyData = {
-        month: monthLabel,
-        monthIndex: date.getMonth(),
+    if (!periodMap.has(periodKey)) {
+      const emptyData: PeriodData = {
+        period: `${periodLabel} ${String(txYear).slice(-2)}`,
+        periodIndex: periodNum,
         year: txYear,
         income: 0,
         expenses: 0,
@@ -132,10 +151,10 @@ function aggregateMonthlyData(
       for (const cat of categories) {
         emptyData[cat.id] = 0;
       }
-      monthMap.set(monthKey, emptyData);
+      periodMap.set(periodKey, emptyData);
     }
 
-    const data = monthMap.get(monthKey)!;
+    const data = periodMap.get(periodKey)!;
 
     if (tx.type === "income") {
       data.income += tx.amount;
@@ -151,9 +170,27 @@ function aggregateMonthlyData(
     data.savings = data.income - data.expenses;
   }
 
-  return Array.from(monthMap.entries())
+  const allPeriods = Array.from(periodMap.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, data]) => data);
+
+  const targetYear = year ?? new Date().getFullYear();
+  const currentPeriod =
+    granularity === "month" ? new Date().getMonth() + 1 : getWeekOfYear(new Date());
+
+  const currentPeriodKey = `${targetYear}-${String(currentPeriod).padStart(2, "0")}`;
+  const currentIndex = allPeriods.findIndex((p) => {
+    const periodNum = granularity === "month" ? p.periodIndex : p.periodIndex;
+    const key = `${p.year}-${String(periodNum).padStart(2, "0")}`;
+    return key === currentPeriodKey;
+  });
+
+  if (currentIndex === -1) {
+    return allPeriods.slice(-6);
+  }
+
+  const startIndex = Math.max(0, currentIndex - 5);
+  return allPeriods.slice(startIndex, currentIndex + 1);
 }
 
 function aggregateCategorySpending(
@@ -198,7 +235,7 @@ function MiniAreaChart({
   dataKey,
   color,
 }: {
-  data: MonthlyData[];
+  data: PeriodData[];
   dataKey: string;
   color: string;
 }) {
@@ -223,27 +260,59 @@ function MiniAreaChart({
   );
 }
 
-function HorizontalStackedBar({ data }: { data: CategorySpending[] }) {
+interface HorizontalStackedBarProps {
+  data: CategorySpending[];
+}
+
+function HorizontalStackedBar({ data }: HorizontalStackedBarProps) {
+  const [hoveredItem, setHoveredItem] = useState<CategorySpending | null>(null);
   const total = data.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="flex h-8 w-full overflow-hidden rounded-full">
-      {data.map((item) => (
-        <div
-          key={item.id}
-          className="h-full transition-all duration-300"
-          style={{
-            width: `${(item.amount / total) * 100}%`,
-            backgroundColor: item.color,
-          }}
-          title={`${item.name}: ${formatCurrency(item.amount)}`}
-        />
-      ))}
+    <div className="relative">
+      <div className="flex h-8 w-full overflow-hidden rounded-full">
+        {data.map((item) => (
+          <div
+            key={item.id}
+            className="h-full cursor-pointer transition-all duration-300 hover:opacity-80"
+            style={{
+              width: `${(item.amount / total) * 100}%`,
+              backgroundColor: item.color,
+            }}
+            onMouseEnter={() => setHoveredItem(item)}
+            onMouseLeave={() => setHoveredItem(null)}
+          />
+        ))}
+      </div>
+      {hoveredItem && (
+        <div className="absolute top-full right-0 left-0 z-10 mt-2 rounded-lg border border-(--color-border) bg-(--color-bg) p-3 shadow-lg">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: hoveredItem.color }} />
+            <span className="font-medium text-(--color-text)">{hoveredItem.name}</span>
+          </div>
+          <div className="mt-1 flex justify-between text-sm">
+            <span className="text-(--color-text-muted)">Amount:</span>
+            <span className="font-medium text-(--color-text)">
+              {formatCurrency(hoveredItem.amount)}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-(--color-text-muted)">Total Spending:</span>
+            <span className="font-medium text-(--color-text)">{formatCurrency(total)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-(--color-text-muted)">Percentage:</span>
+            <span className="font-medium text-(--color-text)">
+              {((hoveredItem.amount / total) * 100).toFixed(1)}%
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export function OverviewView({ year }: OverviewViewProps) {
+export function OverviewView({ year, granularity = "month" }: OverviewViewProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cashFlowView, setCashFlowView] = useState<CashFlowView>("income");
@@ -263,9 +332,9 @@ export function OverviewView({ year }: OverviewViewProps) {
 
   const allExpenseCategories = useMemo(() => getAllExpenseCategories(), []);
 
-  const monthlyData = useMemo(
-    () => aggregateMonthlyData(transactions, year, allExpenseCategories),
-    [transactions, year, allExpenseCategories],
+  const periodData = useMemo(
+    () => aggregatePeriodData(transactions, year, granularity, allExpenseCategories),
+    [transactions, year, granularity, allExpenseCategories],
   );
 
   const categorySpending = useMemo(
@@ -274,13 +343,13 @@ export function OverviewView({ year }: OverviewViewProps) {
   );
 
   const totals = useMemo(() => {
-    if (monthlyData.length === 0) return { income: 0, expenses: 0, savings: 0 };
+    if (periodData.length === 0) return { income: 0, expenses: 0, savings: 0 };
     return {
-      income: monthlyData.reduce((sum, m) => sum + m.income, 0),
-      expenses: monthlyData.reduce((sum, m) => sum + m.expenses, 0),
-      savings: monthlyData.reduce((sum, m) => sum + m.savings, 0),
+      income: periodData.reduce((sum, p) => sum + p.income, 0),
+      expenses: periodData.reduce((sum, p) => sum + p.expenses, 0),
+      savings: periodData.reduce((sum, p) => sum + p.savings, 0),
     };
-  }, [monthlyData]);
+  }, [periodData]);
 
   const recentTransactions = useMemo(() => {
     return transactions
@@ -295,6 +364,11 @@ export function OverviewView({ year }: OverviewViewProps) {
       savings: { label: "Savings", color: "#3b82f6" },
     };
   }, []);
+
+  const currentPeriodTotal = useMemo(() => {
+    if (periodData.length === 0) return 0;
+    return periodData[periodData.length - 1]?.income || 0;
+  }, [periodData]);
 
   if (isLoading) {
     return (
@@ -317,13 +391,16 @@ export function OverviewView({ year }: OverviewViewProps) {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
           <div className="flex flex-col">
-            <span className="text-sm text-(--color-text-muted)">Income</span>
-            <span className="text-2xl font-semibold text-(--color-text)">
-              {formatCurrency(totals.income)}
+            <span className="text-sm text-(--color-text-muted)">
+              Income ({granularity === "month" ? "6 months" : "6 weeks"})
             </span>
+            <span className="text-2xl font-semibold text-(--color-text)">
+              {formatCurrency(currentPeriodTotal)}
+            </span>
+            <span className="text-xs text-(--color-text-muted)">Current {granularity}</span>
           </div>
           <div className="h-32">
-            <MiniAreaChart data={monthlyData} dataKey="income" color="#10b981" />
+            <MiniAreaChart data={periodData} dataKey="income" color="#10b981" />
           </div>
         </div>
 
@@ -373,10 +450,10 @@ export function OverviewView({ year }: OverviewViewProps) {
 
           <div className="h-48">
             <ChartContainer config={cashFlowConfig} className="h-full w-full">
-              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <BarChart data={periodData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.3} />
                 <XAxis
-                  dataKey="month"
+                  dataKey="period"
                   stroke="var(--color-text-muted)"
                   fontSize={11}
                   tickLine={false}

@@ -128,7 +128,7 @@ export function MainPanel(props: Props) {
       if (props.activeTab === "overview") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <OverviewView />
+            <OverviewView year={year} granularity={props.granularity} />
           </div>
         );
       } else if (props.activeTab === "income") {
@@ -173,7 +173,7 @@ export function MainPanel(props: Props) {
       if (props.activeTab === "overview") {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
-            <OverviewView />
+            <OverviewView granularity={props.granularity} />
           </div>
         );
       } else if (props.activeTab === "income") {
