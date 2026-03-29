@@ -288,6 +288,16 @@ function MiniAreaChart({
           interval="preserveStartEnd"
         />
         <YAxis domain={[0, yDomainMax]} hide />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "var(--color-bg)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "0.5rem",
+            fontSize: "12px",
+          }}
+          formatter={(value) => [formatCurrency(Number(value)), "Income"]}
+          labelStyle={{ color: "var(--color-text)" }}
+        />
         <Area
           type="monotone"
           dataKey={dataKey}
