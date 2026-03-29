@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { formatCurrency } from "../lib/format";
 import { EXPENSE_CATEGORIES, type ExpenseCategoryId, type Transaction } from "../lib/schema";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "./ui/chart";
+import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 
 const CATEGORY_COLORS: Record<ExpenseCategoryId | string, string> = {
   groceries: "#3b82f6",
@@ -62,14 +64,24 @@ const PARENT_CATEGORY_COLORS: Record<string, string> = {
   personal: "#10b981",
 };
 
+type CashFlowView = "income" | "expense" | "savings";
+
 interface MonthlyData {
   month: string;
   monthIndex: number;
   year: number;
   income: number;
   expenses: number;
-  net: number;
+  savings: number;
   [category: string]: number | string;
+}
+
+interface CategorySpending {
+  id: string;
+  name: string;
+  amount: number;
+  color: string;
+  parent: string;
 }
 
 interface OverviewViewProps {
@@ -115,7 +127,7 @@ function aggregateMonthlyData(
         year: txYear,
         income: 0,
         expenses: 0,
-        net: 0,
+        savings: 0,
       };
       for (const cat of categories) {
         emptyData[cat.id] = 0;
@@ -136,7 +148,7 @@ function aggregateMonthlyData(
         }
       }
     }
-    data.net = data.income - data.expenses;
+    data.savings = data.income - data.expenses;
   }
 
   return Array.from(monthMap.entries())
@@ -144,35 +156,97 @@ function aggregateMonthlyData(
     .map(([, data]) => data);
 }
 
-function createIncomeExpenseChartConfig(): ChartConfig {
-  return {
-    income: {
-      label: "Income",
-      color: "#10b981",
-    },
-    expenses: {
-      label: "Expenses",
-      color: "#ef4444",
-    },
-  };
+function aggregateCategorySpending(
+  transactions: Transaction[],
+  year: number | undefined,
+): CategorySpending[] {
+  const spendingByCategory = new Map<string, { amount: number; parent: string; name: string }>();
+
+  for (const tx of transactions) {
+    if (tx.type !== "expense") continue;
+    const date = new Date(tx.date);
+    if (year !== undefined && date.getFullYear() !== year) continue;
+
+    const catId = tx.category || "life-admin";
+    const existing = spendingByCategory.get(catId) || {
+      amount: 0,
+      parent: "personal",
+      name: "Unknown",
+    };
+    existing.amount += tx.amount;
+    spendingByCategory.set(catId, existing);
+  }
+
+  const allCategories = getAllExpenseCategories();
+
+  return Array.from(spendingByCategory.entries())
+    .map(([id, data]) => {
+      const categoryInfo = allCategories.find((c) => c.id === id);
+      return {
+        id,
+        name: categoryInfo?.name || id,
+        amount: data.amount,
+        color: CATEGORY_COLORS[id] || "#94a3b8",
+        parent: categoryInfo?.parent || "personal",
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
 }
 
-function createExpenseCategoryChartConfig(
-  categories: { id: ExpenseCategoryId; name: string; parent: string }[],
-): ChartConfig {
-  const config: ChartConfig = {};
-  for (const cat of categories) {
-    config[cat.id] = {
-      label: cat.name,
-      color: CATEGORY_COLORS[cat.id],
-    };
-  }
-  return config;
+function MiniAreaChart({
+  data,
+  dataKey,
+  color,
+}: {
+  data: MonthlyData[];
+  dataKey: string;
+  color: string;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id={`${dataKey}Gradient`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area
+          type="monotone"
+          dataKey={dataKey}
+          stroke={color}
+          fill={`url(#${dataKey}Gradient)`}
+          strokeWidth={2}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+function HorizontalStackedBar({ data }: { data: CategorySpending[] }) {
+  const total = data.reduce((sum, item) => sum + item.amount, 0);
+
+  return (
+    <div className="flex h-8 w-full overflow-hidden rounded-full">
+      {data.map((item) => (
+        <div
+          key={item.id}
+          className="h-full transition-all duration-300"
+          style={{
+            width: `${(item.amount / total) * 100}%`,
+            backgroundColor: item.color,
+          }}
+          title={`${item.name}: ${formatCurrency(item.amount)}`}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function OverviewView({ year }: OverviewViewProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [cashFlowView, setCashFlowView] = useState<CashFlowView>("income");
 
   useEffect(() => {
     fetch("/api/transactions")
@@ -194,11 +268,33 @@ export function OverviewView({ year }: OverviewViewProps) {
     [transactions, year, allExpenseCategories],
   );
 
-  const incomeExpenseConfig = useMemo(() => createIncomeExpenseChartConfig(), []);
-  const expenseCategoryConfig = useMemo(
-    () => createExpenseCategoryChartConfig(allExpenseCategories),
-    [allExpenseCategories],
+  const categorySpending = useMemo(
+    () => aggregateCategorySpending(transactions, year),
+    [transactions, year],
   );
+
+  const totals = useMemo(() => {
+    if (monthlyData.length === 0) return { income: 0, expenses: 0, savings: 0 };
+    return {
+      income: monthlyData.reduce((sum, m) => sum + m.income, 0),
+      expenses: monthlyData.reduce((sum, m) => sum + m.expenses, 0),
+      savings: monthlyData.reduce((sum, m) => sum + m.savings, 0),
+    };
+  }, [monthlyData]);
+
+  const recentTransactions = useMemo(() => {
+    return transactions
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  }, [transactions]);
+
+  const cashFlowConfig: ChartConfig = useMemo(() => {
+    return {
+      income: { label: "Income", color: "#10b981" },
+      expenses: { label: "Expenses", color: "#ef4444" },
+      savings: { label: "Savings", color: "#3b82f6" },
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -208,7 +304,7 @@ export function OverviewView({ year }: OverviewViewProps) {
     );
   }
 
-  if (monthlyData.length === 0) {
+  if (transactions.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center text-(--color-text-muted)">
         <p>No transaction data available. Add transactions to see your overview.</p>
@@ -217,135 +313,188 @@ export function OverviewView({ year }: OverviewViewProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
-      <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold text-(--color-text)">Income & Expenses Over Time</h2>
-        <div className="h-64 w-full rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
-          <ChartContainer config={incomeExpenseConfig} className="h-full w-full">
-            <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-expenses)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--color-expenses)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.5} />
-              <XAxis
-                dataKey="month"
-                stroke="var(--color-text-muted)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={{ stroke: "var(--color-border)" }}
-              />
-              <YAxis
-                stroke="var(--color-text-muted)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={{ stroke: "var(--color-border)" }}
-                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
-                }
-              />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Area
-                type="monotone"
-                dataKey="income"
-                stackId="1"
-                stroke="var(--color-income)"
-                fill="url(#incomeGradient)"
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="expenses"
-                stackId="1"
-                stroke="var(--color-expenses)"
-                fill="url(#expenseGradient)"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ChartContainer>
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
+          <div className="flex flex-col">
+            <span className="text-sm text-(--color-text-muted)">Income</span>
+            <span className="text-2xl font-semibold text-(--color-text)">
+              {formatCurrency(totals.income)}
+            </span>
+          </div>
+          <div className="h-32">
+            <MiniAreaChart data={monthlyData} dataKey="income" color="#10b981" />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
+          <div className="flex flex-col">
+            <span className="text-sm text-(--color-text-muted)">Spending Overview</span>
+            <span className="text-2xl font-semibold text-(--color-text)">
+              {formatCurrency(totals.expenses)}
+            </span>
+          </div>
+          <HorizontalStackedBar data={categorySpending} />
+          <div className="flex flex-wrap gap-2">
+            {categorySpending.slice(0, 5).map((item) => (
+              <div key={item.id} className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-xs text-(--color-text-muted)">{item.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3">
-        <h2 className="text-lg font-semibold text-(--color-text)">Monthly Expenses by Category</h2>
-        <div className="min-h-96 w-full flex-1 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
-          <ChartContainer config={expenseCategoryConfig} className="h-full w-full">
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.5} />
-              <XAxis
-                dataKey="month"
-                stroke="var(--color-text-muted)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={{ stroke: "var(--color-border)" }}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis
-                stroke="var(--color-text-muted)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={{ stroke: "var(--color-border)" }}
-                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    nameKey="dataKey"
-                    formatter={(value, name) => {
-                      const category = allExpenseCategories.find((c) => c.id === name);
-                      return `${category?.name ?? name}: ${formatCurrency(Number(value))}`;
-                    }}
-                  />
-                }
-              />
-              {allExpenseCategories.map((category) => (
-                <Bar
-                  key={category.id}
-                  dataKey={category.id}
-                  stackId="expenses"
-                  fill={`var(--color-${category.id})`}
-                  stroke={`var(--color-${category.id})`}
-                  strokeWidth={1}
-                  radius={[0, 0, 0, 0]}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4 lg:col-span-2">
+          <div className="flex flex-col">
+            <span className="text-sm text-(--color-text-muted)">Cash Flow</span>
+            <span className="text-2xl font-semibold text-(--color-text)">
+              {formatCurrency(totals.savings)}
+            </span>
+          </div>
+
+          <div className="flex gap-2">
+            {(["income", "expense", "savings"] as CashFlowView[]).map((view) => (
+              <button
+                key={view}
+                onClick={() => setCashFlowView(view)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  cashFlowView === view
+                    ? "bg-(--color-bg) text-(--color-text)"
+                    : "text-(--color-text-muted) hover:text-(--color-text)"
+                }`}
+              >
+                {view.charAt(0).toUpperCase() + view.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-48">
+            <ChartContainer config={cashFlowConfig} className="h-full w-full">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.3} />
+                <XAxis
+                  dataKey="month"
+                  stroke="var(--color-text-muted)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={{ stroke: "var(--color-border)" }}
                 />
-              ))}
-            </BarChart>
-          </ChartContainer>
+                <YAxis
+                  stroke="var(--color-text-muted)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
+                  }
+                />
+                <Bar
+                  dataKey={cashFlowView}
+                  fill={`var(--color-${cashFlowView === "expense" ? "expenses" : cashFlowView})`}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 rounded-lg border border-(--color-border) bg-(--color-bg-muted)/30 p-3">
-          {Object.entries(EXPENSE_CATEGORIES).map(([parentKey, parent]) => (
-            <div key={parentKey} className="flex flex-col gap-1">
-              <span
-                className="text-xs font-semibold tracking-wide uppercase"
-                style={{ color: PARENT_CATEGORY_COLORS[parentKey] }}
-              >
-                {parent.name}
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {parent.children.map((child) => (
-                  <div key={child.id} className="flex items-center gap-1">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: CATEGORY_COLORS[child.id] }}
-                    />
-                    <span className="text-xs text-(--color-text-muted)">{child.name}</span>
-                  </div>
-                ))}
+        <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
+          <span className="text-sm font-medium text-(--color-text)">Upcoming Bills</span>
+          <div className="flex flex-col gap-3">
+            {categorySpending.slice(0, 4).map((bill) => (
+              <div key={bill.id} className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                  style={{ backgroundColor: `${bill.color}20` }}
+                >
+                  <span className="text-lg font-semibold" style={{ color: bill.color }}>
+                    {bill.name.charAt(0)}
+                  </span>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-sm font-medium text-(--color-text)">
+                    {bill.name}
+                  </span>
+                  <span className="text-xs text-(--color-text-muted)">Monthly average</span>
+                </div>
+                <span className="text-sm font-medium text-(--color-text)">
+                  {formatCurrency(bill.amount / 12)}
+                </span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
+        <span className="mb-4 block text-sm font-medium text-(--color-text)">
+          Recent Transactions
+        </span>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-(--color-border)">
+                <th className="pb-2 text-left text-xs font-medium text-(--color-text-muted)">
+                  Activity
+                </th>
+                <th className="pb-2 text-left text-xs font-medium text-(--color-text-muted)">
+                  Date
+                </th>
+                <th className="pb-2 text-right text-xs font-medium text-(--color-text-muted)">
+                  Total
+                </th>
+                <th className="pb-2 text-right text-xs font-medium text-(--color-text-muted)">
+                  Type
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentTransactions.map((tx) => (
+                <tr key={tx.id} className="border-b border-(--color-border)/50 last:border-0">
+                  <td className="py-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm text-(--color-text)">
+                        {tx.description || tx.category}
+                      </span>
+                      <span className="text-xs text-(--color-text-muted)">{tx.category}</span>
+                    </div>
+                  </td>
+                  <td className="py-3">
+                    <span className="text-sm text-(--color-text-muted)">
+                      {new Date(tx.date).toLocaleDateString()}
+                    </span>
+                  </td>
+                  <td className="py-3 text-right">
+                    <span
+                      className={`text-sm font-medium ${
+                        tx.type === "income" ? "text-green-600" : "text-(--color-text)"
+                      }`}
+                    >
+                      {tx.type === "income" ? "+" : "-"}
+                      {formatCurrency(tx.amount)}
+                    </span>
+                  </td>
+                  <td className="py-3 text-right">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                        tx.type === "income"
+                          ? "bg-green-500/10 text-green-600"
+                          : "bg-gray-500/10 text-(--color-text-muted)"
+                      }`}
+                    >
+                      {tx.type === "income" ? "Income" : "Expense"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
