@@ -7,6 +7,7 @@ import {
   BarChart,
   CartesianGrid,
   ResponsiveContainer,
+  Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -639,10 +640,16 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                 axisLine={false}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
               />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
-                }
+              <RechartsTooltip
+                contentStyle={{
+                  backgroundColor: "var(--color-bg)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "0.5rem",
+                  boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                }}
+                formatter={(value) => [formatCurrency(Number(value)), "Income"]}
+                labelStyle={{ color: "var(--color-text)" }}
+                itemStyle={{ color: "var(--color-text)" }}
               />
               <Area
                 type="monotone"
