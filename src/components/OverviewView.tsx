@@ -12,6 +12,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -417,8 +418,7 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
 
   const cashFlowConfig: ChartConfig = useMemo(() => {
     return {
-      positiveSavings: { label: "Net Positive", color: "#d1d5db" },
-      negativeSavings: { label: "Net Negative", color: "#4b5563" },
+      savings: { label: "Net Cash Flow", color: "#9ca3af" },
     };
   }, []);
 
@@ -586,18 +586,14 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                     return null;
                   }}
                 />
-                <Bar
-                  dataKey="positiveSavings"
-                  name="Net Positive"
-                  fill="var(--color-positiveSavings)"
-                  radius={[4, 4, 4, 4]}
-                />
-                <Bar
-                  dataKey="negativeSavings"
-                  name="Net Negative"
-                  fill="var(--color-negativeSavings)"
-                  radius={[4, 4, 4, 4]}
-                />
+                <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
+                  {periodData.map((entry) => (
+                    <Cell
+                      key={`cell-${entry.period}`}
+                      fill={entry.savings >= 0 ? "#d1d5db" : "#4b5563"}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </div>
@@ -876,18 +872,14 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
                     return null;
                   }}
                 />
-                <Bar
-                  dataKey="positiveSavings"
-                  name="Net Positive"
-                  fill="var(--color-positiveSavings)"
-                  radius={[4, 4, 4, 4]}
-                />
-                <Bar
-                  dataKey="negativeSavings"
-                  name="Net Negative"
-                  fill="var(--color-negativeSavings)"
-                  radius={[4, 4, 4, 4]}
-                />
+                <Bar dataKey="savings" name="Net Cash Flow" radius={[4, 4, 4, 4]}>
+                  {periodData.map((entry) => (
+                    <Cell
+                      key={`fullscreen-cell-${entry.period}`}
+                      fill={entry.savings >= 0 ? "#d1d5db" : "#4b5563"}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </div>
