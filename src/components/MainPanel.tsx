@@ -349,6 +349,7 @@ export function MainPanel(props: Props) {
             side="bottom"
             trigger="Settings"
           >
+            <MenuItem onClick={props.onOpenStart}>Import Documents</MenuItem>
             <MenuItem onClick={props.onOpenSettings}>Preferences</MenuItem>
           </Menu>
         </div>
