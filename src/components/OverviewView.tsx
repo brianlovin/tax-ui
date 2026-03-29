@@ -194,7 +194,7 @@ function aggregatePeriodData(
     if (year !== undefined && txYear !== year) continue;
 
     const catId = normalizeExpenseCategory(tx.category);
-    if (catId === "exclude") continue;
+    if (catId === "exclude" && tx.type === "expense") continue;
 
     const periodNum = getPeriodFromDate(date, granularity);
 
