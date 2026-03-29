@@ -1,3 +1,4 @@
+import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
 import {
   Area,
@@ -19,6 +20,7 @@ import {
   getWeekOfYear,
   type Transaction,
 } from "../lib/schema";
+import { Dialog } from "./Dialog";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 
 const CATEGORY_COLORS: Record<ExpenseCategoryId | string, string> = {
@@ -318,6 +320,9 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cashFlowView, setCashFlowView] = useState<CashFlowView>("income");
+  const [fullscreenChart, setFullscreenChart] = useState<"income" | "spending" | "cashflow" | null>(
+    null,
+  );
 
   useEffect(() => {
     fetch("/api/transactions")
@@ -392,14 +397,23 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
     <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
-          <div className="flex flex-col">
-            <span className="text-sm text-(--color-text-muted)">
-              Income ({granularity === "month" ? "6 months" : "6 weeks"})
-            </span>
-            <span className="text-2xl font-semibold text-(--color-text)">
-              {formatCurrency(currentPeriodTotal)}
-            </span>
-            <span className="text-xs text-(--color-text-muted)">Current {granularity}</span>
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="text-sm text-(--color-text-muted)">
+                Income ({granularity === "month" ? "6 months" : "6 weeks"})
+              </span>
+              <span className="text-2xl font-semibold text-(--color-text)">
+                {formatCurrency(currentPeriodTotal)}
+              </span>
+              <span className="text-xs text-(--color-text-muted)">Current {granularity}</span>
+            </div>
+            <button
+              onClick={() => setFullscreenChart("income")}
+              className="rounded-lg p-2 text-(--color-text-muted) transition-colors hover:bg-(--color-bg-muted) hover:text-(--color-text)"
+              title="View fullscreen"
+            >
+              <ArrowsPointingOutIcon className="h-5 w-5" />
+            </button>
           </div>
           <div className="h-32">
             <MiniAreaChart data={periodData} dataKey="income" color="#10b981" />
@@ -407,11 +421,20 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
         </div>
 
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4">
-          <div className="flex flex-col">
-            <span className="text-sm text-(--color-text-muted)">Spending Overview</span>
-            <span className="text-2xl font-semibold text-(--color-text)">
-              {formatCurrency(totals.expenses)}
-            </span>
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="text-sm text-(--color-text-muted)">Spending Overview</span>
+              <span className="text-2xl font-semibold text-(--color-text)">
+                {formatCurrency(totals.expenses)}
+              </span>
+            </div>
+            <button
+              onClick={() => setFullscreenChart("spending")}
+              className="rounded-lg p-2 text-(--color-text-muted) transition-colors hover:bg-(--color-bg-muted) hover:text-(--color-text)"
+              title="View fullscreen"
+            >
+              <ArrowsPointingOutIcon className="h-5 w-5" />
+            </button>
           </div>
           <HorizontalStackedBar data={categorySpending} />
           <div className="flex flex-wrap gap-2">
@@ -427,11 +450,20 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-3 rounded-xl border border-(--color-border) bg-(--color-bg-muted)/30 p-4 lg:col-span-2">
-          <div className="flex flex-col">
-            <span className="text-sm text-(--color-text-muted)">Cash Flow</span>
-            <span className="text-2xl font-semibold text-(--color-text)">
-              {formatCurrency(totals.savings)}
-            </span>
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="text-sm text-(--color-text-muted)">Cash Flow</span>
+              <span className="text-2xl font-semibold text-(--color-text)">
+                {formatCurrency(totals.savings)}
+              </span>
+            </div>
+            <button
+              onClick={() => setFullscreenChart("cashflow")}
+              className="rounded-lg p-2 text-(--color-text-muted) transition-colors hover:bg-(--color-bg-muted) hover:text-(--color-text)"
+              title="View fullscreen"
+            >
+              <ArrowsPointingOutIcon className="h-5 w-5" />
+            </button>
           </div>
 
           <div className="flex gap-2">
@@ -576,6 +608,178 @@ export function OverviewView({ year, granularity = "month" }: OverviewViewProps)
           </table>
         </div>
       </div>
+
+      <Dialog
+        open={fullscreenChart === "income"}
+        onClose={() => setFullscreenChart(null)}
+        title={`Income Trend (${granularity === "month" ? "6 months" : "6 weeks"})`}
+        size="lg"
+      >
+        <div className="h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={periodData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="fullscreenIncomeGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.3} />
+              <XAxis
+                dataKey="period"
+                stroke="var(--color-text-muted)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={{ stroke: "var(--color-border)" }}
+              />
+              <YAxis
+                stroke="var(--color-text-muted)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
+                }
+              />
+              <Area
+                type="monotone"
+                dataKey="income"
+                stroke="#10b981"
+                fill="url(#fullscreenIncomeGradient)"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={fullscreenChart === "spending"}
+        onClose={() => setFullscreenChart(null)}
+        title="Spending Overview by Category"
+        size="lg"
+      >
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <span className="text-3xl font-semibold text-(--color-text)">
+              {formatCurrency(totals.expenses)}
+            </span>
+            <span className="ml-2 text-(--color-text-muted)">Total Spending</span>
+          </div>
+          <div className="h-8 w-full overflow-hidden rounded-full">
+            {categorySpending.map((item) => (
+              <div
+                key={item.id}
+                className="inline-block h-full"
+                style={{
+                  width: `${(item.amount / totals.expenses) * 100}%`,
+                  backgroundColor: item.color,
+                }}
+              />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {categorySpending.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 rounded-lg p-2 hover:bg-(--color-bg-muted)"
+              >
+                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-medium text-(--color-text)">
+                    {item.name}
+                  </span>
+                  <span className="text-xs text-(--color-text-muted)">
+                    {formatCurrency(item.amount)} (
+                    {((item.amount / totals.expenses) * 100).toFixed(1)}%)
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={fullscreenChart === "cashflow"}
+        onClose={() => setFullscreenChart(null)}
+        title="Cash Flow Analysis"
+        size="lg"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2">
+            {(["income", "expense", "savings"] as CashFlowView[]).map((view) => (
+              <button
+                key={view}
+                onClick={() => setCashFlowView(view)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  cashFlowView === view
+                    ? "bg-(--color-bg) text-(--color-text)"
+                    : "text-(--color-text-muted) hover:text-(--color-text)"
+                }`}
+              >
+                {view.charAt(0).toUpperCase() + view.slice(1)}
+              </button>
+            ))}
+          </div>
+          <div className="h-96">
+            <ChartContainer config={cashFlowConfig} className="h-full w-full">
+              <BarChart data={periodData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.3} />
+                <XAxis
+                  dataKey="period"
+                  stroke="var(--color-text-muted)"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={{ stroke: "var(--color-border)" }}
+                />
+                <YAxis
+                  stroke="var(--color-text-muted)"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
+                  }
+                />
+                <Bar
+                  dataKey={cashFlowView}
+                  fill={`var(--color-${cashFlowView === "expense" ? "expenses" : cashFlowView})`}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          </div>
+          <div className="flex justify-center gap-8">
+            <div className="text-center">
+              <div className="text-sm text-(--color-text-muted)">Income</div>
+              <div className="text-xl font-semibold text-green-600">
+                {formatCurrency(totals.income)}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-(--color-text-muted)">Expenses</div>
+              <div className="text-xl font-semibold text-red-500">
+                {formatCurrency(totals.expenses)}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-(--color-text-muted)">Savings</div>
+              <div
+                className={`text-xl font-semibold ${totals.savings >= 0 ? "text-blue-500" : "text-red-500"}`}
+              >
+                {formatCurrency(totals.savings)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }
