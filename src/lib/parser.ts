@@ -211,7 +211,7 @@ async function smartExtract(pdfBase64: string, config: AIConfig): Promise<TaxRet
 export async function parseTaxReturn(
   pdfBase64: string,
   apiKey: string,
-  provider: string = "anthropic",
+  provider: string = "vercel",
 ): Promise<TaxReturn> {
   const config: AIConfig = {
     provider: provider as AIConfig["provider"],
@@ -223,7 +223,7 @@ export async function parseTaxReturn(
 export async function extractYearFromPdf(
   pdfBase64: string,
   apiKey: string,
-  provider: string = "anthropic",
+  provider: string = "vercel",
 ): Promise<number | null> {
   const config: AIConfig = {
     provider: provider as AIConfig["provider"],

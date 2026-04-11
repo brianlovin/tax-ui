@@ -4,7 +4,9 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText, Output } from "ai";
 import { z } from "zod";
-export type AIProvider = "anthropic" | "openai" | "google" | "gateway";
+export type AIProvider = "anthropic" | "openai" | "google" | "vercel" | "gateway";
+type GatewayProvider = Extract<AIProvider, "vercel" | "gateway">;
+type DirectProvider = Exclude<AIProvider, GatewayProvider>;
 
 export interface AIConfig {
   provider: AIProvider;
@@ -16,14 +18,18 @@ export function isGatewayKey(apiKey: string): boolean {
   return apiKey.startsWith("vck_");
 }
 
+function isGatewayProvider(provider: AIProvider): provider is GatewayProvider {
+  return provider === "vercel" || provider === "gateway";
+}
+
 // Model IDs for direct provider access
-const FAST_MODEL_MAP: Record<Exclude<AIProvider, "gateway">, string> = {
+const FAST_MODEL_MAP: Record<DirectProvider, string> = {
   anthropic: "claude-haiku-4-5-20251001",
   openai: "gpt-4o-mini",
   google: "gemini-2.0-flash",
 };
 
-const MAIN_MODEL_MAP: Record<Exclude<AIProvider, "gateway">, string> = {
+const MAIN_MODEL_MAP: Record<DirectProvider, string> = {
   anthropic: "claude-sonnet-4-5-20250929",
   openai: "gpt-4o",
   google: "gemini-2.0-pro",
@@ -62,6 +68,7 @@ export function getClient(config: AIConfig) {
       return getOpenAIClient(config.apiKey);
     case "google":
       return getGoogleClient(config.apiKey);
+    case "vercel":
     case "gateway":
       return getGatewayClient(config.apiKey);
     default:
@@ -71,24 +78,26 @@ export function getClient(config: AIConfig) {
 
 export function getFastModel(config: AIConfig) {
   const client = getClient(config);
+  const { provider } = config;
 
   // Gateway uses prefixed model names
-  if (isGatewayKey(config.apiKey) || config.provider === "gateway") {
+  if (isGatewayKey(config.apiKey) || isGatewayProvider(provider)) {
     return client.languageModel(GATEWAY_FAST_MODEL);
   }
 
-  return client.languageModel(FAST_MODEL_MAP[config.provider]);
+  return client.languageModel(FAST_MODEL_MAP[provider]);
 }
 
 export function getMainModel(config: AIConfig) {
   const client = getClient(config);
+  const { provider } = config;
 
   // Gateway uses prefixed model names
-  if (isGatewayKey(config.apiKey) || config.provider === "gateway") {
+  if (isGatewayKey(config.apiKey) || isGatewayProvider(provider)) {
     return client.languageModel(GATEWAY_MAIN_MODEL);
   }
 
-  return client.languageModel(MAIN_MODEL_MAP[config.provider]);
+  return client.languageModel(MAIN_MODEL_MAP[provider]);
 }
 
 export async function generateTextFromPDF(

@@ -124,7 +124,7 @@ export async function parseDocument(
   pdfBase64: string,
   apiKey: string,
   documentType?: DocumentType,
-  provider: string = "anthropic",
+  provider: string = "vercel",
 ): Promise<{ type: DocumentType; data: Payslip | BankStatement }> {
   const config: AIConfig = {
     provider: provider as AIConfig["provider"],

@@ -497,7 +497,7 @@ export function App() {
     const res = await fetch("/api/config/key", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ apiKey }),
+      body: JSON.stringify({ apiKey, provider: "vercel" }),
     });
     if (!res.ok) {
       const { error } = await res.json();

@@ -181,31 +181,34 @@ export function getApiKey(): string | undefined {
       return process.env.OPENAI_API_KEY;
     case "google":
       return process.env.GOOGLE_API_KEY;
+    case "vercel":
+    case "gateway":
     case "anthropic":
     default:
-      return process.env.ANTHROPIC_API_KEY;
+      return process.env.AI_SDK_KEY;
   }
 }
 
 export function getApiKeys(): Record<string, string> {
   return {
-    anthropic: process.env.ANTHROPIC_API_KEY || "",
+    vercel: process.env.AI_SDK_KEY || "",
+    anthropic: process.env.AI_SDK_KEY || "",
     openai: process.env.OPENAI_API_KEY || "",
     google: process.env.GOOGLE_API_KEY || "",
   };
 }
 
 export function getStoredProvider(): string {
-  return process.env.AI_PROVIDER || "anthropic";
+  return process.env.AI_PROVIDER || "vercel";
 }
 
-export async function saveApiKey(key: string, provider: string = "anthropic"): Promise<void> {
+export async function saveApiKey(key: string, provider: string = "vercel"): Promise<void> {
   const keyName =
     provider === "openai"
       ? "OPENAI_API_KEY"
       : provider === "google"
         ? "GOOGLE_API_KEY"
-        : "ANTHROPIC_API_KEY";
+        : "AI_SDK_KEY";
 
   const file = Bun.file(ENV_FILE);
   let content = "";
@@ -249,7 +252,7 @@ export async function removeApiKey(): Promise<void> {
   const envFile = Bun.file(ENV_FILE);
   if (await envFile.exists()) {
     let content = await envFile.text();
-    content = content.replace(/^ANTHROPIC_API_KEY=.*$/gm, "").trim();
+    content = content.replace(/^AI_SDK_KEY=.*$/gm, "").trim();
     if (content) {
       await Bun.write(ENV_FILE, content + "\n");
     } else {
@@ -257,7 +260,7 @@ export async function removeApiKey(): Promise<void> {
       await fs.unlink(ENV_FILE);
     }
   }
-  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.AI_SDK_KEY;
 }
 
 export async function clearAllData(): Promise<void> {
@@ -289,7 +292,7 @@ export async function clearAllData(): Promise<void> {
   const envFile = Bun.file(ENV_FILE);
   if (await envFile.exists()) {
     let content = await envFile.text();
-    content = content.replace(/^ANTHROPIC_API_KEY=.*$/gm, "").trim();
+    content = content.replace(/^AI_SDK_KEY=.*$/gm, "").trim();
     if (content) {
       await Bun.write(ENV_FILE, content + "\n");
     } else {
@@ -297,7 +300,7 @@ export async function clearAllData(): Promise<void> {
       await fs.unlink(ENV_FILE);
     }
   }
-  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.AI_SDK_KEY;
 }
 
 // ============================================

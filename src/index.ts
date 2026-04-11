@@ -83,7 +83,9 @@ const routes: Record<string, any> = {
     GET: () => {
       const apiKeys = getApiKeys();
       const provider = getStoredProvider();
-      const hasKey = Boolean(apiKeys.anthropic || apiKeys.openai || apiKeys.google);
+      const hasKey = Boolean(
+        apiKeys.vercel || apiKeys.anthropic || apiKeys.openai || apiKeys.google,
+      );
       const isDemo = process.env.DEMO_MODE === "true";
       const isDev = process.env.NODE_ENV !== "production";
       return Response.json({
@@ -92,6 +94,7 @@ const routes: Record<string, any> = {
         isDev,
         provider,
         keys: {
+          vercel: Boolean(apiKeys.vercel),
           anthropic: Boolean(apiKeys.anthropic),
           openai: Boolean(apiKeys.openai),
           google: Boolean(apiKeys.google),
@@ -101,7 +104,7 @@ const routes: Record<string, any> = {
   },
   "/api/config/key": {
     POST: async (req: Request) => {
-      const { apiKey, provider = "anthropic" } = await req.json();
+      const { apiKey, provider = "vercel" } = await req.json();
       if (!apiKey || typeof apiKey !== "string") {
         return Response.json({ error: "Invalid API key" }, { status: 400 });
       }
@@ -156,6 +159,7 @@ const routes: Record<string, any> = {
 
       const formApiKey = formData.get("apiKey") as string | null;
       const apiKey = formApiKey || getApiKey();
+      const provider = getStoredProvider();
       if (!apiKey) {
         return Response.json({ error: "No API key configured" }, { status: 400 });
       }
@@ -163,7 +167,7 @@ const routes: Record<string, any> = {
       try {
         const buffer = await file.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
-        const year = await extractYearFromPdf(base64, apiKey);
+        const year = await extractYearFromPdf(base64, apiKey, provider);
         return Response.json({ year });
       } catch (error) {
         console.error("Year extraction error:", error);
@@ -264,6 +268,7 @@ const routes: Record<string, any> = {
       }
 
       const apiKey = apiKeyFromForm?.trim() || getApiKey();
+      const provider = getStoredProvider();
       if (!apiKey) {
         return Response.json({ error: "No API key provided" }, { status: 400 });
       }
@@ -271,11 +276,12 @@ const routes: Record<string, any> = {
       try {
         const buffer = await file.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
-        const taxReturn = await parseTaxReturn(base64, apiKey);
+        const taxReturn = await parseTaxReturn(base64, apiKey, provider);
 
         // Save key only after successful parse
         if (apiKeyFromForm?.trim()) {
-          await saveApiKey(apiKeyFromForm.trim());
+          await saveApiKey(apiKeyFromForm.trim(), provider);
+          await saveProvider(provider);
         }
 
         await saveReturn(taxReturn);
@@ -381,6 +387,7 @@ const routes: Record<string, any> = {
       }
 
       const apiKey = apiKeyFromForm?.trim() || getApiKey();
+      const provider = getStoredProvider();
       if (!apiKey) {
         return Response.json({ error: "No API key configured" }, { status: 400 });
       }
@@ -388,7 +395,7 @@ const routes: Record<string, any> = {
       try {
         const buffer = await file.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
-        const result = await parseDocument(base64, apiKey, "payslip");
+        const result = await parseDocument(base64, apiKey, "payslip", provider);
 
         if (result.type !== "payslip") {
           return Response.json({ error: "Document is not a payslip" }, { status: 400 });
@@ -441,6 +448,7 @@ const routes: Record<string, any> = {
       }
 
       const apiKey = apiKeyFromForm?.trim() || getApiKey();
+      const provider = getStoredProvider();
       if (!apiKey) {
         return Response.json({ error: "No API key configured" }, { status: 400 });
       }
@@ -448,7 +456,7 @@ const routes: Record<string, any> = {
       try {
         const buffer = await file.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
-        const result = await parseDocument(base64, apiKey, "bank-statement");
+        const result = await parseDocument(base64, apiKey, "bank-statement", provider);
 
         if (result.type !== "bank-statement") {
           return Response.json({ error: "Document is not a bank statement" }, { status: 400 });
