@@ -29,6 +29,14 @@ function header(headers: Req["headers"], name: string): string | undefined {
   return value || undefined;
 }
 
+function decodeGeoValue(value: string): string {
+  try {
+    return decodeURIComponent(value.replace(/\+/g, " "));
+  } catch {
+    return value;
+  }
+}
+
 function geoMeta(headers: Req["headers"]): Record<string, string> {
   const country = header(headers, "x-vercel-ip-country") ?? header(headers, "cf-ipcountry");
   const region =
@@ -38,8 +46,8 @@ function geoMeta(headers: Req["headers"]): Record<string, string> {
   const city = header(headers, "x-vercel-ip-city") ?? header(headers, "cf-ipcity");
   const meta: Record<string, string> = {};
   if (country) meta.country = country;
-  if (region) meta.region = region;
-  if (city) meta.city = city;
+  if (region) meta.region = decodeGeoValue(region);
+  if (city) meta.city = decodeGeoValue(city);
   return meta;
 }
 
