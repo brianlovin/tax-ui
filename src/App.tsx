@@ -210,6 +210,7 @@ export function App() {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const hasShownOnboardingRef = useRef(false);
+  const didPingVisit = useRef(false);
   const [devUpdateOverride, setDevUpdateOverride] = useState<UpdateStatus | null>(null);
   const updater = useElectronUpdater(devUpdateOverride);
 
@@ -224,7 +225,9 @@ export function App() {
   const navItems = buildNavItems(effectiveReturns);
 
   useEffect(() => {
-    if (isHostedEnvironment()) pingVisit();
+    if (!isHostedEnvironment() || didPingVisit.current) return;
+    didPingVisit.current = true;
+    pingVisit();
   }, []);
 
   useEffect(() => {
