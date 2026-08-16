@@ -68,7 +68,7 @@ Please analyze the source code and verify:
 
 2. NETWORK ACTIVITY
    - Identify all network requests in the codebase
-   - Verify the only external calls are to Anthropic's API
+   - Verify tax data is only sent to Anthropic's API (the hosted site also sends anonymous visit/download pings to brianlovin.com via a same-origin API)
    - Check for any hidden data collection or tracking
 
 3. API KEY SECURITY

@@ -12,6 +12,7 @@ import { SettingsModal } from "./components/SettingsModal";
 import { SetupDialog } from "./components/SetupDialog";
 import { UploadModal } from "./components/UploadModal";
 import { sampleReturns } from "./data/sampleData";
+import { pingVisit } from "./lib/activity";
 import { isElectron } from "./lib/electron";
 import { getDevDemoOverride, isHostedEnvironment, resolveDemoMode } from "./lib/env";
 import type { FileProgress, FileWithId, PendingUpload, TaxReturn } from "./lib/schema";
@@ -221,6 +222,10 @@ export function App() {
   // When demo mode is toggled on, show sample data instead of user data
   const effectiveReturns = effectiveIsDemo ? sampleReturns : state.returns;
   const navItems = buildNavItems(effectiveReturns);
+
+  useEffect(() => {
+    if (isHostedEnvironment()) pingVisit();
+  }, []);
 
   useEffect(() => {
     fetchInitialState()

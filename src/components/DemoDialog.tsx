@@ -2,6 +2,7 @@ import { Collapsible } from "@base-ui/react/collapsible";
 import { useEffect, useState } from "react";
 
 import appIconUrl from "../app-icon.png";
+import { pingDownload } from "../lib/activity";
 import { detectPlatform, getPlatformLabel } from "../lib/platform";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
@@ -80,20 +81,24 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
   const primaryLabel = `Download for ${getPlatformLabel(primaryPlatform)}`;
 
   // Alternate platforms
-  type AltPlatform = { label: string; url: string | null };
+  type AltPlatform = {
+    label: string;
+    url: string | null;
+    platform: "mac-arm" | "mac-intel" | "windows";
+  };
   const altPlatforms: AltPlatform[] = [];
   if (release && !error) {
     if (platform !== "mac-intel") {
       const url = getDownloadUrl(release.assets, "mac-intel");
-      if (url) altPlatforms.push({ label: "Intel Mac", url });
+      if (url) altPlatforms.push({ label: "Intel Mac", url, platform: "mac-intel" });
     }
     if (platform === "mac-intel") {
       const url = getDownloadUrl(release.assets, "mac-arm");
-      if (url) altPlatforms.push({ label: "Apple Silicon Mac", url });
+      if (url) altPlatforms.push({ label: "Apple Silicon Mac", url, platform: "mac-arm" });
     }
     if (platform !== "windows") {
       const url = getDownloadUrl(release.assets, "windows");
-      if (url) altPlatforms.push({ label: "Windows", url });
+      if (url) altPlatforms.push({ label: "Windows", url, platform: "windows" });
     }
   }
 
@@ -128,7 +133,14 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
           {error || (release && !primaryUrl) ? (
             <Button
               nativeButton={false}
-              render={<a href={RELEASES_URL} target="_blank" rel="noopener noreferrer" />}
+              render={
+                <a
+                  href={RELEASES_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => pingDownload()}
+                />
+              }
               className="justify-center bg-(--color-brand) text-center dark:text-white"
             >
               Download from GitHub
@@ -136,7 +148,7 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
           ) : primaryUrl ? (
             <Button
               nativeButton={false}
-              render={<a href={primaryUrl} />}
+              render={<a href={primaryUrl} onClick={() => pingDownload(primaryPlatform)} />}
               className="justify-center bg-(--color-brand) text-center dark:text-white"
             >
               {primaryLabel}
@@ -154,7 +166,11 @@ export function DemoDialog({ isOpen, onClose, skipOpenAnimation }: Props) {
               {altPlatforms.map((alt, i) => (
                 <span key={alt.label}>
                   {i > 0 && " & "}
-                  <a href={alt.url!} className="underline hover:text-(--color-text)">
+                  <a
+                    href={alt.url!}
+                    className="underline hover:text-(--color-text)"
+                    onClick={() => pingDownload(alt.platform)}
+                  >
                     {alt.label}
                   </a>
                 </span>
