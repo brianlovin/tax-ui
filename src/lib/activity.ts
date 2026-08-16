@@ -1,18 +1,15 @@
 import { isHostedEnvironment } from "./env";
 
-const ACTIVITY_ORIGIN = "https://brianlovin.com/api/activity";
-const SOURCE = "tax-ui";
-
 export type DownloadPlatform = "mac-arm" | "mac-intel" | "windows";
 
-function postActivity(endpoint: "visit" | "download", body: Record<string, string>): void {
+function postActivity(type: "visit" | "download", platform?: DownloadPlatform): void {
   if (!isHostedEnvironment()) return;
 
   try {
-    void fetch(`${ACTIVITY_ORIGIN}/${endpoint}`, {
+    void fetch("/api/activity", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(platform ? { type, platform } : { type }),
       keepalive: true,
       signal: AbortSignal.timeout(800),
     }).catch(() => {});
@@ -22,9 +19,9 @@ function postActivity(endpoint: "visit" | "download", body: Record<string, strin
 }
 
 export function pingVisit(): void {
-  postActivity("visit", { path: "/", source: SOURCE, title: "Tax UI" });
+  postActivity("visit");
 }
 
 export function pingDownload(platform?: DownloadPlatform): void {
-  postActivity("download", platform ? { source: SOURCE, platform } : { source: SOURCE });
+  postActivity("download", platform);
 }
