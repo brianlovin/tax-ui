@@ -37,17 +37,38 @@ function decodeGeoValue(value: string): string {
   }
 }
 
-function geoMeta(headers: Req["headers"]): Record<string, string> {
+function parseCoord(value: string | undefined, min: number, max: number): number | undefined {
+  if (!value) return undefined;
+  const n = Number.parseFloat(value);
+  if (!Number.isFinite(n) || n < min || n > max) return undefined;
+  return n;
+}
+
+export function geoMeta(headers: Req["headers"]): Record<string, string | number> {
   const country = header(headers, "x-vercel-ip-country") ?? header(headers, "cf-ipcountry");
   const region =
     header(headers, "x-vercel-ip-country-region") ??
     header(headers, "cf-region") ??
     header(headers, "cf-region-code");
   const city = header(headers, "x-vercel-ip-city") ?? header(headers, "cf-ipcity");
-  const meta: Record<string, string> = {};
+  const latitude = parseCoord(
+    header(headers, "x-vercel-ip-latitude") ?? header(headers, "cf-iplatitude"),
+    -90,
+    90,
+  );
+  const longitude = parseCoord(
+    header(headers, "x-vercel-ip-longitude") ?? header(headers, "cf-iplongitude"),
+    -180,
+    180,
+  );
+  const meta: Record<string, string | number> = {};
   if (country) meta.country = country;
   if (region) meta.region = decodeGeoValue(region);
   if (city) meta.city = decodeGeoValue(city);
+  if (latitude !== undefined && longitude !== undefined) {
+    meta.latitude = latitude;
+    meta.longitude = longitude;
+  }
   return meta;
 }
 
@@ -70,7 +91,10 @@ function parseBody(raw: unknown): { type: ActivityType; platform?: Platform } | 
   return { type, platform: platform as Platform | undefined };
 }
 
-function envelope(input: { type: ActivityType; platform?: Platform }, geo: Record<string, string>) {
+function envelope(
+  input: { type: ActivityType; platform?: Platform },
+  geo: Record<string, string | number>,
+) {
   if (input.type === "visit") {
     return {
       source: "tax-ui",
