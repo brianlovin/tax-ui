@@ -521,6 +521,7 @@ export function App() {
           prompt,
           history: chatMessages,
           returns: effectiveReturns,
+          selectedYear: state.selectedYear,
         }),
       });
 

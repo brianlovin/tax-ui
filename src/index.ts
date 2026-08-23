@@ -38,12 +38,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const STATIC_ROOT = process.env.TAX_UI_STATIC_DIR || __dirname;
 
-function buildChatSystemPrompt(returns: Record<number, unknown>): string {
+function buildChatSystemPrompt(returns: Record<number, unknown>, selectedYear?: number | string): string {
   const years = Object.keys(returns)
     .map(Number)
     .sort((a, b) => a - b);
   const yearRange =
     years.length > 1 ? `${years[0]}-${years[years.length - 1]}` : years[0]?.toString() || "none";
+
+  const activeYear =
+    selectedYear && selectedYear !== "summary" ? Number(selectedYear) : years[years.length - 1];
+  const activeContext = activeYear && returns[activeYear]
+    ? `\nCURRENTLY VIEWED YEAR: ${activeYear}\n${JSON.stringify(returns[activeYear])}`
+    : `\n${JSON.stringify(returns)}`;
 
   return `You are a helpful tax data analysis assistant. You have access to the user's tax return data.
 
@@ -52,10 +58,11 @@ IMPORTANT FORMATTING RULES:
 - Format percentages to 1 decimal place (e.g., 22.5%)
 - Be concise and direct in your responses
 - When comparing years, show values side by side
+- When the user says "my year" or "this year", default to the CURRENTLY VIEWED YEAR unless they specify otherwise
 
 TAX DATA AVAILABLE:
-Years: ${yearRange}
-${JSON.stringify(returns, null, 2)}
+All years on file: ${yearRange}
+${activeContext}
 
 Answer questions about the user's income, taxes, deductions, credits, and tax rates based on this data.`;
 }
@@ -150,7 +157,7 @@ const routes: Record<string, any> = {
   },
   "/api/chat": {
     POST: async (req: Request) => {
-      const { prompt, history, returns: clientReturns } = await req.json();
+      const { prompt, history, returns: clientReturns, selectedYear } = await req.json();
 
       if (!prompt || typeof prompt !== "string") {
         return Response.json({ error: "No prompt provided" }, { status: 400 });
@@ -178,9 +185,9 @@ const routes: Record<string, any> = {
         messages.push({ role: "user", content: prompt });
 
         const response = await client.messages.create({
-          model: "claude-sonnet-4-5-20250929",
+          model: "claude-sonnet-4-6",
           max_tokens: 2048,
-          system: buildChatSystemPrompt(returns),
+          system: buildChatSystemPrompt(returns, selectedYear),
           messages,
         });
 

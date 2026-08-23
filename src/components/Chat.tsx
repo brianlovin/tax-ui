@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { cn } from "../lib/cn";
 import { isElectron } from "../lib/electron";
@@ -242,6 +243,7 @@ export function Chat({
                   </div>
                   <div className="prose-chat text-sm">
                     <Markdown
+                      remarkPlugins={[remarkGfm]}
                       components={{
                         a: ({ href, children }) => (
                           <a
