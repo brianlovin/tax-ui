@@ -178,7 +178,7 @@ const routes: Record<string, any> = {
         messages.push({ role: "user", content: prompt });
 
         const response = await client.messages.create({
-          model: "claude-sonnet-4-5-20250929",
+          model: "claude-sonnet-5-5",
           max_tokens: 2048,
           system: buildChatSystemPrompt(returns),
           messages,
