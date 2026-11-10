@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --hot src/index.ts --port 3005",
+    "dev": "./scripts/with-env.sh bun --hot src/index.ts --port 3005",
     "start": "NODE_ENV=production bun src/index.ts",
     "build": "bun run build.ts",
     "build:server": "bun scripts/build-server.ts",
