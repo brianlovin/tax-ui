@@ -67,7 +67,9 @@ async function splitPdf(pdfBase64: string): Promise<string[]> {
 async function parseChunk(pdfBase64: string, client: Anthropic): Promise<TaxReturn> {
   const response = await client.messages.create({
     model: "claude-sonnet-5-5",
-    max_tokens: 4096,
+    // Thinking is on by default on this model and counts toward max_tokens. A
+    // cut-off response is invalid JSON, so leave room for thinking plus the full return.
+    max_tokens: 16000,
     messages: [
       {
         role: "user",

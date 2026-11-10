@@ -179,7 +179,9 @@ const routes: Record<string, any> = {
 
         const response = await client.messages.create({
           model: "claude-sonnet-5-5",
-          max_tokens: 2048,
+          // Thinking is on by default on this model and counts toward max_tokens,
+          // so the limit has to cover thinking plus the reply.
+          max_tokens: 16000,
           system: buildChatSystemPrompt(returns),
           messages,
         });
