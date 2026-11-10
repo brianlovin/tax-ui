@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "setup": "bun install",
+    "setup": "if [ -e \"$CONDUCTOR_ROOT_PATH/.env\" ]; then cp \"$CONDUCTOR_ROOT_PATH/.env\" .env; fi; bun install",
     "run": "bun run dev --port ${CONDUCTOR_PORT:-3000}"
   }
 }
